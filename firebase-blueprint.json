@@ -1,0 +1,140 @@
+{
+  "entities": {
+    "CloudSave": {
+      "title": "CloudSave",
+      "description": "Stores a player's cross-device cloud save state, meta progression, achievements, and ad-removal purchase status.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Google user UID owning this save."
+        },
+        "playerName": {
+          "type": "string",
+          "description": "Display name of the player."
+        },
+        "saveDataJson": {
+          "type": "string",
+          "description": "Serialized game save state including equipment, inventory, floor, meta upgrades, and achievements."
+        },
+        "level": {
+          "type": "integer",
+          "description": "Current hero level in the saved run."
+        },
+        "floor": {
+          "type": "integer",
+          "description": "Current dungeon floor in the saved run."
+        },
+        "gold": {
+          "type": "integer",
+          "description": "Accumulated gold."
+        },
+        "metaShards": {
+          "type": "integer",
+          "description": "Accumulated relic shards for meta progression."
+        },
+        "adsRemoved": {
+          "type": "boolean",
+          "description": "Whether the user has unlocked the No-Ads premium status."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp submitted via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp submitted via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "playerName",
+        "saveDataJson",
+        "level",
+        "floor",
+        "gold",
+        "metaShards",
+        "adsRemoved",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Represents a global cross-platform high score entry in the Last Relic leaderboard.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Google user UID who achieved this score."
+        },
+        "playerName": {
+          "type": "string",
+          "description": "Player display name."
+        },
+        "playerClass": {
+          "type": "string",
+          "description": "Hero class used for the run (warrior, rogue, mage, tank, necromancer)."
+        },
+        "score": {
+          "type": "integer",
+          "description": "Total calculated run score."
+        },
+        "level": {
+          "type": "integer",
+          "description": "Hero level reached."
+        },
+        "floor": {
+          "type": "integer",
+          "description": "Dungeon floor reached."
+        },
+        "kills": {
+          "type": "integer",
+          "description": "Total enemies defeated."
+        },
+        "itemsFound": {
+          "type": "integer",
+          "description": "Total loot items discovered."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp submitted via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp submitted via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "playerName",
+        "playerClass",
+        "score",
+        "level",
+        "floor",
+        "kills",
+        "itemsFound",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/cloud_saves/{userId}": {
+      "schema": {
+        "$ref": "#/entities/CloudSave"
+      },
+      "description": "Per-user cloud save state keyed by the user's UID."
+    },
+    "/leaderboard/{entryId}": {
+      "schema": {
+        "$ref": "#/entities/LeaderboardEntry"
+      },
+      "description": "Global leaderboard entries keyed by userId or run entryId."
+    }
+  }
+}

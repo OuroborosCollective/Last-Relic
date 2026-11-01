@@ -1,0 +1,93 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidCloudSave(data) {
+      return data.userId is string && data.userId == request.auth.uid && data.userId.size() <= 128 &&
+             data.playerName is string && data.playerName.size() >= 1 && data.playerName.size() <= 60 &&
+             data.saveDataJson is string && data.saveDataJson.size() >= 2 && data.saveDataJson.size() <= 200000 &&
+             data.level is int && data.level >= 1 && data.level <= 9999 &&
+             data.floor is int && data.floor >= 1 && data.floor <= 9999 &&
+             data.gold is int && data.gold >= 0 && data.gold <= 100000000 &&
+             data.metaShards is int && data.metaShards >= 0 && data.metaShards <= 100000000 &&
+             data.adsRemoved is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidLeaderboardEntry(data) {
+      return data.userId is string && data.userId == request.auth.uid && data.userId.size() <= 128 &&
+             data.playerName is string && data.playerName.size() >= 1 && data.playerName.size() <= 40 &&
+             data.playerClass is string && data.playerClass in ['warrior', 'rogue', 'mage', 'tank', 'necromancer'] &&
+             data.score is int && data.score >= 0 && data.score <= 1000000000 &&
+             data.level is int && data.level >= 1 && data.level <= 9999 &&
+             data.floor is int && data.floor >= 1 && data.floor <= 9999 &&
+             data.kills is int && data.kills >= 0 && data.kills <= 10000000 &&
+             data.itemsFound is int && data.itemsFound >= 0 && data.itemsFound <= 10000000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /cloud_saves/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().keys().hasAll(['userId', 'playerName', 'saveDataJson', 'level', 'floor', 'gold', 'metaShards', 'adsRemoved', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'playerName', 'saveDataJson', 'level', 'floor', 'gold', 'metaShards', 'adsRemoved', 'createdAt', 'updatedAt']) &&
+                       isValidCloudSave(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       isValidCloudSave(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['playerName', 'saveDataJson', 'level', 'floor', 'gold', 'metaShards', 'adsRemoved', 'createdAt', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+    }
+
+    match /leaderboard/{entryId} {
+      allow get: if isSignedIn() && isValidId(entryId) && resource.data.score >= 0;
+      allow list: if isSignedIn() && resource.data.score >= 0;
+
+      allow create: if isSignedIn() &&
+                       isValidId(entryId) &&
+                       request.auth.uid == entryId &&
+                       incoming().keys().hasAll(['userId', 'playerName', 'playerClass', 'score', 'level', 'floor', 'kills', 'itemsFound', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'playerName', 'playerClass', 'score', 'level', 'floor', 'kills', 'itemsFound', 'createdAt', 'updatedAt']) &&
+                       isValidLeaderboardEntry(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(entryId) &&
+                       request.auth.uid == entryId &&
+                       isValidLeaderboardEntry(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['playerName', 'playerClass', 'score', 'level', 'floor', 'kills', 'itemsFound', 'createdAt', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isValidId(entryId) && request.auth.uid == entryId && resource.data.userId == request.auth.uid;
+    }
+  }
+}
