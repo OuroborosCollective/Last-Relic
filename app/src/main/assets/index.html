@@ -9,6 +9,8 @@
 html,body{margin:0;height:100%;overflow:hidden;background:#05060a;color:#e8ecf4;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;user-select:none;-webkit-user-select:none;touch-action:none;overscroll-behavior:none}
 #cv{position:fixed;inset:0;width:100%;height:100%;display:block}
 #vig{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;background:radial-gradient(ellipse at center,rgba(255,0,0,0) 42%,rgba(235,20,30,.72) 100%);transition:opacity .08s}
+#vig.heavy-hit{background:radial-gradient(ellipse at center,rgba(255,50,20,.16) 24%,rgba(235,15,25,.82) 72%,rgba(130,0,15,.96) 100%);box-shadow:inset 0 0 95px rgba(255,35,35,.95);animation:heavyVigPulse .52s cubic-bezier(.18,.89,.32,1.28)}
+@keyframes heavyVigPulse{0%{transform:scale(1.06);filter:brightness(1.5) saturate(1.4)}35%{transform:scale(.99);filter:brightness(1.25)}70%{transform:scale(1.02)}100%{transform:scale(1);filter:none}}
 #bloom{position:fixed;inset:0;pointer-events:none;z-index:3;background:radial-gradient(circle at 50% 50%,rgba(79,209,255,.06) 0%,rgba(199,125,255,.04) 45%,rgba(0,0,0,.35) 100%);mix-blend-mode:screen}
 #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
 #tl{position:absolute;left:8px;top:8px;width:min(50vw,260px);padding-top:max(8px,env(safe-area-inset-top));padding-left:max(8px,env(safe-area-inset-left))}
@@ -19,9 +21,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:#05060a;color:#e8ecf4;
 #inf{font-size:11px;opacity:.92;text-shadow:0 1px 3px #000;line-height:1.38;font-weight:500}
 #mm{position:absolute;right:8px;top:8px;width:104px;height:104px;border:1.5px solid rgba(79,209,255,.45);background:rgba(4,7,14,.68);image-rendering:pixelated;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.6);padding-top:max(8px,env(safe-area-inset-top));padding-right:max(8px,env(safe-area-inset-right))}
 #wv{position:absolute;right:8px;top:116px;font-size:11px;text-align:right;text-shadow:0 1px 3px #000;opacity:.95;padding-right:max(8px,env(safe-area-inset-right))}
-#bossb{position:absolute;left:50%;bottom:92px;transform:translateX(-50%);width:min(64vw,380px);display:none}
-#bossb .bar{height:20px;border-color:rgba(199,125,255,.6)}
-#bossb .bar div{background:linear-gradient(90deg,#c77dff,#6a22b8);box-shadow:0 0 14px rgba(199,125,255,.8)}
+#bossb{position:absolute;left:50%;bottom:92px;transform:translateX(-50%);width:min(68vw,400px);display:none;background:rgba(8,11,20,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:8px 12px;border-radius:12px;border:1px solid rgba(199,125,255,.35);box-shadow:0 8px 24px rgba(0,0,0,.78);transition:border-color .35s ease,box-shadow .35s ease}
+#bossb .bar{height:20px;margin-bottom:0;border-color:var(--boss-border,rgba(199,125,255,.65));box-shadow:0 0 var(--boss-glow-size,12px) var(--boss-glow,rgba(199,125,255,.55)),inset 0 0 8px rgba(0,0,0,.65);filter:drop-shadow(0 0 var(--boss-drop-size,6px) var(--boss-glow,rgba(199,125,255,.5)));transition:box-shadow .35s ease,border-color .35s ease,filter .35s ease,transform .25s ease;animation:bossBarPulse var(--boss-pulse-dur,2.2s) ease-in-out infinite alternate}
+#bossb .bar div{background:var(--boss-fill,linear-gradient(90deg,#c77dff,#6a22b8));box-shadow:0 0 14px var(--boss-glow,rgba(199,125,255,.85));transition:width .12s ease-out,background .35s ease,box-shadow .35s ease}
+@keyframes bossBarPulse{0%{box-shadow:0 0 var(--boss-glow-size,10px) var(--boss-glow,rgba(199,125,255,.45)),inset 0 0 6px rgba(0,0,0,.6);filter:drop-shadow(0 0 var(--boss-drop-size,5px) var(--boss-glow,rgba(199,125,255,.4)))}100%{box-shadow:0 0 calc(var(--boss-glow-size,10px) * 1.65) var(--boss-glow,rgba(199,125,255,.9)),inset 0 0 10px rgba(255,255,255,.18);filter:drop-shadow(0 0 calc(var(--boss-drop-size,5px) * 1.7) var(--boss-glow,rgba(199,125,255,.85)))}}
 #toasts{position:absolute;left:50%;top:24%;transform:translateX(-50%);width:84vw;max-width:460px;text-align:center}
 .ts{font-weight:800;font-size:15px;text-shadow:0 2px 8px #000,0 0 12px rgba(79,209,255,.35);margin:4px 0;animation:fo 2.8s forwards;letter-spacing:.3px}
 @keyframes fo{0%{opacity:0;transform:translateY(10px) scale(.95)}10%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
@@ -48,6 +51,11 @@ button.t:disabled{opacity:.35;pointer-events:none}
 #grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:8px 0}
 #det{min-height:96px;background:#101726;border:1px solid #2c3850;border-radius:10px;padding:10px;font-size:13px;line-height:1.45}
 .nm{font-weight:800;font-size:15px}.sb{opacity:.7;font-size:11px;margin-bottom:4px}.af{color:#9ec7ff}
+#autoScrapPanel{background:#101726;border:1px solid #2c3850;border-radius:10px;padding:10px;margin:8px 0;font-size:12px}
+.as-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-weight:700;color:#9ec7ff}
+.as-chips{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px}
+.as-chip{display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 6px;border-radius:8px;border:1.5px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);font-size:12px;font-weight:700;cursor:pointer;transition:all .14s}
+.as-chip.on{background:rgba(79,209,255,.16);box-shadow:0 0 10px rgba(79,209,255,.22)}
 #stat{background:#101726;border:1px solid #2c3850;border-radius:10px;padding:10px;font-size:13px;margin-top:8px;line-height:1.5}
 .at{display:flex;align-items:center;gap:6px;margin:4px 0}.at span{width:92px;font-weight:700}.at small{flex:1;opacity:.7;font-size:11px}
 #ovl{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at center,rgba(12,18,34,.92),rgba(3,5,9,.96));padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y}
@@ -66,14 +74,26 @@ button.t:disabled{opacity:.35;pointer-events:none}
 .class-card h3{margin:0 0 3px;font-size:15px;color:#fff}
 .class-card p{margin:0;font-size:12px;opacity:.82}
 
-/* Pause */
-#pauseOvl{position:fixed;inset:0;z-index:35;display:none;align-items:center;justify-content:center;background:rgba(3,5,10,.92);backdrop-filter:blur(6px);padding:16px;overflow-y:auto}
-.pause-card{max-width:420px;width:100%;text-align:center;background:rgba(12,17,28,.97);border:1px solid #2c3850;border-radius:14px;padding:22px;box-shadow:0 12px 36px rgba(0,0,0,.8)}
-.pause-card h2{margin:0 0 8px;font-size:26px;color:#fff}
-.pause-card p{opacity:.8;margin-bottom:14px;font-size:14px}
-.pause-card .btnrow{display:flex;flex-direction:column;gap:8px}
-.pause-card button{width:100%;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;border:0;border-radius:10px;padding:11px;font-size:15px;font-weight:700;cursor:pointer}
-.pause-card button.secondary{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.22)}
+/* Pause & Quest Log & Shake Config */
+#pauseOvl{position:fixed;inset:0;z-index:35;display:none;align-items:center;justify-content:center;background:rgba(3,5,10,.92);backdrop-filter:blur(6px);padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.pause-card{max-width:460px;width:100%;text-align:center;background:rgba(12,17,28,.97);border:1px solid #2c3850;border-radius:14px;padding:20px;box-shadow:0 12px 36px rgba(0,0,0,.8);margin:auto}
+.pause-card h2{margin:0 0 4px;font-size:24px;color:#fff}
+.pause-card p{opacity:.8;margin:0 0 10px;font-size:13px}
+.pause-sec{background:#101726;border:1px solid #28354e;border-radius:10px;padding:10px 12px;margin-bottom:10px;text-align:left}
+.pause-sec-title{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800;color:#4fd1ff;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.q-item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:8px 10px;margin-bottom:6px}
+.q-item:last-child{margin-bottom:0}
+.q-item.done{border-color:rgba(109,255,155,.45);background:rgba(109,255,155,.07)}
+.q-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;margin-bottom:4px}
+.q-prog-bg{height:8px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.18);border-radius:5px;overflow:hidden;margin-bottom:5px}
+.q-prog-fill{height:100%;background:linear-gradient(90deg,#4fd1ff,#6dff9b);transition:width .25s}
+.q-rew{font-size:11px;color:#ffd54a;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.shake-opts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.shake-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2);color:#e8ecf4;border-radius:7px;padding:6px 4px;font-size:11px;font-weight:700;cursor:pointer;text-align:center}
+.shake-btn.active{background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-color:#60a5fa;color:#fff;box-shadow:0 0 10px rgba(59,130,246,.4)}
+.pause-card .btnrow{display:flex;flex-direction:column;gap:7px}
+.pause-card .btnrow button{width:100%;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;border:0;border-radius:10px;padding:10px;font-size:14px;font-weight:700;cursor:pointer}
+.pause-card .btnrow button.secondary{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.22)}
 
 /* Leaderboard */
 #leaderboardOvl{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(3,5,10,.95);backdrop-filter:blur(6px);padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y}
@@ -157,6 +177,7 @@ table.lb .you{background:rgba(79,209,255,.14)}
  <div id="eqs"></div>
  <div id="det"></div>
  <div id="acts"></div>
+ <div id="autoScrapPanel"></div>
  <div id="grid"></div>
  <div id="stat"></div>
 </div></div>
@@ -164,6 +185,25 @@ table.lb .you{background:rgba(79,209,255,.14)}
  <div class="pause-card">
   <h2 id="pauseTitle">Pause</h2>
   <p id="pauseSub">Spiel ist unterbrochen</p>
+  <div class="pause-sec" id="pauseQuestBox">
+   <div class="pause-sec-title">
+    <span id="qlHeader">📜 Dorf-Aufträge (Quest-Log)</span>
+    <button class="t" id="btnRefreshQuests" style="padding:3px 8px;font-size:11px;margin:0">🔄 Neue Aufträge</button>
+   </div>
+   <div id="pauseQuestList"></div>
+  </div>
+  <div class="pause-sec" id="pauseShakeBox">
+   <div class="pause-sec-title">
+    <span id="shakeHeader">💥 Bildschirm-Wackeln (Screen-Shake)</span>
+    <span id="shakeValLbl" style="color:#6dff9b">100%</span>
+   </div>
+   <div class="shake-opts" id="shakeOpts">
+    <div class="shake-btn" data-shake="0">Aus (0%)</div>
+    <div class="shake-btn" data-shake="0.5">Sanft (50%)</div>
+    <div class="shake-btn active" data-shake="1">Normal (100%)</div>
+    <div class="shake-btn" data-shake="1.5">Stark (150%)</div>
+   </div>
+  </div>
   <div class="btnrow">
    <button id="btnResume">Weiterspielen</button>
    <button class="secondary" id="btnRestart">Run neu starten</button>
@@ -373,6 +413,15 @@ de:{
  shop:'Laden', shop_buy:'Kaufen', shop_owned:'Besitzt', shop_weapon:'Waffe', shop_potion:'Trank', shop_relic:'Relikt',
  quest_complete:'Auftrag abgeschlossen!', quest_reward_item:'Item: {0}', quest_reward_shards:'{0} Relikt-Splitter',
  quest_reward_buff:'Segen {0}s',
+ as_title:'⚙️ Auto-Zerlegen Filter (Beim Aufheben → XP)',
+ as_scrap_bag:'Gefilterte im Beutel zerlegen (+{0} XP)',
+ ql_title:'📜 Dorf-Aufträge (Quest-Log)',
+ ql_new:'🔄 Neue Aufträge',
+ ql_hunt:'Besiege {0}× {1}',
+ ql_done:'✓ Abgeschlossen',
+ ql_active:'In Arbeit',
+ shake_title:'💥 Bildschirm-Wackeln (Screen-Shake)',
+ shake_off:'Aus (0%)', shake_low:'Sanft (50%)', shake_norm:'Normal (100%)', shake_high:'Stark (150%)',
 },
 en:{
  title:'Last Relic', subtitle:'Top-Down Last-Survivor × Loot-Dungeon', start:'Start Run',
@@ -415,13 +464,22 @@ en:{
  village:'Village', village_leave:'Leave Village', village_hire:'Hire ({0} Gold)', village_quest:'Quest: {0} ({1} {2})',
  village_reward:'Reward: {0} Gold + {1} XP', minions:'Minions: {0}/{1}', summon_cd:'Summon ready',
  cemetery:'The Cemetery', raid_boss:'Raid Boss incoming!', raid_defeated:'Raid Boss defeated! Great loot!',
- shop:'Laden', shop_buy:'Buy', shop_owned:'Owned', shop_weapon:'Weapon', shop_potion:'Potion', shop_relic:'Relic',
+ shop:'Shop', shop_buy:'Buy', shop_owned:'Owned', shop_weapon:'Weapon', shop_potion:'Potion', shop_relic:'Relic',
  quest_complete:'Quest completed!', quest_reward_item:'Item: {0}', quest_reward_shards:'{0} Relic Shards',
  quest_reward_buff:'Blessing {0}s',
+ as_title:'⚙️ Auto-Scrap Filter (On Pickup → XP)',
+ as_scrap_bag:'Scrap Filtered in Bag (+{0} XP)',
+ ql_title:'📜 Village Quests (Quest Log)',
+ ql_new:'🔄 New Quests',
+ ql_hunt:'Defeat {0}× {1}',
+ ql_done:'✓ Completed',
+ ql_active:'In Progress',
+ shake_title:'💥 Screen-Shake Intensity',
+ shake_off:'Off (0%)', shake_low:'Mild (50%)', shake_norm:'Normal (100%)', shake_high:'Strong (150%)',
 }};
 let lang=localStorage.getItem('lr_lang')||'de';
 function T(k){return LANG[lang][k]||k;}
-function toggleLang(){lang=lang==='de'?'en':'de';localStorage.setItem('lr_lang',lang);if(mode==='menu')startScreen();if(invOpen)renderInv();hud();}
+function toggleLang(){lang=lang==='de'?'en':'de';localStorage.setItem('lr_lang',lang);if(mode==='menu')startScreen();if(invOpen)renderInv();if(isPaused)renderPausePanel();hud();}
 
 /* ================= SAVE / LOAD / CLOUD / LEADERBOARD ================= */
 let lastCloudSync=0;
@@ -429,7 +487,11 @@ function saveGame(forceCloud=false){
   if(!S||!P)return;
   const data={
     lang, lvl:S.lvl, xp:S.xp, pts:S.pts, at:S.at, eq:S.eq, inv:S.inv, floor:S.floor,
-    kills:S.kills, found:S.found, secrets:S.secrets, autoS:S.autoS, sfx:AUDIO.sfxOn, music:AUDIO.musicOn,
+    kills:S.kills, found:S.found, secrets:S.secrets, autoS:S.autoS,
+    scrapFilter:S.scrapFilter||[true,false,false],
+    shakeMult:S.shakeMult!==undefined?S.shakeMult:1,
+    quests:activeQuests||[],
+    sfx:AUDIO.sfxOn, music:AUDIO.musicOn,
     hp:P.hp, mh:P.mh, dashCd:P.dashCd, novaCd:P.novaCd,
     metaShards:S.metaShards||0, gold:S.gold||0, metaUpg:S.metaUpg||{dmg:0,hp:0,inv:0}, playerClass:S.playerClass||'warrior',
     achievements:S.achievements||[],
@@ -450,10 +512,15 @@ function applyLoadedData(d){
   lang=d.lang||lang;localStorage.setItem('lr_lang',lang);
   AUDIO.sfxOn=d.sfx!==undefined?d.sfx:true;AUDIO.musicOn=d.music!==undefined?d.music:true;
   if(!P){P={x:0,y:0,r:.36,cr:.3,hp:100,mh:100,aim:0,iT:0,fireT:0,dashCd:0,novaCd:0,dashT:0,buff:0,walk:0,ldx:1,ldy:0,ddx:1,ddy:0,potions:0};P.m=mkPlayer();}
+  const autoSVal = d.autoS!==undefined?d.autoS:1;
+  const loadedFilter = Array.isArray(d.scrapFilter) && d.scrapFilter.length===3 ? d.scrapFilter : [autoSVal>0, autoSVal>1, false];
   S={lvl:d.lvl||1,xp:d.xp||0,pts:d.pts||0,at:d.at||{str:0,dex:0,vit:0,arc:0},eq:d.eq||{},inv:d.inv||[],
-     floor:d.floor||1,kills:d.kills||0,found:d.found||0,secrets:d.secrets||0,autoS:d.autoS!==undefined?d.autoS:1,
+     floor:d.floor||1,kills:d.kills||0,found:d.found||0,secrets:d.secrets||0,autoS:autoSVal,
+     scrapFilter:loadedFilter,
+     shakeMult:d.shakeMult!==undefined?d.shakeMult:1,
      metaShards:d.metaShards||0,gold:d.gold||0,metaUpg:d.metaUpg||{dmg:0,hp:0,inv:0},playerClass:d.playerClass||'warrior',
      achievements:d.achievements||[]};
+  if(Array.isArray(d.quests)&&d.quests.length){activeQuests=d.quests;}
   if(!S.eq.weapon){
     const sw=CLASSES[S.playerClass||'warrior'].startWeapon;
     S.eq.weapon=genItem(1,{slot:'weapon',rar:0,base:sw});
@@ -593,10 +660,10 @@ const TH=[
 ];
 
 /* ================= STATE ================= */
-let S={lvl:1,xp:0,pts:0,at:{str:0,dex:0,vit:0,arc:0},eq:{},inv:[],floor:1,kills:0,found:0,secrets:0,autoS:1,metaShards:0,gold:0,metaUpg:{dmg:0,hp:0,inv:0},playerClass:'warrior',achievements:[]};
+let S={lvl:1,xp:0,pts:0,at:{str:0,dex:0,vit:0,arc:0},eq:{},inv:[],floor:1,kills:0,found:0,secrets:0,autoS:1,scrapFilter:[true,false,false],shakeMult:1,metaShards:0,gold:0,metaUpg:{dmg:0,hp:0,inv:0},playerClass:'warrior',achievements:[]};
 let M,P,ST={},en=[],crates=[],chests=[],shrines=[],drops=[],secrets=[],portal=null,boss=null,pb=[],eb=[],flick=[],disp=[],ex,mmx,sel=null;
 let minions=[], villageNPCs=[], activeQuests=[], hiredHelpers=[], villageShop=[];
-let mode='menu',tm=0,wt=45,vig=0,shake=0,uid=0,lastTh=-1,invOpen=false,inputM='touch',dtN=0,fullT=0,last=0,hudT=0,expT=0,flowKey=-1,camX=0,camZ=0,isPaused=false;
+let mode='menu',tm=0,wt=45,vig=0,vigHeavy=0,shake=0,uid=0,lastTh=-1,invOpen=false,inputM='touch',dtN=0,fullT=0,last=0,hudT=0,expT=0,flowKey=-1,camX=0,camZ=0,isPaused=false;
 let villageActive=false, villageFloor=-1, raidBossSpawned=false;
 const flow=new Int16Array(W*H),fq=new Int32Array(W*H);
 const keys={},mouse={x:0,y:0,down:false},tch={mv:null,aim:null,mvx:0,mvy:0,ax:0,ay:0,ox:0,oy:0,px:0,py:0};
@@ -793,7 +860,7 @@ function genMap(seed,fl,th){
 function clearWorld(){
  for(const d of drops)if(d.lbl)d.lbl.material.map.dispose();
  while(world.children.length)world.remove(world.children[0]);
- disp.forEach(d=>d.dispose());disp=[];en=[];crates=[];chests=[];shrines=[],drops=[],secrets=[],portal=null;boss=null;pb.length=0;eb.length=0;flick=[];minions=[];villageNPCs=[];activeQuests=[];hiredHelpers=[];villageShop=[];villageActive=false;}
+ disp.forEach(d=>d.dispose());disp=[];en=[];crates=[];chests=[];shrines=[],drops=[],secrets=[],portal=null;boss=null;pb.length=0;eb.length=0;flick=[];minions=[];villageNPCs=[];hiredHelpers=[];villageShop=[];villageActive=false;}
 function paintFloor(th,rg){
  return cTex(W*TP,H*TP,x=>{
   x.fillStyle='#020304';x.fillRect(0,0,W*TP,H*TP);
@@ -844,6 +911,7 @@ function wallTex(th,k,rg){
 function rndIn(r){for(let k=0;k<30;k++){const x=ri(r.x,r.x+r.w-1),y=ri(r.y,r.y+r.h-1);if(M.g[y*W+x]===1&&M.rt[y*W+x]===r.idx)return[x+.5,y+.5]}return null}
 function buildFloor(){
  clearWorld();
+ ensureQuests();
  const th=M.th,rg=mkRng(M.seed+7);
  scene.background=new Tt.Color(th.bg);scene.fog.color.setHex(th.bg);amb.color.set(0x8890b0).lerp(new Tt.Color(th.ac),.32);
  const ft=paintFloor(th,rg),fm=new Tt.MeshLambertMaterial({map:ft}),fg=new Tt.PlaneGeometry(W,H).rotateX(-Math.PI/2);disp.push(ft,fm,fg);
@@ -877,7 +945,7 @@ function populate(th){
   if(r.type==='treasure')mkChest(r.c[0]+.5,r.c[1]+.5,1);
   if(r.type==='shrine')mkShrine(r.c[0]+.5,r.c[1]+.5,false);
   if(r.type==='arena'){r.spawned=false;r.arenaWave=0;}
-  if(r.type==='village'){spawnVillageNPCs(r);generateQuests();generateShop();}}
+  if(r.type==='village'){spawnVillageNPCs(r);ensureQuests();generateShop();}}
 }
 function mkCrate(x,y){const g=new Tt.Group();g.position.set(x,0,y);g.rotation.y=R()*3;
  if(R()<.5){g.add(part(boxG,lam(0x7a5a3a),0,.35,0,.7,.7,.7));g.add(part(boxG,lam(0x5a4028),0,.35,0,.74,.12,.74));g.add(part(boxG,bas(M.th.ac),0,.5,.36,.2,.1,.02))}
@@ -893,7 +961,7 @@ function openPortal(x,y){if(!isF(x|0,y|0)){const r=M.rooms.find(r=>r.type==='bos
  const g=new Tt.Group();g.position.set(x,0,y);const r1=part(torG,bm(0x4fd1ff,.95),0,1.3,0,1.1);r1.scale.z=1;g.add(r1);const r2=part(torG,bm(0xc77dff,.85),0,1.3,0,.8);g.add(r2);
  g.add(part(circG,bm(0x4fd1ff,.35),0,1.3,0,1,1,1));g.add(part(beamG,bm(0x4fd1ff,.28),0,0,0,.9,7,.9));g.add(part(flatG,gm(0x4fd1ff,.75),0,.04,0,4.2,1,4.2));world.add(g);portal={x,y,g,r1,r2};sndPortal();}
 
-/* ================= VILLAGE & SHOP ================= */
+/* ================= VILLAGE & SHOP & QUESTS ================= */
 function spawnVillageNPCs(room){
   const c=rndIn(room)||[room.cx+.5,room.cy+.5];
   for(let k=0;k<2;k++){
@@ -907,12 +975,19 @@ function spawnVillageNPCs(room){
 }
 function generateQuests(){
   activeQuests=[];
-  const targets=['husk','drone','mage'];
-  for(let k=0;k<2;k++){
-    const amt=3+S.floor;
-    const rewardGold=20+S.floor*5;
-    const rewardXp=30+S.floor*10;
-    activeQuests.push({type:'kill',target:pick(targets),amt,reward:rewardGold,xp:rewardXp,done:false,killed:0});
+  const pool=['husk','drone','mage'];
+  if(S.floor>=2)pool.push('archer','brute');
+  pool.slice(0,3).forEach((tKey,idx)=>{
+    const amt=(idx===0?5:idx===1?4:3)+S.floor;
+    const rewardGold=25+S.floor*8+idx*10;
+    const rewardXp=40+S.floor*15+idx*15;
+    const rewardShards=1+Math.floor(S.floor/2)+(idx===2?1:0);
+    activeQuests.push({type:'kill',target:tKey,amt,reward:rewardGold,xp:rewardXp,shards:rewardShards,done:false,killed:0});
+  });
+}
+function ensureQuests(){
+  if(!Array.isArray(activeQuests)||activeQuests.length===0||activeQuests.every(q=>q.done)){
+    generateQuests();
   }
 }
 function generateShop(){
@@ -948,9 +1023,14 @@ function renderVillageTab(tab){
       c.appendChild(el);
     });
   }else if(tab==='vtQuests'){
+    ensureQuests();
     activeQuests.forEach((qq)=>{
-      const el=document.createElement('div');el.className='quest';
-      el.innerHTML=`<div class="qobj">${qq.amt} ${qq.target} besiegen (${qq.killed}/${qq.amt})</div><div class="qrew">${T('village_reward').replace('{0}',qq.reward).replace('{1}',qq.xp)}</div>`;
+      const pct=Math.min(100,Math.round((qq.killed||0)/qq.amt*100));
+      const tName=(ET[qq.target]&&ET[qq.target].n)||qq.target;
+      const el=document.createElement('div');el.className='q-item'+(qq.done?' done':'');
+      el.innerHTML=`<div class="q-top"><span>⚔️ ${T('ql_hunt').replace('{0}',qq.amt).replace('{1}',tName)}</span><span style="color:${qq.done?'#6dff9b':'#9ec7ff'}">${qq.killed}/${qq.amt} (${pct}%)</span></div>
+      <div class="q-prog-bg"><div class="q-prog-fill" style="width:${pct}%"></div></div>
+      <div class="q-rew"><span>💰 +${qq.reward} Gold · ✨ +${qq.xp} XP · 💎 +${qq.shards||1} Splitter</span><span>${qq.done?T('ql_done'):T('ql_active')}</span></div>`;
       c.appendChild(el);
     });
   }
@@ -1110,12 +1190,22 @@ function killE(e){e.dead=true;world.remove(e.root);S.kills++;emit(e.x,e.y,.8,e.e
  checkAch('kills100');
 }
 function completeQuest(q){
-  S.gold=(S.gold||0)+q.reward;addXp(q.xp);
-  toast(T('quest_complete'),'#6dff9b');saveGame(true);renderVillageTab('vtQuests');
+  S.gold=(S.gold||0)+q.reward;
+  if(q.shards)S.metaShards=(S.metaShards||0)+q.shards;
+  addXp(q.xp);
+  toast(T('quest_complete')+' (+'+q.reward+' Gold, +'+(q.shards||1)+' Splitter)','#6dff9b');
+  sndLevelUp();
+  saveGame(true);
+  if(villageActive)renderVillageTab('vtQuests');
+  if(isPaused)renderPausePanel();
 }
 function checkAch(id){if(!S.achievements)S.achievements=[];if(S.achievements.includes(id))return;let ok=false;if(id==='first_boss'&&S.kills>0)ok=true;if(id==='floor10'&&S.floor>=10)ok=true;if(id==='secret5'&&(S.secrets||0)>=5)ok=true;if(id==='level20'&&S.lvl>=20)ok=true;if(id==='kills100'&&S.kills>=100)ok=true;if(id==='ach_necromant'&&S.playerClass==='necromancer'&&minions.length>=5)ok=true;if(ok){S.achievements.push(id);toast('🏅 '+T('ach_'+id),'#ffd54a');saveGame(true);}}
 
 /* ================= LOOT ================= */
+function shouldAutoScrap(rar){
+  if(!S.scrapFilter||!Array.isArray(S.scrapFilter))S.scrapFilter=[S.autoS>=1,S.autoS>=2,false];
+  return rar>=0&&rar<=2&&Boolean(S.scrapFilter[rar]);
+}
 function lblSprite(txt,col){const c=document.createElement('canvas');c.width=320;c.height=48;const x=c.getContext('2d');let fs=26;x.font=`bold ${fs}px system-ui,sans-serif`;while(x.measureText(txt).width>300&&fs>12){fs--;x.font=`bold ${fs}px system-ui,sans-serif`}
  x.textAlign='center';x.textBaseline='middle';x.lineWidth=5;x.strokeStyle='rgba(0,0,0,.85)';x.strokeText(txt,160,26);x.fillStyle=col;x.fillText(txt,160,26);
  const t=new Tt.CanvasTexture(c),s=new Tt.Sprite(new Tt.SpriteMaterial({map:t,transparent:true,depthTest:false,depthWrite:false}));s.scale.set(4,.6,1);s.renderOrder=10;return s}
@@ -1131,7 +1221,7 @@ function spawnDrop(x,y,item,orb){
   if(item.rar>=3)emit(px,py,.8,RC[item.rar],20,4,.7,4)}
  world.add(g);drops.push({x:px,y:py,item,orb,g,lbl,ph:R()*6,t:0})}
 function take(d){const it=d.item;
- if(S.autoS>it.rar){const xp=scrapXp(it);addXp(xp);dmgTxt(P.x,P.y,'+'+xp+' XP','hl');return true}
+ if(shouldAutoScrap(it.rar)){const xp=scrapXp(it);addXp(xp);dmgTxt(P.x,P.y,'♻ +'+xp+' XP','hl');return true}
  if(S.inv.length>=CAP){if(tm-fullT>2){fullT=tm;toast(T('inv_full'),'#ff7a7a')}return false}
  S.inv.push(it);S.found++;
  if(!S.eq[it.slot]){equip(S.inv.length-1);toast(T('equipped')+': '+it.n,RC[it.rar]);sndChest()}
@@ -1141,7 +1231,7 @@ function updDrops(dt){
  for(let i=drops.length-1;i>=0;i--){const d=drops[i];d.t+=dt;const c0=d.g.children[0];c0.rotation.y+=dt*2;c0.position.y=.6+Math.sin(tm*3+d.ph)*.12;
   const dx=P.x-d.x,dy=P.y-d.y,dd=dx*dx+dy*dy;
   if(d.lbl)d.lbl.visible=d.item.rar>=1||dd<64;
-  const can=d.orb||S.inv.length<CAP||S.autoS>d.item.rar;
+  const can=d.orb||S.inv.length<CAP||shouldAutoScrap(d.item.rar);
   if(can&&dd<14&&dd>.01&&d.t>.35){const l=Math.sqrt(dd),s=Math.min(l,8*dt);d.x+=dx/l*s;d.y+=dy/l*s;d.g.position.x=d.x;d.g.position.z=d.y}
   if(dd<.9&&d.t>.35){let ok=true;
    if(d.orb){P.hp=Math.min(P.mh,P.hp+P.mh*.2);dmgTxt(P.x,P.y,'+'+Math.round(P.mh*.2),'hl')}
@@ -1151,7 +1241,30 @@ function addXp(v){S.xp+=v*(1+(ST.xpP||0)/100);let up=false;while(S.xp>=need(S.lv
  if(up){recalc();P.hp=P.mh;toast(T('level_up')+' '+T('level_up_text').replace('{0}',S.lvl),'#59b6ff');sndLevelUp();emit(P.x,P.y,1,'#59b6ff',45,6.5,.95,5);if(invOpen)renderInv();saveGame(true);}}
 
 /* ================= COMBAT ================= */
-function hurtP(d){if(P.iT>0||mode!=='play')return;d*=100/(100+ST.armor);P.hp-=d;P.iT=.3;vig=1;shake=Math.max(shake,.28);dmgTxt(P.x,P.y,Math.round(d),'ph');sndHit();if(P.hp<=0)die();}
+function hurtP(d){
+ if(P.iT>0||mode!=='play')return;
+ d*=100/(100+ST.armor);
+ P.hp-=d;P.iT=.3;
+ const dmgRatio=d/Math.max(1,P.mh);
+ const isHeavy=dmgRatio>=0.14||d>=16;
+ const vigEl=$('vig');
+ if(isHeavy){
+  vig=1;vigHeavy=0.55;
+  shake=Math.max(shake,0.65);
+  if(vigEl){
+   vigEl.classList.remove('heavy-hit');
+   void vigEl.offsetWidth;
+   vigEl.classList.add('heavy-hit');
+  }
+  if(navigator.vibrate)navigator.vibrate([35,25,55]);
+ }else{
+  vig=Math.min(1,0.55+dmgRatio*2.2);
+  shake=Math.max(shake,0.28);
+ }
+ dmgTxt(P.x,P.y,Math.round(d),'ph');
+ sndHit();
+ if(P.hp<=0)die();
+}
 function shoot(){
  const w=S.eq.weapon,n=w.wc+ST.proj,sp=w.wsp+ST.proj*.03,mul=ST.dm*(P.buff>0?1.3:1);
  for(let i=0;i<n;i++){if(pb.length>=PB.max)break;
@@ -1206,12 +1319,23 @@ function tip(it){const RN=getRN(),SN=getSN(),e=S.eq[it.slot],oth=e&&e!==it;let h
 function selItem(){if(!sel)return null;return sel.s==='eq'?S.eq[sel.k]:S.inv[sel.k]}
 const ATT=[['str','Kraft','+5% Schaden'],['dex','Geschick','+3% Tempo, +1% Laufen'],['vit','Vitalität','+12 Leben, +0,25 Regen'],['arc','Arkana','+8% Nova, +0,5% Krit, kürzere Pausen']];
 function renderInv(){
- const SN=getSN();
+ const SN=getSN(),RN=getRN();
+ if(!S.scrapFilter||!Array.isArray(S.scrapFilter))S.scrapFilter=[S.autoS>=1,S.autoS>=2,false];
  $('eqs').innerHTML=['weapon','helm','chest','boots','relic'].map(s=>{const it=S.eq[s];return`<div class="eqc"><small>${SN[s]}</small>${it?cellH(it,sel&&sel.s==='eq'&&sel.k===s?'sel':'',`data-eq="${s}"`):`<div class="cell empty">${SI[s]}</div>`}</div>`}).join('');
  $('grid').innerHTML=Array.from({length:CAP},(_,i)=>{const it=S.inv[i];return it?cellH(it,sel&&sel.s==='inv'&&sel.k===i?'sel':'',`data-i="${i}"`):'<div class="cell"></div>'}).join('');
  const it=selItem();$('det').innerHTML=it?tip(it):`<span style="opacity:.6">${T('inv_tip')}</span>`;
  let a='';if(it){if(sel.s==='inv')a+=`<button class="t" data-act="equip">${T('equip')}</button><button class="t" data-act="scrap">${T('scrap').replace('{0}',scrapXp(it))}</button>`;else if(sel.k!=='weapon')a+=`<button class="t" data-act="unequip">${T('unequip')}</button>`}
- a+=`<button class="t" data-act="auto">${T('auto_scrap').replace('{0}',[T('auto_off'),T('auto_common'),T('auto_magic')][S.autoS])}</button><button class="t" data-act="scrapC">${T('scrap_all')}</button>`;$('acts').innerHTML=a;
+ a+=`<button class="t" data-act="scrapFiltered">${T('scrap_filtered_btn')}</button><button class="t" data-act="scrapC">${T('scrap_all')}</button>`;$('acts').innerHTML=a;
+ const asp=$('autoScrapPanel');
+ if(asp){
+  const rars=[0,1,2];
+  asp.innerHTML=`<div class="as-head"><b>${T('as_filter_title')}</b><span>${T('as_filter_sub')}</span></div>
+   <div class="as-chips">${rars.map(r=>{
+    const on=Boolean(S.scrapFilter[r]);
+    const col=RC[r];
+    return `<div class="as-chip ${on?'on':''}" data-scrap-rar="${r}" style="${on?`border-color:${col};background:${col}22;color:${col}`:''}"><i style="background:${col}"></i><span>${RN[r]}</span><small style="opacity:.8">${on?'✓':'—'}</small></div>`;
+   }).join('')}</div>`;
+ }
  const w=S.eq.weapon||{wd:10,wc:1,wr:2},dpsT=Math.round(dps(w)*ST.dm*ST.rateM);
  $('stat').innerHTML=`<b>${T('lvl')} ${S.lvl}</b> · XP ${Math.floor(S.xp)}/${need(S.lvl)} · <b style="color:#ffd54a">${S.pts}</b> ${T('free_points')}`+ATT.map(([k,n,d])=>`<div class="at"><span>${n} ${S.at[k]}</span><small>${d}</small><button class="t" data-at="${k}" ${S.pts?'':'disabled'}>＋</button></div>`).join('')+
  `<div style="margin-top:6px;opacity:.9">${T('stats_dps').replace('{0}',dpsT)} · ${T('stats_hp').replace('{0}',ST.maxhp)} · ${T('stats_armor').replace('{1}',Math.round(ST.armor)).replace('{2}',Math.round(ST.armor/(100+ST.armor)*100))} · ${T('stats_crit').replace('{0}',ST.crit.toFixed(1)).replace('{1}',ST.critD)} · ${T('stats_move').replace('{1}',ST.spd.toFixed(1))} · ${T('stats_loot').replace('{0}',ST.mf)}${(ST.proj?T('proj').replace('{0}',ST.proj)+' · ':'')}${ST.pierce?T('pierce').replace('{0}',ST.pierce):''}</div>`;
@@ -1221,6 +1345,15 @@ function toggleInv(v){if(mode!=='play')return;invOpen=v==null?!invOpen:v;$('inv'
 
 $('xInv').onclick=()=>toggleInv(false);
 $('inv').onclick=e=>{
+  const chipEl=e.target.closest('[data-scrap-rar]');
+  if(chipEl){
+    const r=parseInt(chipEl.getAttribute('data-scrap-rar'),10);
+    if(!S.scrapFilter||!Array.isArray(S.scrapFilter))S.scrapFilter=[true,false,false];
+    S.scrapFilter[r]=!S.scrapFilter[r];
+    S.autoS=S.scrapFilter[1]?2:S.scrapFilter[0]?1:0;
+    renderInv();saveGame();sndBuy();
+    return;
+  }
   const eqEl=e.target.closest('[data-eq]');
   if(eqEl){const k=eqEl.getAttribute('data-eq');sel={s:'eq',k};renderInv();return;}
   const invEl=e.target.closest('[data-i]');
@@ -1239,12 +1372,14 @@ $('inv').onclick=e=>{
       else toast(T('inv_full'),'#ff7a7a');
     }else if(act==='scrap'&&sel&&sel.s==='inv'){
       const it=S.inv.splice(sel.k,1)[0];if(it){addXp(scrapXp(it));sel=null;renderInv();saveGame();}
-    }else if(act==='auto'){
-      S.autoS=(S.autoS+1)%3;renderInv();saveGame();
+    }else if(act==='scrapFiltered'){
+      let gained=0;
+      for(let i=S.inv.length-1;i>=0;i--){if(shouldAutoScrap(S.inv[i].rar)){gained+=scrapXp(S.inv[i]);S.inv.splice(i,1);}}
+      if(gained>0){addXp(gained);sel=null;renderInv();saveGame();toast('♻ +'+gained+' XP','#6dff9b');}
     }else if(act==='scrapC'){
       let gained=0;
       for(let i=S.inv.length-1;i>=0;i--){if(S.inv[i].rar===0){gained+=scrapXp(S.inv[i]);S.inv.splice(i,1);}}
-      if(gained>0){addXp(gained);sel=null;renderInv();saveGame();}
+      if(gained>0){addXp(gained);sel=null;renderInv();saveGame();toast('♻ +'+gained+' XP','#6dff9b');}
     }
     return;
   }
@@ -1255,8 +1390,47 @@ $('inv').onclick=e=>{
   }
 };
 
-/* ================= PAUSE ================= */
-function togglePause(){if(mode!=='play')return;isPaused=!isPaused;const ovl=$('pauseOvl');ovl.style.display=isPaused?'flex':'none';$('pauseTitle').textContent=T('pause');$('pauseSub').textContent=`${T('floor')} ${S.floor} · Lv ${S.lvl} · Gold ${S.gold}`;if(isPaused){for(const k in keys)keys[k]=false;mouse.down=false;}}
+/* ================= PAUSE & QUEST LOG & SHAKE SETTINGS ================= */
+function renderPausePanel(){
+  ensureQuests();
+  if($('qlHeader'))$('qlHeader').textContent=T('ql_title');
+  if($('btnRefreshQuests'))$('btnRefreshQuests').textContent=T('ql_refresh');
+  const qList=$('pauseQuestList');
+  if(qList){
+    if(!activeQuests.length){
+      qList.innerHTML=`<div style="font-size:12px;opacity:.7">${T('ql_empty')}</div>`;
+    }else{
+      qList.innerHTML=activeQuests.map(q=>{
+        const tn=ET[q.target]?ET[q.target].n:q.target;
+        const pct=Math.min(100,Math.round((q.killed/Math.max(1,q.amt))*100));
+        const status=q.done?`<span style="color:#6dff9b;font-weight:800">${T('ql_done')}</span>`:`<span>${q.killed} / ${q.amt} (${pct}%)</span>`;
+        const rew=T('village_reward').replace('{0}',q.reward).replace('{1}',q.xp)+(q.shards?` · +${q.shards} Splitter`:'');
+        return `<div class="q-item ${q.done?'done':''}">
+          <div class="q-top"><b>⚔ ${q.amt}× ${tn}</b>${status}</div>
+          <div class="q-prog-bg"><div class="q-prog-fill" style="width:${pct}%"></div></div>
+          <div class="q-rew">🎁 ${rew}</div>
+        </div>`;
+      }).join('');
+    }
+  }
+  if($('shakeHeader'))$('shakeHeader').textContent=T('shake_title');
+  const sm=S&&S.shakeMult!==undefined?S.shakeMult:1;
+  if($('shakeValLbl'))$('shakeValLbl').textContent=Math.round(sm*100)+'%';
+  const sOpts=$('shakeOpts');
+  if(sOpts){
+    const levels=[[0,T('shake_off')],[0.5,T('shake_low')],[1,T('shake_norm')],[1.5,T('shake_high')]];
+    sOpts.innerHTML=levels.map(([val,lbl])=>`<button class="shake-btn ${Math.abs(sm-val)<0.05?'active':''}" data-shake="${val}">${lbl}</button>`).join('');
+  }
+}
+if($('btnRefreshQuests'))$('btnRefreshQuests').onclick=()=>{generateQuests();renderPausePanel();saveGame();sndBuy();};
+if($('shakeOpts'))$('shakeOpts').onclick=e=>{
+  const b=e.target.closest('[data-shake]');
+  if(!b)return;
+  S.shakeMult=parseFloat(b.getAttribute('data-shake'));
+  if(S.shakeMult>0){shake=0.35;}
+  renderPausePanel();saveGame();sndBuy();
+};
+function togglePause(){if(mode!=='play')return;isPaused=!isPaused;const ovl=$('pauseOvl');ovl.style.display=isPaused?'flex':'none';$('pauseTitle').textContent=T('pause');$('pauseSub').textContent=`${T('floor')} ${S.floor} · Lv ${S.lvl} · Gold ${S.gold}`;if(isPaused){for(const k in keys)keys[k]=false;mouse.down=false;renderPausePanel();}}
 function pauseResume(){isPaused=false;$('pauseOvl').style.display='none';}
 function pauseRestart(){isPaused=false;$('pauseOvl').style.display='none';startRun();}
 function pauseSave(){saveGame(true);toast(T('save_ok'),'#6dff9b');}
@@ -1346,8 +1520,12 @@ function nextFloor(){S.floor++;P.hp=Math.min(P.mh,P.hp+P.mh*.25);startFloor();}
 function startRun(){
  if(!P){P={x:0,y:0,r:.36,cr:.3,hp:100,mh:100,aim:0,iT:0,fireT:0,dashCd:0,novaCd:0,dashT:0,buff:0,walk:0,ldx:1,ldy:0,ddx:1,ddy:0,potions:0};P.m=mkPlayer()}
  const cls=S.playerClass||'warrior';
+ const prevFilter=S.scrapFilter||[true,false,false];
+ const prevShake=S.shakeMult!==undefined?S.shakeMult:1;
  S={lvl:1,xp:0,pts:0,at:{str:0,dex:0,vit:0,arc:0},eq:{},inv:[],floor:1,kills:0,found:0,secrets:0,autoS:1,
+    scrapFilter:prevFilter,shakeMult:prevShake,
     metaShards:S.metaShards||0,gold:S.gold||0,metaUpg:S.metaUpg||{dmg:0,hp:0,inv:0},playerClass:cls,achievements:S.achievements||[]};
+ activeQuests=[];generateQuests();
  const sw=CLASSES[cls].startWeapon;
  recalc();S.eq.weapon=genItem(1,{slot:'weapon',rar:0,base:sw});recalc();
  P.hp=P.mh;P.buff=0;P.novaCd=0;P.dashCd=0;P.m.root.visible=true;sel=null;invOpen=false;$('inv').style.display='none';isPaused=false;
@@ -1425,9 +1603,16 @@ function update(dt){
  for(const f of flick){f.m.scale.y=.4*(.85+Math.sin(tm*12+f.ph)*.2+Math.sin(tm*7.3+f.ph)*.1);f.g.scale.set(5+Math.sin(tm*9+f.ph)*.4,1,5+Math.sin(tm*9+f.ph)*.4)}
  if(novaT>0){novaT-=dt;const k=1-novaT/.42;novaM.scale.set(1+k*6.5,1,1+k*6.5);novaMat.opacity=.85*(1-k);if(novaT<=0)novaM.visible=false}
  drawB(PB,pb);drawB(EB,eb);
- shake=Math.max(0,shake-dt*1.8);vig=Math.max(0,vig-dt*2);$('vig').style.opacity=vig;
+ shake=Math.max(0,shake-dt*1.8);
+ vig=Math.max(0,vig-dt*(vigHeavy>0?1.35:2.2));
+ if(vigHeavy>0){
+  vigHeavy=Math.max(0,vigHeavy-dt);
+  if(vigHeavy<=0)$('vig').classList.remove('heavy-hit');
+ }
+ $('vig').style.opacity=vig;
+ const effShake=shake*(S&&S.shakeMult!==undefined?S.shakeMult:1);
  const lx=Math.cos(P.aim)*1.5,lz=Math.sin(P.aim)*1.5;camX+=(P.x+lx*.4-camX)*Math.min(1,dt*6);camZ+=(P.y+lz*.4-camZ)*Math.min(1,dt*6);
- cam.position.set(camX+(R()-.5)*shake,camD*.866+(R()-.5)*shake*.5,camZ+camD*.5);cam.lookAt(camX,0,camZ);
+ cam.position.set(camX+(R()-.5)*effShake,camD*.866+(R()-.5)*effShake*.5,camZ+camD*.5);cam.lookAt(camX,0,camZ);
  expT-=dt;if(expT<=0){expT=.25;explore()}
  hudT-=dt;if(hudT<=0){hudT=.1;hud();saveGame(false);}}
 function frame(t){requestAnimationFrame(frame);const dt=Math.min(.05,(t-last)/1000||0);last=t;
@@ -1465,7 +1650,33 @@ function hud(){
  $('inf').innerHTML=`${T('floor')} ${S.floor} · ${M.th.n}<br>${T('enemies')} ${en.length} · ${T('kills')} ${S.kills} · 💰 ${S.gold||0}`+(P.buff>0?` · <span style="color:#6dff9b">Segen ${Math.ceil(P.buff)}s</span>`:'');
  $('wv').innerHTML=`${T('void_pulse')} ${Math.max(0,Math.ceil(wt))}${T('sec')}`+(S.pts?`<br><span style="color:#ffd54a">${S.pts} ${T('attr_points')}</span>`:'');
  $('bNova').style.setProperty('--cd',cl(P.novaCd/8,0,1));$('bDash').style.setProperty('--cd',cl(P.dashCd/(2.4*ST.cdM),0,1));
- const bb=$('bossb');if(boss&&boss.st===1){bb.style.display='block';$('bossf').style.width=cl(boss.hp/boss.mh,0,1)*100+'%';$('bossn').textContent=boss.name}else bb.style.display='none';
+ const bb=$('bossb');
+ if(boss&&!boss.dead&&boss.st===1){
+  bb.style.display='block';
+  const hpRatio=cl(boss.hp/boss.mh,0,1);
+  $('bossf').style.width=(hpRatio*100)+'%';
+  $('bossn').textContent=boss.name;
+  const phz=boss.phz||0;
+  const isRaid=boss.t==='raidboss';
+  const barEl=bb.querySelector('.bar');
+  if(barEl){
+   const glowCol=isRaid?(phz===2?'rgba(255,40,40,.95)':phz===1?'rgba(255,75,45,.82)':'rgba(255,90,60,.68)'):(phz===2?'rgba(255,65,150,.95)':phz===1?'rgba(220,95,255,.82)':'rgba(199,125,255,.65)');
+   const borderCol=isRaid?(phz===2?'rgba(255,90,90,.95)':'rgba(255,110,80,.75)'):(phz===2?'rgba(255,110,185,.95)':phz===1?'rgba(215,130,255,.8)':'rgba(199,125,255,.65)');
+   const fillGrad=isRaid?(phz===2?'linear-gradient(90deg,#ff2a2a,#990012)':'linear-gradient(90deg,#ff5a3d,#a31616)'):(phz===2?'linear-gradient(90deg,#ff477e,#8a1163)':phz===1?'linear-gradient(90deg,#e066ff,#7b1fa2)':'linear-gradient(90deg,#c77dff,#6a22b8)');
+   const glowSize=(10+phz*5+(1-hpRatio)*6).toFixed(1)+'px';
+   const dropSize=(5+phz*3.5+(1-hpRatio)*4).toFixed(1)+'px';
+   const pulseDur=phz===2?'0.75s':phz===1?'1.3s':'2.1s';
+   barEl.style.setProperty('--boss-glow',glowCol);
+   barEl.style.setProperty('--boss-border',borderCol);
+   barEl.style.setProperty('--boss-fill',fillGrad);
+   barEl.style.setProperty('--boss-glow-size',glowSize);
+   barEl.style.setProperty('--boss-drop-size',dropSize);
+   barEl.style.setProperty('--boss-pulse-dur',pulseDur);
+   bb.style.borderColor=borderCol;
+  }
+ }else{
+  bb.style.display='none';
+ }
  drawMM();
  $('invTitle').textContent = T('bag');
  if(S.playerClass==='necromancer'){
