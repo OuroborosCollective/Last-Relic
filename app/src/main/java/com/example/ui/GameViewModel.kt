@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.data.CloudSave
 import com.example.data.GameRepository
 import com.example.data.LeaderboardEntry
+import com.example.util.GameRuntimeValidator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -86,19 +87,19 @@ class GameViewModel(
   fun syncCloudSaveFromJs(saveJson: String) {
     viewModelScope.launch {
       try {
-        val obj = JSONObject(saveJson)
-        val lvl = obj.optLong("lvl", 1L).coerceAtLeast(1L)
-        val fl = obj.optLong("floor", 1L).coerceAtLeast(1L)
-        val gold = obj.optLong("gold", 0L).coerceAtLeast(0L)
-        val shards = obj.optLong("metaShards", 0L).coerceAtLeast(0L)
+        val validated = GameRuntimeValidator.validateAndSanitizeSaveJson(saveJson)
+        if (!validated.isValid) {
+          Log.w(TAG, "Skipped syncing invalid JS save payload")
+          return@launch
+        }
         repository.saveCloudProgress(
           userId = currentUserId,
           playerName = defaultPlayerName,
-          saveDataJson = saveJson,
-          level = lvl,
-          floor = fl,
-          gold = gold,
-          metaShards = shards,
+          saveDataJson = validated.sanitizedJson,
+          level = validated.level,
+          floor = validated.floor,
+          gold = validated.gold,
+          metaShards = validated.metaShards,
           adsRemoved = _adsRemoved.value
         )
       } catch (e: Exception) {
@@ -117,19 +118,28 @@ class GameViewModel(
     itemsFound: Long
   ) {
     viewModelScope.launch {
-      val nameToUse = playerName.trim().ifEmpty { defaultPlayerName }
-      val res = repository.submitLeaderboardScore(
-        userId = currentUserId,
-        playerName = nameToUse,
+      val validated = GameRuntimeValidator.validateLeaderboardSubmission(
+        playerName = playerName,
         playerClass = playerClass,
         score = score,
         level = level,
         floor = floor,
         kills = kills,
-        itemsFound = itemsFound
+        itemsFound = itemsFound,
+        fallbackName = defaultPlayerName
+      )
+      val res = repository.submitLeaderboardScore(
+        userId = currentUserId,
+        playerName = validated.playerName,
+        playerClass = validated.playerClass,
+        score = validated.score,
+        level = validated.level,
+        floor = validated.floor,
+        kills = validated.kills,
+        itemsFound = validated.itemsFound
       )
       if (res.isSuccess) {
-        showStatus("Play Games Bestenliste aktualisiert: $score Punkte!")
+        showStatus("Play Games Bestenliste aktualisiert: ${validated.score} Punkte!")
       }
     }
   }

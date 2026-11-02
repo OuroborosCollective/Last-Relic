@@ -17,10 +17,28 @@ android {
     applicationId = "com.aistudio.lastrelic.xkvpzr"
     minSdk = 24
     targetSdk = 36
-    versionCode = 1
+    versionCode = 2
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    // Google Play Console Policy Declarations:
+    // 1. Target Age Group & Audience: 13+ (Teen fantasy action dungeon crawler; not directed at children under 13)
+    // 2. Permissions: Normal install-time permissions only (INTERNET, ACCESS_NETWORK_STATE, VIBRATE); zero dangerous runtime permissions
+    // 3. Data Collection Practices (Data Safety): Google Sign-In account identity (UID & display name), Cloud Save progress, and Global Leaderboard scores transmitted over TLS to Firebase Firestore; no third-party data sharing; user data deletion supported
+    buildConfigField("String", "PLAY_TARGET_AGE_GROUP", "\"13+\"")
+    buildConfigField(
+      "String",
+      "PLAY_PERMISSIONS_DECLARED",
+      "\"android.permission.INTERNET,android.permission.ACCESS_NETWORK_STATE,android.permission.VIBRATE\""
+    )
+    buildConfigField(
+      "String",
+      "PLAY_DATA_COLLECTION_PRACTICES",
+      "\"Auth:GoogleSignIn_CredentialManager;CloudSave:Firestore_EncryptedTLS;Leaderboard:Firestore_EncryptedTLS;ThirdPartySharing:None\""
+    )
+    manifestPlaceholders["playTargetAgeGroup"] = "13+"
+    manifestPlaceholders["playDataSafetyDeclared"] = "true"
   }
 
   // Do not remove or modify these signingConfigs. They are necessary for building, installing,

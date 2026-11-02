@@ -92,13 +92,16 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.BuildConfig
 import com.example.data.CloudSave
 import com.example.data.LeaderboardEntry
+import com.example.util.GameMonitor
 import kotlinx.coroutines.delay
 import org.json.JSONObject
 
 class AndroidWebBridge(
   private val viewModel: GameViewModel,
+  private val gameMonitor: GameMonitor,
   private val mainHandler: Handler,
   private val onWebViewEvaluate: (String) -> Unit
 ) {
@@ -163,6 +166,29 @@ class AndroidWebBridge(
   fun getPlayerName(): String {
     return viewModel.defaultPlayerName
   }
+
+  @JavascriptInterface
+  fun reportPerformanceMetrics(
+    fps: Double,
+    avgFrameTimeMs: Double,
+    webGlHeapMb: Double,
+    dungeonFloor: Int,
+    playerLevel: Int,
+    entityCount: Int,
+    activeParticles: Int,
+    activeBullets: Int
+  ) {
+    gameMonitor.recordSample(
+      fps = fps,
+      avgFrameTimeMs = avgFrameTimeMs,
+      webGlHeapMb = webGlHeapMb,
+      dungeonFloor = dungeonFloor,
+      playerLevel = playerLevel,
+      entityCount = entityCount,
+      activeParticles = activeParticles,
+      activeBullets = activeBullets
+    )
+  }
 }
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -182,6 +208,17 @@ fun GameScreen(
 
   var webViewRef by remember { mutableStateOf<WebView?>(null) }
   val mainHandler = remember { Handler(Looper.getMainLooper()) }
+  val gameMonitor = remember { GameMonitor() }
+  val perfSnapshot by gameMonitor.snapshot.collectAsStateWithLifecycle()
+  var showPerfOverlay by remember { mutableStateOf(false) }
+
+  // Periodic JVM & frame rate health check every 3 seconds
+  LaunchedEffect(gameMonitor) {
+    while (true) {
+      gameMonitor.checkJvmPerformance()
+      delay(3000L)
+    }
+  }
 
   // Auto-dismiss status banner after 3.5 seconds
   LaunchedEffect(statusBanner) {
@@ -267,6 +304,7 @@ fun GameScreen(
 
               val bridge = AndroidWebBridge(
                 viewModel = viewModel,
+                gameMonitor = gameMonitor,
                 mainHandler = mainHandler,
                 onWebViewEvaluate = { script ->
                   evaluateJavascript(script, null)
@@ -398,6 +436,109 @@ fun GameScreen(
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold
               )
+            }
+          }
+          // Toggleable GameMonitor Performance Pill
+          Row(
+            modifier = Modifier
+              .clip(RoundedCornerShape(50))
+              .background(
+                if (perfSnapshot.isFrameRateDip || perfSnapshot.isMemoryPressure) {
+                  Color(0x33FF6A3D)
+                } else {
+                  Color(0x264FD1FF)
+                }
+              )
+              .clickable {
+                showPerfOverlay = !showPerfOverlay
+                webViewRef?.evaluateJavascript(
+                  "if(window.GAME_MONITOR) window.GAME_MONITOR.toggleOverlay($showPerfOverlay);",
+                  null
+                )
+              }
+              .padding(horizontal = 7.dp, vertical = 3.dp)
+              .testTag("game_monitor_toggle_button"),
+            verticalAlignment = Alignment.CenterVertically
+          ) {
+            Text(
+              text = "${perfSnapshot.currentFps} FPS",
+              color = if (perfSnapshot.isFrameRateDip) Color(0xFFFFB347) else Color(0xFF9EC7FF),
+              fontSize = 10.sp,
+              fontWeight = FontWeight.Bold
+            )
+          }
+        }
+
+        // GameMonitor Debug Overlay for Frame Rate Dips, Memory Usage & Play Policy Diagnostics
+        androidx.compose.animation.AnimatedVisibility(
+          visible = showPerfOverlay,
+          enter = fadeIn(),
+          exit = fadeOut(),
+          modifier = Modifier
+            .align(Alignment.TopEnd)
+            .statusBarsPadding()
+            .padding(top = 48.dp, end = 10.dp)
+        ) {
+          Surface(
+            modifier = Modifier
+              .widthIn(max = 280.dp)
+              .testTag("game_monitor_overlay"),
+            color = Color(0xE60B101D),
+            shape = RoundedCornerShape(10.dp),
+            border = androidx.compose.foundation.BorderStroke(
+              1.dp,
+              if (perfSnapshot.isFrameRateDip || perfSnapshot.isMemoryPressure) {
+                Color(0xFFFF6A3D)
+              } else {
+                Color(0x664FD1FF)
+              }
+            )
+          ) {
+            Column(
+              modifier = Modifier.padding(10.dp),
+              verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+              Text(
+                text = "GameMonitor · Android Vitals",
+                color = Color(0xFF4FD1FF),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold
+              )
+              Text(
+                text = "FPS: ${perfSnapshot.currentFps} (${perfSnapshot.avgFrameTimeMs} ms) · Dips: ${perfSnapshot.frameDipCount}",
+                color = if (perfSnapshot.isFrameRateDip) Color(0xFFFFB347) else Color(0xFFE8ECF4),
+                fontSize = 10.sp
+              )
+              Text(
+                text = "Floor: ${perfSnapshot.dungeonFloor} · Lv: ${perfSnapshot.playerLevel} · Entities: ${perfSnapshot.entityCount}",
+                color = Color(0xFFE8ECF4),
+                fontSize = 10.sp
+              )
+              Text(
+                text = "Particles: ${perfSnapshot.activeParticles} · Bullets: ${perfSnapshot.activeBullets}",
+                color = Color(0xFF6DFF9B),
+                fontSize = 10.sp
+              )
+              Text(
+                text = "JVM Heap: ${perfSnapshot.usedMemoryMb}/${perfSnapshot.maxMemoryMb} MB (${perfSnapshot.memoryUsagePercent}%)",
+                color = if (perfSnapshot.isMemoryPressure) Color(0xFFFF7A7A) else Color(0xFFE8ECF4),
+                fontSize = 10.sp
+              )
+              Text(
+                text = "WebGL Heap: ~${perfSnapshot.webGlMemoryMb} MB · Play Age: ${BuildConfig.PLAY_TARGET_AGE_GROUP}",
+                color = Color(0xFF9EC7FF),
+                fontSize = 10.sp
+              )
+              val latestFinding = perfSnapshot.recentFindings.lastOrNull()
+              if (latestFinding != null) {
+                Text(
+                  text = latestFinding,
+                  color = Color(0xFF6DFF9B),
+                  fontSize = 9.sp,
+                  maxLines = 2,
+                  overflow = TextOverflow.Ellipsis
+                )
+              }
             }
           }
         }

@@ -21,6 +21,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.LooperMode
 
+import org.junit.Assume.assumeTrue
+
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
 @LooperMode(LooperMode.Mode.INSTRUMENTATION_TEST)
@@ -32,6 +34,10 @@ abstract class FirestoreEmulatorTestBase {
 
   @Before
   open fun setUpFirebase() {
+    assumeTrue(
+      "Firebase emulators not running on $EMULATOR_HOST:$AUTH_PORT / $FIRESTORE_PORT",
+      isPortOpen(EMULATOR_HOST, AUTH_PORT) && isPortOpen(EMULATOR_HOST, FIRESTORE_PORT)
+    )
     val context = ApplicationProvider.getApplicationContext<Context>()
     val resId = context.resources.getIdentifier("firestore_database_id", "string", context.packageName)
     databaseId = if (resId != 0) context.getString(resId) else "ai-studio-android-lastreli-221ac608-83a8-41da-898b-243ca32f61fa"
@@ -64,7 +70,9 @@ abstract class FirestoreEmulatorTestBase {
 
   @After
   open fun tearDownFirebase() {
-    auth.signOut()
+    if (::auth.isInitialized) {
+      auth.signOut()
+    }
   }
 
   protected suspend fun signInTestUser(email: String): String = withContext(Dispatchers.IO) {
@@ -85,6 +93,17 @@ abstract class FirestoreEmulatorTestBase {
       current = current.cause
     }
     return null
+  }
+
+  private fun isPortOpen(host: String, port: Int): Boolean {
+    return try {
+      java.net.Socket().use { socket ->
+        socket.connect(java.net.InetSocketAddress(host, port), 250)
+        true
+      }
+    } catch (_: Exception) {
+      false
+    }
   }
 
   private companion object {
