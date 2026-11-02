@@ -148,7 +148,8 @@ fun signOutUser(
 
 @Composable
 fun AuthScreen(
-  onAuthSuccess: () -> Unit
+  onAuthSuccess: () -> Unit,
+  onPlayOffline: () -> Unit = {}
 ) {
   val context = LocalContext.current
   val scope = rememberCoroutineScope()
@@ -325,6 +326,28 @@ fun AuthScreen(
               fontWeight = FontWeight.Bold
             )
           }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedButton(
+          onClick = onPlayOffline,
+          enabled = !isLoading,
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .testTag("play_offline_button"),
+          shape = RoundedCornerShape(12.dp),
+          border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4A5A7A)),
+          colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = Color(0xFF9EC7FF)
+          )
+        ) {
+          Text(
+            text = "Direkt spielen (Lokaler Speicher)",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold
+          )
         }
       }
     }

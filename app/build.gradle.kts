@@ -30,15 +30,28 @@ android {
     buildConfigField(
       "String",
       "PLAY_PERMISSIONS_DECLARED",
-      "\"android.permission.INTERNET,android.permission.ACCESS_NETWORK_STATE,android.permission.VIBRATE\""
+      "\"android.permission.INTERNET,android.permission.ACCESS_NETWORK_STATE,android.permission.VIBRATE,com.google.android.gms.permission.AD_ID\""
     )
     buildConfigField(
       "String",
       "PLAY_DATA_COLLECTION_PRACTICES",
-      "\"Auth:GoogleSignIn_CredentialManager;CloudSave:Firestore_EncryptedTLS;Leaderboard:Firestore_EncryptedTLS;ThirdPartySharing:None\""
+      "\"Auth:GoogleSignIn_CredentialManager;CloudSave:Firestore_EncryptedTLS;Leaderboard:Firestore_EncryptedTLS;Ads:AdMob_Rewarded;ThirdPartySharing:None\""
     )
+    buildConfigField(
+      "String",
+      "ADMOB_APP_ID",
+      "\"ca-app-pub-2526614647374921~8134608409\""
+    )
+    buildConfigField(
+      "String",
+      "ADMOB_REWARDED_AD_UNIT_ID",
+      "\"ca-app-pub-2526614647374921/8246289044\""
+    )
+    buildConfigField("String", "ADMOB_REWARD_NAME", "\"Reward\"")
+    buildConfigField("int", "ADMOB_REWARD_AMOUNT", "1")
     manifestPlaceholders["playTargetAgeGroup"] = "13+"
     manifestPlaceholders["playDataSafetyDeclared"] = "true"
+    manifestPlaceholders["admobAppId"] = "ca-app-pub-2526614647374921~8134608409"
   }
 
   // Do not remove or modify these signingConfigs. They are necessary for building, installing,
@@ -92,6 +105,8 @@ android {
 tasks.withType<Test> {
   failFast = true
   timeout.set(Duration.ofMinutes(2))
+  systemProperty("robolectric.offline", "true")
+  systemProperty("robolectric.dependency.dir", "/home/appuser/robolectric-jars")
   testLogging {
     events("passed", "failed", "skipped")
   }
@@ -144,6 +159,7 @@ dependencies {
   implementation(libs.androidx.credentials)
   implementation(libs.androidx.credentials.play.services)
   implementation(libs.googleid)
+  implementation(libs.play.services.ads)
   // implementation(libs.firebase.appcheck.recaptcha)
   // implementation(libs.firebase.appcheck.debug)
   implementation(libs.kotlinx.coroutines.android)

@@ -22,6 +22,7 @@ import com.example.ui.AuthScreen
 import com.example.ui.GameScreen
 import com.example.ui.GameViewModel
 import com.example.ui.theme.MyApplicationTheme
+import com.example.util.AdMobRewardedAdManager
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
@@ -32,6 +33,7 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
+    AdMobRewardedAdManager.initialize(this)
     setContent {
       MyApplicationTheme(darkTheme = true, dynamicColor = false) {
         LastRelicApp()
@@ -58,21 +60,27 @@ fun LastRelicApp() {
   }
 
   val user = currentUser
-  if (user == null) {
+  var isOfflineLocalMode by remember { mutableStateOf(false) }
+
+  if (user == null && !isOfflineLocalMode) {
     AuthScreen(
       onAuthSuccess = {
         currentUser = auth.currentUser
+      },
+      onPlayOffline = {
+        isOfflineLocalMode = true
       }
     )
   } else {
-    val playerName = remember(user.uid, user.displayName, user.email) {
-      user.displayName?.takeIf { it.isNotBlank() }
-        ?: user.email?.substringBefore("@")?.takeIf { it.isNotBlank() }
+    val activeUid = user?.uid ?: "local_offline_hero"
+    val playerName = remember(user?.uid, user?.displayName, user?.email, isOfflineLocalMode) {
+      user?.displayName?.takeIf { it.isNotBlank() }
+        ?: user?.email?.substringBefore("@")?.takeIf { it.isNotBlank() }
         ?: "RelicHunter"
     }
 
     val gameViewModel: GameViewModel = viewModel(
-      key = user.uid,
+      key = activeUid,
       factory = viewModelFactory {
         initializer {
           val dbId = context.applicationContext.getString(R.string.firestore_database_id)
@@ -80,7 +88,7 @@ fun LastRelicApp() {
           val repository = GameRepository(firestore)
           GameViewModel(
             repository = repository,
-            currentUserId = user.uid,
+            currentUserId = activeUid,
             defaultPlayerName = playerName
           )
         }
@@ -98,6 +106,7 @@ fun LastRelicApp() {
           }
           auth.signOut()
           currentUser = null
+          isOfflineLocalMode = false
         }
       }
     )

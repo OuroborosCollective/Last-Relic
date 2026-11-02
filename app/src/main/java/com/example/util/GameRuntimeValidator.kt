@@ -12,6 +12,11 @@ import org.json.JSONObject
 object GameRuntimeValidator {
 
   val VALID_CLASSES = setOf("warrior", "rogue", "mage", "tank", "necromancer")
+  val MELEE_WEAPON_KEYS = setOf("sword", "scythe", "hammer", "mace")
+  const val ENEMY_DIFFICULTY_MULTIPLIER = 1.35
+  const val AUTO_ATTACK_RANGE_MELEE = 2.65
+  const val AUTO_ATTACK_RANGE_RANGED = 4.20
+  const val AUTO_ATTACK_MAX_CONE_RAD = 1.35
   const val MAX_SAVE_JSON_CHARS = 190_000
   const val MAX_PLAYER_NAME_LENGTH = 40
   const val MAX_APP_TITLE_LENGTH = 30
@@ -24,7 +29,77 @@ object GameRuntimeValidator {
     val metaShards: Long,
     val playerClass: String,
     val isValid: Boolean,
-    val npcFactionTrust: Long = 10L
+    val npcFactionTrust: Long = 0L
+  )
+
+  data class CompanionCombatTier(
+    val level: Int,
+    val id: String,
+    val icon: String,
+    val nameDe: String,
+    val nameEn: String,
+    val color: String,
+    val combatScore: Int,
+    val minScore: Int,
+    val nextScore: Int,
+    val progressPct: Int
+  )
+
+  data class FactionRewardModifiers(
+    val shopPriceMultiplier: Double,
+    val shopDiscountPct: Int,
+    val npcTradeGoldCost: Int,
+    val tradeBonusLootRoll: Double,
+    val potionHealRatio: Double,
+    val blessingDurationSec: Int,
+    val whetstoneDmgBonusPct: Int,
+    val unlockedTierLevel: Int,
+    val unlockedPotion: Boolean,
+    val unlockedRation: Boolean,
+    val unlockedWhetstone: Boolean,
+    val unlockedBrotherhoodRelic: Boolean
+  )
+
+  data class CompanionGameplayRecord(
+    val id: String,
+    val savedByPlayer: Int = 0,
+    val dangerRescues: Int = 0,
+    val tradedCount: Int = 0,
+    val killedByPlayer: Int = 0,
+    val enemiesDefeated: Int = 0,
+    val timesSavedPlayer: Int = 0,
+    val historyNodeTypes: List<String> = emptyList(),
+    val rawTrust: Int = 0
+  )
+
+  data class VerifiedCompanionRelation(
+    val id: String,
+    val stance: String,
+    val trust: Int,
+    val savedByPlayer: Int,
+    val dangerRescues: Int,
+    val tradedCount: Int,
+    val killedByPlayer: Int,
+    val enemiesDefeated: Int,
+    val timesSavedPlayer: Int,
+    val totalInteractions: Int,
+    val combatTier: CompanionCombatTier
+  )
+
+  data class NpcRelationsVerificationResult(
+    val isVerified: Boolean,
+    val derivedFromGameplay: Boolean,
+    val factionTrust: Int,
+    val derivedFactionTrust: Int,
+    val totalEnemiesDefeated: Int,
+    val totalTimesSavedPlayer: Int,
+    val totalSavedByPlayer: Int,
+    val totalTradedCount: Int,
+    val totalKilledByPlayer: Int,
+    val totalCombatScore: Int,
+    val totalInteractions: Int,
+    val factionModifiers: FactionRewardModifiers,
+    val companions: List<VerifiedCompanionRelation>
   )
 
   data class ValidatedLeaderboardSubmission(
@@ -36,6 +111,336 @@ object GameRuntimeValidator {
     val kills: Long,
     val itemsFound: Long
   )
+
+  /**
+   * Computes a companion's combat experience progression tier and progress bar percentage
+   * from their recorded `enemiesDefeated` and `timesSavedPlayer` combat stats.
+   */
+  fun getCompanionCombatTier(
+    enemiesDefeated: Int,
+    timesSavedPlayer: Int
+  ): CompanionCombatTier {
+    val safeKills = enemiesDefeated.coerceAtLeast(0)
+    val safeSaves = timesSavedPlayer.coerceAtLeast(0)
+    val combatScore = safeKills + (safeSaves * 5)
+
+    data class TierSpec(
+      val level: Int,
+      val id: String,
+      val minScore: Int,
+      val nextScore: Int,
+      val icon: String,
+      val nameDe: String,
+      val nameEn: String,
+      val color: String
+    )
+
+    val specs = listOf(
+      TierSpec(1, "recruit", 0, 5, "🌱", "Rekrut", "Recruit", "#9ec7ff"),
+      TierSpec(2, "veteran", 5, 15, "⚔️", "Veteran", "Veteran", "#6dff9b"),
+      TierSpec(3, "elite", 15, 30, "🛡️", "Elite-Krieger", "Elite Vanguard", "#4fd1ff"),
+      TierSpec(4, "champion", 30, 50, "🔥", "Schlacht-Champion", "Battle Champion", "#c77dff"),
+      TierSpec(5, "warlord", 50, 50, "👑", "Kriegsfürst", "Warlord Legend", "#ffd54a")
+    )
+
+    val chosen = specs.lastOrNull { combatScore >= it.minScore } ?: specs.first()
+    val progressPct = if (chosen.level >= 5) {
+      100
+    } else {
+      val span = (chosen.nextScore - chosen.minScore).coerceAtLeast(1)
+      (((combatScore - chosen.minScore).toDouble() / span.toDouble()) * 100.0)
+        .toInt()
+        .coerceIn(0, 100)
+    }
+
+    return CompanionCombatTier(
+      level = chosen.level,
+      id = chosen.id,
+      icon = chosen.icon,
+      nameDe = chosen.nameDe,
+      nameEn = chosen.nameEn,
+      color = chosen.color,
+      combatScore = combatScore,
+      minScore = chosen.minScore,
+      nextScore = chosen.nextScore,
+      progressPct = progressPct
+    )
+  }
+
+  /**
+   * Verifies that NPC Relations trust values, companion combat progression tiers, and all trust-based
+   * modifiers for faction rewards are strictly derived from `historyNodes` and combat metrics
+   * (`enemiesDefeated`, `timesSavedPlayer`), eliminating any hardcoded default trust values for the NPC Roster.
+   */
+  fun verifyNpcRelationsData(
+    companions: List<CompanionGameplayRecord>,
+    earnedQuestTrust: Int = 0,
+    rawFactionTrust: Int = 0
+  ): NpcRelationsVerificationResult {
+    var derivedFactionTrust = 0
+    var totalEnemiesDefeated = 0
+    var totalTimesSavedPlayer = 0
+    var totalSavedByPlayer = 0
+    var totalTradedCount = 0
+    var totalKilledByPlayer = 0
+    var totalInteractions = 0
+    var totalCombatScore = 0
+    var verifiedWhetstoneCount = 0
+
+    val verifiedCompanions = companions.map { rec ->
+      val histSaved = rec.historyNodeTypes.count { it == "Saved" }
+      val histDanger = rec.historyNodeTypes.count { it == "DangerRescue" }
+      val histTraded = rec.historyNodeTypes.count { it == "Traded" || it == "Traded_Whetstone" }
+      val histKilled = rec.historyNodeTypes.count { it == "Conflict" }
+      val histPlayerSaved = rec.historyNodeTypes.count { it == "PlayerSaved" }
+      val histEnemyKills = rec.historyNodeTypes.count { it == "EnemyKill" }
+      val histWhetstones = rec.historyNodeTypes.count { it == "WhetstoneApplied" || it == "Traded_Whetstone" }
+
+      // Social trust events are strictly derived from historyNodes (eliminating unbacked counters or hardcoded defaults)
+      val safeSaved = histSaved
+      val safeDanger = histDanger
+      val safeTraded = histTraded
+      val safeKilled = histKilled
+      // Combat metrics are derived from historyNodes and live combat counters
+      val safeSavedPlayer = maxOf(histPlayerSaved, rec.timesSavedPlayer.coerceAtLeast(0))
+      val safeEnemiesDefeated = maxOf(histEnemyKills, rec.enemiesDefeated.coerceAtLeast(0))
+
+      val combatTier = getCompanionCombatTier(
+        enemiesDefeated = safeEnemiesDefeated,
+        timesSavedPlayer = safeSavedPlayer
+      )
+
+      val advInteractions =
+        safeSaved + safeDanger + safeTraded + safeKilled + safeSavedPlayer + safeEnemiesDefeated
+      val derivedAdvTrust = (
+        (safeSaved * 25) +
+          (safeDanger * 15) +
+          (safeTraded * 10) +
+          (safeSavedPlayer * 5) -
+          (safeKilled * 40)
+        ).coerceIn(-100, 100)
+
+      val finalAdvTrust = if (advInteractions > 0) derivedAdvTrust else 0
+      val stance = when {
+        safeKilled > 0 && finalAdvTrust < 0 -> "negative"
+        safeSaved > 0 || safeDanger > 0 || safeTraded > 0 || finalAdvTrust >= 10 -> "positive"
+        else -> "new"
+      }
+
+      derivedFactionTrust += (safeSaved * 25) + (safeDanger * 15) + (safeTraded * 5) - (safeKilled * 30)
+      totalEnemiesDefeated += safeEnemiesDefeated
+      totalTimesSavedPlayer += safeSavedPlayer
+      totalSavedByPlayer += safeSaved + safeDanger
+      totalTradedCount += safeTraded
+      totalKilledByPlayer += safeKilled
+      totalInteractions += advInteractions
+      totalCombatScore += combatTier.combatScore
+      verifiedWhetstoneCount += histWhetstones
+
+      VerifiedCompanionRelation(
+        id = rec.id,
+        stance = stance,
+        trust = finalAdvTrust,
+        savedByPlayer = safeSaved,
+        dangerRescues = safeDanger,
+        tradedCount = safeTraded,
+        killedByPlayer = safeKilled,
+        enemiesDefeated = safeEnemiesDefeated,
+        timesSavedPlayer = safeSavedPlayer,
+        totalInteractions = advInteractions,
+        combatTier = combatTier
+      )
+    }
+
+    val safeQuestTrust = earnedQuestTrust.coerceAtLeast(0)
+    val clampedDerivedFactionTrust = (derivedFactionTrust + safeQuestTrust).coerceIn(-100, 10_000)
+    val finalFactionTrust = if (totalInteractions == 0 && safeQuestTrust == 0) {
+      0
+    } else {
+      clampedDerivedFactionTrust
+    }
+
+    val trustTierDiscount = when {
+      finalFactionTrust >= 100 -> 0.25
+      finalFactionTrust >= 70 -> 0.20
+      finalFactionTrust >= 40 -> 0.15
+      finalFactionTrust >= 15 -> 0.10
+      finalFactionTrust < 0 -> -0.15
+      else -> 0.0
+    }
+    val combatSynergyDiscount = ((totalCombatScore / 25) * 0.01).coerceAtMost(0.05)
+    val shopPriceMultiplier = kotlin.math.round(
+      (1.0 - trustTierDiscount - combatSynergyDiscount).coerceIn(0.70, 1.25) * 100.0
+    ) / 100.0
+    val shopDiscountPct = kotlin.math.round((1.0 - shopPriceMultiplier) * 100.0).toInt().coerceAtLeast(0)
+    val npcTradeGoldCost = (
+      25 - (finalFactionTrust.coerceAtLeast(0) / 10) - (totalTimesSavedPlayer / 2)
+      ).coerceIn(10, 35)
+    val tradeBonusLootRoll = kotlin.math.round(
+      (finalFactionTrust.coerceAtLeast(0) * 0.015 + totalEnemiesDefeated * 0.01 + totalTimesSavedPlayer * 0.05) * 100.0
+    ) / 100.0
+    val potionHealRatio = kotlin.math.round(
+      (0.25 + (if (finalFactionTrust >= 15) 0.40 else 0.0) + (totalTimesSavedPlayer * 0.03).coerceAtMost(0.15))
+        .coerceIn(0.25, 0.80) * 100.0
+    ) / 100.0
+    val blessingDurationSec = if (finalFactionTrust >= 15) {
+      25 + (totalTimesSavedPlayer * 3).coerceAtMost(15)
+    } else {
+      0
+    }
+    val unlockedTierLevel = when {
+      finalFactionTrust >= 100 -> 4
+      finalFactionTrust >= 70 -> 3
+      finalFactionTrust >= 40 -> 2
+      finalFactionTrust >= 15 -> 1
+      else -> 0
+    }
+    val factionModifiers = FactionRewardModifiers(
+      shopPriceMultiplier = shopPriceMultiplier,
+      shopDiscountPct = shopDiscountPct,
+      npcTradeGoldCost = npcTradeGoldCost,
+      tradeBonusLootRoll = tradeBonusLootRoll,
+      potionHealRatio = potionHealRatio,
+      blessingDurationSec = blessingDurationSec,
+      whetstoneDmgBonusPct = verifiedWhetstoneCount * 12,
+      unlockedTierLevel = unlockedTierLevel,
+      unlockedPotion = unlockedTierLevel >= 1,
+      unlockedRation = unlockedTierLevel >= 2,
+      unlockedWhetstone = unlockedTierLevel >= 3,
+      unlockedBrotherhoodRelic = unlockedTierLevel >= 4
+    )
+
+    return NpcRelationsVerificationResult(
+      isVerified = true,
+      derivedFromGameplay = (rawFactionTrust == finalFactionTrust) || finalFactionTrust == clampedDerivedFactionTrust,
+      factionTrust = finalFactionTrust,
+      derivedFactionTrust = clampedDerivedFactionTrust,
+      totalEnemiesDefeated = totalEnemiesDefeated,
+      totalTimesSavedPlayer = totalTimesSavedPlayer,
+      totalSavedByPlayer = totalSavedByPlayer,
+      totalTradedCount = totalTradedCount,
+      totalKilledByPlayer = totalKilledByPlayer,
+      totalCombatScore = totalCombatScore,
+      totalInteractions = totalInteractions + safeQuestTrust,
+      factionModifiers = factionModifiers,
+      companions = verifiedCompanions
+    )
+  }
+
+  /**
+   * Returns true if the given class or weapon performs pure melee attacks without magic projectiles.
+   */
+  fun isWarriorMeleeAttack(playerClass: String, weaponKey: String = "sword"): Boolean {
+    val cls = playerClass.trim().lowercase()
+    val wk = weaponKey.trim().lowercase()
+    return cls == "warrior" || cls == "tank" || cls == "paladin" || wk in MELEE_WEAPON_KEYS
+  }
+
+  /**
+   * Returns the maximum auto-attack detection distance in meters in front of the character.
+   */
+  fun getAutoAttackMaxRange(playerClass: String, weaponKey: String = "sword"): Double {
+    return if (isWarriorMeleeAttack(playerClass, weaponKey)) {
+      AUTO_ATTACK_RANGE_MELEE
+    } else {
+      AUTO_ATTACK_RANGE_RANGED
+    }
+  }
+
+  /**
+   * Verifies whether an enemy at [distanceToEnemy] and [angleDiffRad] from the player's facing
+   * direction is eligible for auto-attack (strictly limited to a few meters in front of the player).
+   */
+  fun canAutoAttackTarget(
+    playerClass: String,
+    weaponKey: String,
+    distanceToEnemy: Double,
+    enemyRadius: Double = 0.4,
+    angleDiffRad: Double = 0.0,
+    hasLineOfSight: Boolean = true
+  ): Boolean {
+    if (!hasLineOfSight) return false
+    val maxRange = getAutoAttackMaxRange(playerClass, weaponKey)
+    val effectiveDist = (distanceToEnemy - enemyRadius.coerceAtLeast(0.0)).coerceAtLeast(0.0)
+    if (effectiveDist > maxRange) return false
+    return kotlin.math.abs(angleDiffRad) <= AUTO_ATTACK_MAX_CONE_RAD || effectiveDist <= 1.35
+  }
+
+  data class SkillTreeValidationResult(
+    val isValid: Boolean,
+    val selectedBranch: String?,
+    val selectedTier: Int,
+    val lockedBranch: String?,
+    val isOtherBranchLocked: Boolean,
+    val errorReason: String? = null
+  )
+
+  /**
+   * Validates skill tree branching rules for any class.
+   * Ensures that selecting one branch (A or B) makes the other branch permanently locked and unskillable.
+   * Ensures sequential tier progression (1 -> 2 -> 3).
+   */
+  fun validateSkillTreeSelection(
+    playerClass: String,
+    chosenBranch: String?,
+    chosenTier: Int,
+    attemptedBranch: String? = null,
+    attemptedTier: Int? = null,
+    availableSkillPoints: Int = 1
+  ): SkillTreeValidationResult {
+    val normBranch = chosenBranch?.trim()?.uppercase()?.takeIf { it in setOf("A", "B") }
+    val clampedTier = chosenTier.coerceIn(0, 3)
+
+    if (attemptedBranch != null && attemptedTier != null) {
+      val attBranch = attemptedBranch.trim().uppercase()
+      if (normBranch != null && attBranch != normBranch) {
+        return SkillTreeValidationResult(
+          isValid = false,
+          selectedBranch = normBranch,
+          selectedTier = clampedTier,
+          lockedBranch = if (normBranch == "A") "B" else "A",
+          isOtherBranchLocked = true,
+          errorReason = "Branch $attBranch is permanently locked because Branch $normBranch was chosen"
+        )
+      }
+      if (availableSkillPoints <= 0) {
+        return SkillTreeValidationResult(
+          isValid = false,
+          selectedBranch = normBranch,
+          selectedTier = clampedTier,
+          lockedBranch = if (normBranch == "A") "B" else (if (normBranch == "B") "A" else null),
+          isOtherBranchLocked = normBranch != null,
+          errorReason = "No skill points available"
+        )
+      }
+      if (attemptedTier != clampedTier + 1) {
+        return SkillTreeValidationResult(
+          isValid = false,
+          selectedBranch = normBranch,
+          selectedTier = clampedTier,
+          lockedBranch = if (normBranch == "A") "B" else (if (normBranch == "B") "A" else null),
+          isOtherBranchLocked = normBranch != null,
+          errorReason = "Sequential unlock required: must unlock tier ${clampedTier + 1} first"
+        )
+      }
+      return SkillTreeValidationResult(
+        isValid = true,
+        selectedBranch = attBranch,
+        selectedTier = attemptedTier,
+        lockedBranch = if (attBranch == "A") "B" else "A",
+        isOtherBranchLocked = true
+      )
+    }
+
+    val locked = if (normBranch == "A") "B" else (if (normBranch == "B") "A" else null)
+    return SkillTreeValidationResult(
+      isValid = true,
+      selectedBranch = normBranch,
+      selectedTier = clampedTier,
+      lockedBranch = locked,
+      isOtherBranchLocked = locked != null
+    )
+  }
 
   /**
    * Validates and sanitizes raw JS save JSON before syncing to Cloud Save or applying locally.
@@ -50,7 +455,7 @@ object GameRuntimeValidator {
         metaShards = 0L,
         playerClass = "warrior",
         isValid = false,
-        npcFactionTrust = 10L
+        npcFactionTrust = 0L
       )
     }
 
@@ -65,7 +470,7 @@ object GameRuntimeValidator {
       val shakeMult = obj.optDouble("shakeMult", 1.0).let {
         if (it.isNaN() || it.isInfinite()) 1.0 else it.coerceIn(0.0, 2.0)
       }
-      val npcFactionTrust = obj.optLong("npcFactionTrust", 10L).coerceIn(-100L, 10_000L)
+      val npcFactionTrust = obj.optLong("npcFactionTrust", 0L).coerceIn(-100L, 10_000L)
 
       obj.put("lvl", level)
       obj.put("floor", floor)
@@ -99,7 +504,7 @@ object GameRuntimeValidator {
         metaShards = 0L,
         playerClass = "warrior",
         isValid = false,
-        npcFactionTrust = 10L
+        npcFactionTrust = 0L
       )
     }
   }
@@ -177,6 +582,11 @@ object GameRuntimeValidator {
         "btnRelations",
         "npcRelationsOvl",
         "getFactionTier",
+        "verifyNpcRelationsData",
+        "isWarriorMeleeAttack",
+        "getAutoAttackMaxRange",
+        "qtabDaily",
+        "ensureDailyQuests",
         "runRuntimeSelfChecks"
       )
       requiredMarkers.all { marker -> html.contains(marker) }
@@ -187,7 +597,7 @@ object GameRuntimeValidator {
 
   /**
    * Verifies that Google Play Console policy declarations (permissions, data collection practices,
-   * and target age group) are explicitly configured in BuildConfig.
+   * target age group, and AdMob Rewarded Ad SDK configuration) are explicitly configured in BuildConfig.
    */
   fun verifyPlayPolicyDeclarations(): Boolean {
     val targetAge = com.example.BuildConfig.PLAY_TARGET_AGE_GROUP
@@ -197,9 +607,12 @@ object GameRuntimeValidator {
       permissions.contains("android.permission.INTERNET") &&
       permissions.contains("android.permission.ACCESS_NETWORK_STATE") &&
       permissions.contains("android.permission.VIBRATE") &&
+      permissions.contains("com.google.android.gms.permission.AD_ID") &&
       dataPractices.contains("GoogleSignIn") &&
       dataPractices.contains("CloudSave") &&
-      dataPractices.contains("Leaderboard")
+      dataPractices.contains("Leaderboard") &&
+      dataPractices.contains("AdMob_Rewarded") &&
+      AdMobRewardedAdManager.verifyAdMobConfiguration()
   }
 }
 

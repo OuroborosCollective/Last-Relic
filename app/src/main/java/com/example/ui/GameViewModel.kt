@@ -30,25 +30,38 @@ class GameViewModel(
   val defaultPlayerName: String
 ) : ViewModel() {
 
-  val cloudSaveState: StateFlow<UiState<CloudSave?>> = repository.observeCloudSave(currentUserId)
-    .map<CloudSave?, UiState<CloudSave?>> { UiState.Success(it) }
-    .catch { error ->
-      Log.w(TAG, "Error observing cloud save", error)
-      emit(UiState.Error(error.message ?: "Fehler beim Laden des Cloud-Speicherstands"))
+  private val isCloudAuthenticated: Boolean
+    get() = currentUserId.isNotBlank() && currentUserId != "local_offline_hero"
+
+  val cloudSaveState: StateFlow<UiState<CloudSave?>> = (
+    if (isCloudAuthenticated) {
+      repository.observeCloudSave(currentUserId)
+        .map<CloudSave?, UiState<CloudSave?>> { UiState.Success(it) }
+        .catch { error ->
+          Log.w(TAG, "Error observing cloud save", error)
+          emit(UiState.Error(error.message ?: "Fehler beim Laden des Cloud-Speicherstands"))
+        }
+    } else {
+      kotlinx.coroutines.flow.flowOf(UiState.Success(null))
     }
-    .stateIn(
+    ).stateIn(
       scope = viewModelScope,
       started = SharingStarted.WhileSubscribed(5000L),
       initialValue = UiState.Loading
     )
 
-  val leaderboardState: StateFlow<UiState<List<LeaderboardEntry>>> = repository.observeGlobalLeaderboard()
-    .map<List<LeaderboardEntry>, UiState<List<LeaderboardEntry>>> { UiState.Success(it) }
-    .catch { error ->
-      Log.w(TAG, "Error observing global leaderboard", error)
-      emit(UiState.Error(error.message ?: "Fehler beim Laden der Bestenliste"))
+  val leaderboardState: StateFlow<UiState<List<LeaderboardEntry>>> = (
+    if (isCloudAuthenticated) {
+      repository.observeGlobalLeaderboard()
+        .map<List<LeaderboardEntry>, UiState<List<LeaderboardEntry>>> { UiState.Success(it) }
+        .catch { error ->
+          Log.w(TAG, "Error observing global leaderboard", error)
+          emit(UiState.Error(error.message ?: "Fehler beim Laden der Bestenliste"))
+        }
+    } else {
+      kotlinx.coroutines.flow.flowOf(UiState.Success(emptyList()))
     }
-    .stateIn(
+    ).stateIn(
       scope = viewModelScope,
       started = SharingStarted.WhileSubscribed(5000L),
       initialValue = UiState.Loading
@@ -85,6 +98,7 @@ class GameViewModel(
   }
 
   fun syncCloudSaveFromJs(saveJson: String) {
+    if (!isCloudAuthenticated) return
     viewModelScope.launch {
       try {
         val validated = GameRuntimeValidator.validateAndSanitizeSaveJson(saveJson)
@@ -117,6 +131,7 @@ class GameViewModel(
     kills: Long,
     itemsFound: Long
   ) {
+    if (!isCloudAuthenticated) return
     viewModelScope.launch {
       val validated = GameRuntimeValidator.validateLeaderboardSubmission(
         playerName = playerName,
@@ -208,6 +223,11 @@ class GameViewModel(
   }
 
   fun fetchCloudSaveFromServer(onResult: (String?) -> Unit) {
+    if (!isCloudAuthenticated) {
+      showStatus("Lokaler Modus aktiv. Melde dich mit Google an für Cloud-Speicher.")
+      onResult(null)
+      return
+    }
     viewModelScope.launch {
       val res = repository.getCloudSave(currentUserId)
       val save = res.getOrNull()
@@ -227,6 +247,11 @@ class GameViewModel(
       _adsRemoved.value = true
       _showIapDialog.value = false
       _showInterstitialAd.value = false
+      if (!isCloudAuthenticated) {
+        showStatus("Werbefreiheit für diese Sitzung aktiviert!")
+        onComplete()
+        return@launch
+      }
       val existing = (cloudSaveState.value as? UiState.Success)?.data
       val res = if (existing != null) {
         repository.saveCloudProgress(
@@ -252,6 +277,10 @@ class GameViewModel(
   }
 
   fun restorePurchases() {
+    if (!isCloudAuthenticated) {
+      showStatus("Melde dich mit Google an, um Cloud-Käufe wiederherzustellen.")
+      return
+    }
     viewModelScope.launch {
       val res = repository.getCloudSave(currentUserId)
       val save = res.getOrNull()

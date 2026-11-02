@@ -79,7 +79,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -91,10 +90,16 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.compose.ui.platform.LocalContext
 import com.example.BuildConfig
 import com.example.data.CloudSave
 import com.example.data.LeaderboardEntry
+import com.example.util.AdMobRewardedAdManager
 import com.example.util.GameMonitor
 import kotlinx.coroutines.delay
 import org.json.JSONObject
@@ -156,6 +161,17 @@ class AndroidWebBridge(
   }
 
   @JavascriptInterface
+  fun getAdMobConfigJson(): String {
+    return JSONObject().apply {
+      put("appId", AdMobRewardedAdManager.ADMOB_APP_ID)
+      put("rewardedAdUnitId", AdMobRewardedAdManager.REWARDED_AD_UNIT_ID)
+      put("rewardName", AdMobRewardedAdManager.REWARD_NAME)
+      put("rewardAmount", AdMobRewardedAdManager.REWARD_AMOUNT)
+      put("isAdReady", AdMobRewardedAdManager.isAdReady.value)
+    }.toString()
+  }
+
+  @JavascriptInterface
   fun openRemoveAds() {
     mainHandler.post {
       viewModel.openIapDialog()
@@ -189,6 +205,44 @@ class AndroidWebBridge(
       activeBullets = activeBullets
     )
   }
+
+  @JavascriptInterface
+  fun reportDailyResetCycle(
+    dailyResetTimeMs: Long,
+    currentTimeMs: Long,
+    isActiveGameplay: Boolean
+  ) {
+    val toastMsg = gameMonitor.monitorDailyResetCycle(
+      dailyResetTimeMs = dailyResetTimeMs,
+      currentTimeMs = currentTimeMs,
+      isActiveGameplay = isActiveGameplay
+    )
+    if (toastMsg != null) {
+      mainHandler.post {
+        viewModel.showStatus(toastMsg)
+      }
+    }
+  }
+
+  @JavascriptInterface
+  fun onViewLogsOpened(): Int {
+    return gameMonitor.pruneOldLogs()
+  }
+
+  @JavascriptInterface
+  fun syncQuestState(
+    villageQuestsJson: String,
+    dailyQuestsJson: String,
+    dailyResetTimeMs: Long,
+    floor: Int
+  ) {
+    gameMonitor.questManager.syncFromJson(
+      villageQuestsJson = villageQuestsJson,
+      dailyQuestsJson = dailyQuestsJson,
+      dailyResetTimeMs = dailyResetTimeMs,
+      floor = floor
+    )
+  }
 }
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -206,16 +260,31 @@ fun GameScreen(
   val showCloudPanel by viewModel.showCloudPanel.collectAsStateWithLifecycle()
   val statusBanner by viewModel.statusBanner.collectAsStateWithLifecycle()
 
+  val context = LocalContext.current
   var webViewRef by remember { mutableStateOf<WebView?>(null) }
   val mainHandler = remember { Handler(Looper.getMainLooper()) }
   val gameMonitor = remember { GameMonitor() }
   val perfSnapshot by gameMonitor.snapshot.collectAsStateWithLifecycle()
+  val isAdMobReady by AdMobRewardedAdManager.isAdReady.collectAsStateWithLifecycle()
   var showPerfOverlay by remember { mutableStateOf(false) }
+  var showFallbackRewardedModal by remember { mutableStateOf(false) }
 
-  // Periodic JVM & frame rate health check every 3 seconds
+  LaunchedEffect(context) {
+    AdMobRewardedAdManager.initialize(context)
+  }
+
+  // Periodic JVM, frame rate health, and 24h dailyResetTime background check every 3 seconds
   LaunchedEffect(gameMonitor) {
     while (true) {
       gameMonitor.checkJvmPerformance()
+      val toastMsg = gameMonitor.monitorDailyResetCycle(
+        dailyResetTimeMs = gameMonitor.snapshot.value.dailyResetTime,
+        currentTimeMs = System.currentTimeMillis(),
+        isActiveGameplay = true
+      )
+      if (toastMsg != null) {
+        viewModel.showStatus(toastMsg)
+      }
       delay(3000L)
     }
   }
@@ -451,6 +520,9 @@ fun GameScreen(
               )
               .clickable {
                 showPerfOverlay = !showPerfOverlay
+                if (showPerfOverlay) {
+                  gameMonitor.onOpenViewLogs()
+                }
                 webViewRef?.evaluateJavascript(
                   "if(window.GAME_MONITOR) window.GAME_MONITOR.toggleOverlay($showPerfOverlay);",
                   null
@@ -650,17 +722,79 @@ fun GameScreen(
     )
   }
 
-  // AdMob Rewarded Ad (+75 Gold & +10 Relic Shards)
-  if (showRewardedAd) {
+  // Trigger Google Mobile Ads SDK RewardedAd when requested by explicit user opt-in
+  LaunchedEffect(showRewardedAd) {
+    if (showRewardedAd) {
+      val activity = context.findActivity()
+      AdMobRewardedAdManager.showRewardedAd(
+        activity = activity,
+        onUserEarnedReward = { grant ->
+          viewModel.dismissRewardedAd()
+          showFallbackRewardedModal = false
+          val safeRewardName = JSONObject.quote(grant.rewardName)
+          webViewRef?.evaluateJavascript(
+            "if(window.grantRewardedGold) window.grantRewardedGold(${grant.goldGranted}, ${grant.shardsGranted}, $safeRewardName, ${grant.rewardAmount});",
+            null
+          )
+          viewModel.showStatus(
+            "AdMob Prämie (${grant.rewardAmount}x ${grant.rewardName}): +${grant.goldGranted} Gold & +${grant.shardsGranted} Relikt-Splitter!"
+          )
+        },
+        onAudioPauseChanged = { paused ->
+          webViewRef?.evaluateJavascript(
+            "if(window.onAdAudioPause) window.onAdAudioPause($paused);",
+            null
+          )
+        },
+        onAdUnavailableFallback = {
+          showFallbackRewardedModal = true
+        }
+      )
+    } else {
+      showFallbackRewardedModal = false
+    }
+  }
+
+  // AdMob Rewarded Ad Opt-In & Fallback Modal (Placement: ca-app-pub-2526614647374921/8246289044, 1x Reward)
+  if (showRewardedAd && showFallbackRewardedModal) {
+    DisposableEffect(Unit) {
+      webViewRef?.evaluateJavascript("if(window.onAdAudioPause) window.onAdAudioPause(true);", null)
+      onDispose {
+        webViewRef?.evaluateJavascript("if(window.onAdAudioPause) window.onAdAudioPause(false);", null)
+      }
+    }
     AdMobRewardedDialog(
-      onDismiss = { viewModel.dismissRewardedAd() },
-      onRewardEarned = {
+      adUnitId = AdMobRewardedAdManager.REWARDED_AD_UNIT_ID,
+      rewardName = AdMobRewardedAdManager.REWARD_NAME,
+      rewardAmount = AdMobRewardedAdManager.REWARD_AMOUNT,
+      onDismiss = {
+        showFallbackRewardedModal = false
         viewModel.dismissRewardedAd()
-        webViewRef?.evaluateJavascript("if(window.grantRewardedGold) window.grantRewardedGold(75, 10);", null)
-        viewModel.showStatus("Belohnung erhalten: +75 Gold & +10 Relikt-Splitter!")
+      },
+      onRewardEarned = {
+        val grant = AdMobRewardedAdManager.calculateInGameReward(
+          rawRewardType = AdMobRewardedAdManager.REWARD_NAME,
+          rawRewardAmount = AdMobRewardedAdManager.REWARD_AMOUNT
+        )
+        showFallbackRewardedModal = false
+        viewModel.dismissRewardedAd()
+        val safeRewardName = JSONObject.quote(grant.rewardName)
+        webViewRef?.evaluateJavascript(
+          "if(window.grantRewardedGold) window.grantRewardedGold(${grant.goldGranted}, ${grant.shardsGranted}, $safeRewardName, ${grant.rewardAmount});",
+          null
+        )
+        viewModel.showStatus(
+          "AdMob Prämie (${grant.rewardAmount}x ${grant.rewardName}): +${grant.goldGranted} Gold & +${grant.shardsGranted} Relikt-Splitter!"
+        )
       }
     )
   }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+  is Activity -> this
+  is ContextWrapper -> baseContext.findActivity()
+  else -> null
 }
 
 private fun unquoteJsString(raw: String?): String {
@@ -1347,6 +1481,9 @@ private fun AdMobInterstitialDialog(
 
 @Composable
 private fun AdMobRewardedDialog(
+  adUnitId: String = AdMobRewardedAdManager.REWARDED_AD_UNIT_ID,
+  rewardName: String = AdMobRewardedAdManager.REWARD_NAME,
+  rewardAmount: Int = AdMobRewardedAdManager.REWARD_AMOUNT,
   onDismiss: () -> Unit,
   onRewardEarned: () -> Unit
 ) {
@@ -1371,17 +1508,23 @@ private fun AdMobRewardedDialog(
         horizontalAlignment = Alignment.CenterHorizontally
       ) {
         Text(
-          text = "AdMob Belohnungs-Video",
+          text = "AdMob Anzeige mit Prämie · $rewardAmount× $rewardName",
           color = Color(0xFF6DFF9B),
           fontWeight = FontWeight.ExtraBold,
-          fontSize = 16.sp
+          fontSize = 15.sp
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+          text = "Block-ID: $adUnitId",
+          color = Color(0xFF9AA4B8),
+          fontSize = 10.sp
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
           text = if (secondsLeft > 0) {
-            "Belohnung wird freigeschaltet in ${secondsLeft}s..."
+            "Prämie ($rewardAmount× $rewardName) wird freigeschaltet in ${secondsLeft}s..."
           } else {
-            "Belohnung bereit: +75 Gold & +10 Relikt-Splitter!"
+            "Prämie bereit ($rewardAmount× $rewardName): +75 Gold & +10 Relikt-Splitter!"
           },
           color = Color.White,
           fontSize = 13.sp,
@@ -1392,7 +1535,7 @@ private fun AdMobRewardedDialog(
           CircularProgressIndicator(color = Color(0xFF6DFF9B))
           Spacer(modifier = Modifier.height(12.dp))
           TextButton(onClick = onDismiss) {
-            Text("Abbrechen", color = Color(0xFF9AA4B8))
+            Text("Abbrechen (Keine Prämie)", color = Color(0xFF9AA4B8))
           }
         } else {
           Button(
@@ -1403,7 +1546,10 @@ private fun AdMobRewardedDialog(
               .testTag("claim_rewarded_ad_button"),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669))
           ) {
-            Text("Belohnung einfordern (+75 Gold & +10 Splitter)", fontWeight = FontWeight.Bold)
+            Text(
+              text = "Prämie einfordern ($rewardAmount× $rewardName · +75G / +10💎)",
+              fontWeight = FontWeight.Bold
+            )
           }
         }
       }

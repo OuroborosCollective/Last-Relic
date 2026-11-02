@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Last Relic</string>
+    <string name="admob_app_id" translatable="false">ca-app-pub-2526614647374921~8134608409</string>
+    <string name="admob_rewarded_ad_unit_id" translatable="false">ca-app-pub-2526614647374921/8246289044</string>
+    <string name="admob_reward_name" translatable="false">Reward</string>
 </resources>

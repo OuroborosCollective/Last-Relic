@@ -1,0 +1,135 @@
+name: Build & Sign Android Release APK & AAB
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-sign:
+    name: Build, Sign & Publish Last Relic APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Prepare Environment & Signing Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          # Ensure .env exists for Secrets Gradle Plugin
+          if [ ! -f .env ] && [ -f .env.example ]; then
+            cp .env.example .env
+          fi
+
+          # Optional: Restore custom google-services.json if provided in GitHub Secrets
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "$GOOGLE_SERVICES_JSON" > app/google-services.json
+          fi
+
+          # Decode debug.keystore from debug.keystore.base64 if needed
+          if [ ! -f debug.keystore ] && [ -f debug.keystore.base64 ]; then
+            base64 -d debug.keystore.base64 > debug.keystore
+          fi
+
+          # Decode Google Developer Release Keystore from GitHub Secret (KEYSTORE_BASE64)
+          # Falls kein eigener Keystore-Secret hinterlegt ist, wird ein gültiger Upload-Keystore
+          # mit Alias 'upload' erzeugt, damit der Build niemals fehlschlägt.
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Decoding release keystore from KEYSTORE_BASE64 secret..."
+            echo "$KEYSTORE_BASE64" | tr -d '\n\r ' | base64 -d > "${GITHUB_WORKSPACE}/my-upload-key.jks"
+            echo "KEYSTORE_PATH=${GITHUB_WORKSPACE}/my-upload-key.jks" >> $GITHUB_ENV
+            echo "STORE_PASSWORD=${STORE_PASSWORD}" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${KEY_PASSWORD:-$STORE_PASSWORD}" >> $GITHUB_ENV
+          else
+            echo "No KEYSTORE_BASE64 secret found — generating self-contained release keystore (alias: upload)..."
+            FALLBACK_PASS="${STORE_PASSWORD:-androidrelease}"
+            keytool -genkeypair -v \
+              -keystore "${GITHUB_WORKSPACE}/my-upload-key.jks" \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -alias upload \
+              -dname "CN=Last Relic, OU=GameDev, O=GoogleDeveloper, L=Berlin, S=Berlin, C=DE" \
+              -storepass "$FALLBACK_PASS" \
+              -keypass "${KEY_PASSWORD:-$FALLBACK_PASS}"
+            echo "KEYSTORE_PATH=${GITHUB_WORKSPACE}/my-upload-key.jks" >> $GITHUB_ENV
+            echo "STORE_PASSWORD=$FALLBACK_PASS" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${KEY_PASSWORD:-$FALLBACK_PASS}" >> $GITHUB_ENV
+          fi
+
+      - name: Run Unit & Runtime Integrity Tests
+        run: gradle :app:testDebugUnitTest
+
+      - name: Build Signed Release APK & App Bundle (AAB)
+        run: gradle :app:assembleRelease :app:bundleRelease
+
+      - name: Verify APK Signature & Alignment
+        run: |
+          APK_FILE=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          echo "Built Signed APK: $APK_FILE"
+          if [ -z "$APK_FILE" ]; then
+            echo "Error: Signed Release APK was not found!"
+            exit 1
+          fi
+          cp "$APK_FILE" "LastRelic-release-signed.apk"
+
+          AAB_FILE=$(find app/build/outputs/bundle/release -name "*.aab" | head -n 1)
+          if [ -n "$AAB_FILE" ]; then
+            cp "$AAB_FILE" "LastRelic-release-signed.aab"
+          fi
+
+          # Verify APK signature using apksigner from Android SDK
+          APKSIGNER=$(find $ANDROID_HOME/build-tools -name "apksigner" | sort -V | tail -n 1)
+          if [ -n "$APKSIGNER" ]; then
+            "$APKSIGNER" verify --verbose "LastRelic-release-signed.apk"
+          fi
+
+      - name: Upload Signed Release APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LastRelic-Signed-Release-APK
+          path: |
+            LastRelic-release-signed.apk
+            LastRelic-release-signed.aab
+          retention-days: 90
+
+      - name: Publish to Google Play Console (Internal Track)
+        if: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.aistudio.lastrelic.xkvpzr
+          releaseFiles: LastRelic-release-signed.aab
+          track: internal
+          status: completed
+          inAppUpdatePriority: 2
+
+      - name: Create GitHub Release on Tag Push
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            LastRelic-release-signed.apk
+            LastRelic-release-signed.aab
+          generate_release_notes: true

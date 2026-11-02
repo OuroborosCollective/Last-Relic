@@ -53,6 +53,20 @@ class ExampleRobolectricTest {
     assertTrue(html.contains("historyNodes"))
     assertTrue(html.contains("Traded"))
     assertTrue(html.contains("Conflict"))
+    assertTrue(html.contains("qtabDaily"))
+    assertTrue(html.contains("qtabVillage"))
+    assertTrue(html.contains("DAILY_QUEST_TEMPLATES"))
+    assertTrue(html.contains("ensureDailyQuests"))
+    assertTrue(html.contains("dailyResetTime"))
+    assertTrue(html.contains("daily_complete_toast"))
+    assertTrue(html.contains("timerPopAlert"))
+    assertTrue(html.contains("triggerDailyResetAlert"))
+    assertTrue(html.contains("tickPauseDailyTimer"))
+    assertTrue(html.contains("startPauseTimerInterval"))
+    assertTrue(html.contains("daily-flash-anim"))
+    assertTrue(html.contains("screen-flash-overlay"))
+    assertTrue(html.contains("monitorDailyResetCycle"))
+    assertTrue(html.contains("startDailyResetWatcher"))
   }
 
   @Test
@@ -71,7 +85,7 @@ class ExampleRobolectricTest {
     assertFalse(malformed.isValid)
     assertEquals(1L, malformed.level)
     assertEquals("warrior", malformed.playerClass)
-    assertEquals(10L, malformed.npcFactionTrust)
+    assertEquals(0L, malformed.npcFactionTrust)
   }
 
   @Test
