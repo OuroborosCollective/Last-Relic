@@ -719,5 +719,92 @@ class ExampleUnitTest {
     val guaranteedRar = GameRuntimeValidator.rollMonsterLootRarity(diffFactor = 1.0, playerLevel = 1, rollPct = 50.0, guaranteeDrop = true)
     assertTrue("Guaranteed drop must return valid rarity 0..4", guaranteedRar in 0..4)
   }
+
+  @Test
+  fun `Diablo 3 rule and world logic with classes items affixes dungeons and NPC speech log are integrated`() {
+    val htmlFile = java.io.File("src/main/assets/index.html").let {
+      if (it.exists()) it else java.io.File("app/src/main/assets/index.html")
+    }
+    assertTrue("index.html must exist", htmlFile.exists())
+    val content = htmlFile.readText()
+
+    // 1. Diablo 3 Sanctuary Acts I-V & Nephalem Rifts dungeon themes
+    assertTrue(content.contains("Akt I: Kathedrale von Neu-Tristram"))
+    assertTrue(content.contains("Akt II: Archive von Zoltun Kull"))
+    assertTrue(content.contains("Akt III: Arreatkrater & Bastionsfestung"))
+    assertTrue(content.contains("Akt IV: Die Silberne Spitze (Hohe Himmel)"))
+    assertTrue(content.contains("Akt V: Pandämonium-Festung (Westmark)"))
+    assertTrue(content.contains("Nephalemportal: Sanktuario-Riss"))
+    assertTrue(content.contains("id=\"d3RiftBarWrap\""))
+
+    // 2. Diablo 3 Difficulty Tiers, Paragon, Massacre Streak & Nephalem Glory
+    assertTrue(content.contains("const D3_DIFFICULTIES=["))
+    assertTrue(content.contains("torment16"))
+    assertTrue(content.contains("paragonLvl"))
+    assertTrue(content.contains("id=\"d3MassacreBadge\""))
+    assertTrue(content.contains("id=\"d3GloryBadge\""))
+
+    // 3. Diablo 3 Classes, Sets, Loot 2.0 Affixes, Ancient/Primal items, Gems & Kanai's Cube
+    assertTrue(content.contains("const D3_CLASS_META={"))
+    assertTrue(content.contains("wastes:"))
+    assertTrue(content.contains("akkhan:"))
+    assertTrue(content.contains("unhallowed:"))
+    assertTrue(content.contains("talrasha:"))
+    assertTrue(content.contains("tragoul:"))
+    assertTrue(content.contains("const D3_LEGENDARY_POWERS=["))
+    assertTrue(content.contains("const D3_GEMS=["))
+    assertTrue(content.contains("id=\"vtCube\""))
+    assertTrue(content.contains("function kanaiExtractPower("))
+
+    // 4. Diablo 3 Champion/Rare Elite Affixes & Treasure Goblin (Kobalos Chrysophoros)
+    assertTrue(content.contains("const D3_ELITE_AFFIXES=["))
+    assertTrue(content.contains("goblin:{n:'Schatzgoblin · Κόβαλος Χρυσοφόρος'"))
+
+    // 5. #npcLayer2D Floating Speech Notification & Scrollable History Log
+    assertTrue(content.contains("id=\"npcSpeechFloat\""))
+    assertTrue(content.contains("id=\"npcSpeechDrawer\""))
+    assertTrue(content.contains("id=\"npcInteractionLogBox\""))
+    assertTrue(content.contains("function recordNpcSpeech("))
+
+    // 6. Ancient Greek (Altgriechisch) Nomenclature for Objects, Regions, Cults/Orders, Persons, Races/Species & Affixes
+    assertTrue(content.contains("Ξίφος Ὀρειχάλκου"))
+    assertTrue(content.contains("Σφῦρα Κεραυνοῦ"))
+    assertTrue(content.contains("Κράνος Κορίνθιον"))
+    assertTrue(content.contains("Ἔρεβος"))
+    assertTrue(content.contains("Τάρταρος & Πυριφλεγέθων"))
+    assertTrue(content.contains("Ὄλυμπος"))
+    assertTrue(content.contains("Πόλις Ἐλευσῖνος"))
+    assertTrue(content.contains("Ὁπλίτης Γίγας"))
+    assertTrue(content.contains("Νεκρομάντης Ὀρφικός"))
+    assertTrue(content.contains("Εἴδωλον Νεκρόν"))
+    assertTrue(content.contains("Θάνατος Κοσμοκράτωρ"))
+    assertTrue(content.contains("Καλλίας"))
+    assertTrue(content.contains("Ἱεροφάντης Ὀλύμπιος"))
+    assertTrue(content.contains("Ὀλέθρου"))
+    assertTrue(content.contains("Αἰθερόδετος"))
+
+    // 7. #npcLayer2D 'Expand' Button in Speech History Log Pill & Part-for-Part Old Greek -> Normal ABC Normalization
+    assertTrue(content.contains("id=\"npcSpeechLogExpand\""))
+    assertTrue(content.contains("class=\"npc-speech-expand-btn\">Expand</button>"))
+    assertTrue(content.contains("function toggleNpcSpeechDrawer("))
+    assertTrue(content.contains("dr.classList.toggle('open',npcSpeechDrawerOpen)"))
+    assertTrue(content.contains("const GREEK_WORD_PARTS_LEXICON=["))
+    assertTrue(content.contains("function formatGreekWordPartByPartText("))
+    assertTrue(content.contains("function normalizeGreekTextPartByPart("))
+    assertTrue(content.contains("function unlockRandomGreekWordPart("))
+    assertTrue(content.contains("id=\"npcGreekDecoderBox\""))
+    assertTrue(content.contains("id=\"btnUnlockGreekWordPart\""))
+
+    // 8. #npcLayer2D .npc-speech-drawer Search Input Filter & Time-Elapsed Indicators
+    assertTrue(content.contains("id=\"npcSpeechSearchInput\""))
+    assertTrue(content.contains("class=\"npc-speech-search-input\""))
+    assertTrue(content.contains("id=\"npcSpeechSearchClear\""))
+    assertTrue(content.contains("function filterNpcSpeechLog("))
+    assertTrue(content.contains("function formatNpcSpeechTimeElapsed("))
+    assertTrue(content.contains("function updateNpcSpeechElapsedLabels("))
+    assertTrue(content.contains("class=\"npc-speech-elapsed\""))
+  }
 }
+
+
 

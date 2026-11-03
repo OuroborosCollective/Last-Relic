@@ -28,6 +28,21 @@ html,body{margin:0;height:100%;overflow:hidden;background:#05060a;color:#e8ecf4;
 .bar{position:relative;width:100%;height:18px;flex-shrink:0;background:rgba(6,9,16,.75);border:1px solid rgba(255,255,255,.28);border-radius:6px;overflow:hidden;margin-bottom:0;box-shadow:0 2px 8px rgba(0,0,0,.5)}
 .bar div{height:100%;width:100%;background:linear-gradient(90deg,#ff5247,#b8251e);transition:width .12s;box-shadow:0 0 10px rgba(255,82,71,.6)}
 .bar.xp{height:9px}.bar.xp div{background:linear-gradient(90deg,#4fd1ff,#2563eb);box-shadow:0 0 8px rgba(79,209,255,.6)}
+.bar.rift{height:12px;border-color:rgba(199,125,255,.65);background:rgba(14,8,26,.85);box-shadow:0 0 10px rgba(199,125,255,.3)}
+.bar.rift div{background:linear-gradient(90deg,#9333ea,#c77dff,#ffd54a);box-shadow:0 0 10px rgba(199,125,255,.85);transition:width .2s ease-out}
+.bar.rift span{line-height:12px;font-size:9.5px;font-weight:900;color:#f5e8ff;letter-spacing:.3px;text-shadow:0 1px 2px #000}
+.d3-hud-badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.d3-pill{display:none;align-items:center;gap:4px;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:800;background:rgba(20,12,34,.88);border:1px solid #c77dff;color:#f3e8ff;box-shadow:0 0 8px rgba(199,125,255,.35)}
+.d3-pill.active{display:inline-flex}
+.d3-pill.massacre{border-color:#ff6a3d;background:linear-gradient(90deg,rgba(180,30,10,.88),rgba(90,15,5,.9));color:#ffd54a;box-shadow:0 0 12px rgba(255,106,61,.55)}
+.d3-pill.glory{border-color:#ffd54a;background:rgba(60,45,10,.88);color:#fff3b0}
+.leg-pwr{color:#ff9a3d;font-weight:700;font-size:11.5px;margin-top:4px;padding:4px 6px;background:rgba(255,138,43,.1);border-left:2.5px solid #ff8a2b;border-radius:4px}
+.d3-set-txt{color:#4dff88;font-size:11px;margin-top:3px;padding:3px 6px;background:rgba(77,255,136,.08);border-left:2.5px solid #4dff88;border-radius:4px}
+.d3-gem-txt{color:#e0aaff;font-size:11px;font-weight:700;margin-top:2px}
+.kanai-box{background:rgba(22,15,38,.92);border:1.5px solid rgba(199,125,255,.5);border-radius:10px;padding:10px;margin:8px 0;text-align:left;font-size:12px}
+.kanai-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.kanai-slot{background:rgba(8,6,16,.85);border:1px solid rgba(199,125,255,.4);border-radius:7px;padding:6px;text-align:center;font-size:10.5px}
+.kanai-slot b{display:block;color:#ffd54a;font-size:11px;margin-bottom:2px}
 .minion-hud-wrap{display:none;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:4px;width:100%;height:44px;min-height:44px;max-height:44px;margin-top:2px;flex-shrink:0;box-sizing:border-box; contain:layout style}
 .bar.minion{height:15px;min-height:15px;max-height:15px;border-color:rgba(0,255,204,.65);background:rgba(4,16,18,.85);box-shadow:0 0 12px rgba(0,255,204,.35),inset 0 0 6px rgba(0,0,0,.8);transition:transform .2s ease,box-shadow .25s ease,border-color .25s ease}
 .bar.minion div{background:linear-gradient(90deg,#00ffaa,#00d2ff,#c77dff);box-shadow:0 0 12px rgba(0,255,170,.85);transition:width .18s cubic-bezier(.22,1,.36,1),background .25s ease,box-shadow .25s ease}
@@ -444,6 +459,284 @@ table.lb .you{background:rgba(79,209,255,.14)}
   background: rgba(255, 154, 61, 0.12);
 }
 
+/* #npcLayer2D Floating Speech Notification & Scrollable Mini History Log */
+#npcLayer2D .npc-speech-feed-wrap {
+  position: absolute;
+  left: max(8px, env(safe-area-inset-left));
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 84px);
+  width: min(86vw, 290px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 9;
+}
+#npcLayer2D .npc-speech-float {
+  pointer-events: auto;
+  cursor: pointer;
+  width: 100%;
+  background: rgba(8, 13, 24, 0.92);
+  backdrop-filter: blur(6px);
+  border: 1.5px solid rgba(79, 209, 255, 0.65);
+  border-left: 4px solid #4fd1ff;
+  border-radius: 10px;
+  padding: 6px 9px;
+  color: #f0f5ff;
+  font-size: 11px;
+  line-height: 1.32;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.78);
+  opacity: 0;
+  transform: translateY(8px) scale(0.97);
+  transition: opacity 0.22s ease, transform 0.22s ease, border-color 0.2s ease;
+  display: none;
+}
+#npcLayer2D .npc-speech-float.visible {
+  display: block;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+#npcLayer2D .npc-speech-float.positive { border-color: rgba(109, 255, 155, 0.65); border-left-color: #6dff9b; }
+#npcLayer2D .npc-speech-float.danger { border-color: rgba(255, 213, 74, 0.78); border-left-color: #ffd54a; }
+#npcLayer2D .npc-speech-float.negative { border-color: rgba(255, 74, 74, 0.82); border-left-color: #ff4a4a; }
+#npcLayer2D .npc-speech-float.camp { border-color: rgba(255, 154, 61, 0.78); border-left-color: #ff9a3d; }
+#npcLayer2D .npc-speech-float-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 800;
+  font-size: 10.5px;
+  margin-bottom: 2px;
+  color: #9ec7ff;
+}
+#npcLayer2D .npc-speech-float-text {
+  color: #ffffff;
+  font-style: italic;
+  word-break: break-word;
+}
+#npcLayer2D .npc-speech-log-bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  pointer-events: auto;
+}
+#npcLayer2D .npc-speech-log-pill {
+  pointer-events: auto;
+  cursor: pointer;
+  background: rgba(12, 19, 34, 0.88);
+  border: 1px solid rgba(79, 209, 255, 0.45);
+  color: #cfe4ff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 10.5px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
+}
+#npcLayer2D .npc-speech-log-pill:hover {
+  border-color: #4fd1ff;
+  color: #fff;
+}
+#npcLayer2D .npc-speech-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(79, 209, 255, 0.18);
+  border: 1px solid rgba(79, 209, 255, 0.55);
+  color: #6dff9b;
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.15s ease;
+}
+#npcLayer2D .npc-speech-expand-btn:hover {
+  background: rgba(109, 255, 155, 0.25);
+  border-color: #6dff9b;
+  color: #ffffff;
+}
+#npcLayer2D .npc-speech-drawer {
+  pointer-events: auto;
+  width: 100%;
+  background: rgba(8, 12, 22, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(79, 209, 255, 0.45);
+  border-radius: 10px;
+  padding: 7px 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+  display: none;
+}
+#npcLayer2D .npc-speech-drawer.open {
+  display: block;
+}
+#npcLayer2D .npc-speech-drawer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #9ec7ff;
+  margin-bottom: 5px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+#npcLayer2D .npc-greek-decoder-box {
+  background: rgba(18, 26, 44, 0.9);
+  border: 1px solid rgba(199, 125, 255, 0.42);
+  border-radius: 7px;
+  padding: 5px 6px;
+  margin-bottom: 6px;
+  font-size: 9.5px;
+  color: #e8ecf4;
+}
+#npcLayer2D .npc-greek-decoder-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+#npcLayer2D .npc-greek-unlock-btn {
+  background: linear-gradient(90deg, rgba(199, 125, 255, 0.28), rgba(79, 209, 255, 0.28));
+  border: 1px solid rgba(199, 125, 255, 0.65);
+  color: #ffd54a;
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+#npcLayer2D .npc-greek-unlock-btn:hover {
+  border-color: #ffd54a;
+  color: #fff;
+}
+#npcLayer2D .npc-greek-part-abc {
+  color: #6dff9b;
+  font-weight: 800;
+  background: rgba(109, 255, 155, 0.12);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+#npcLayer2D .npc-greek-part-raw {
+  color: #c77dff;
+  opacity: 0.9;
+  padding: 0 1px;
+}
+#npcLayer2D .npc-greek-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  max-height: 52px;
+  overflow-y: auto;
+  margin-top: 3px;
+}
+#npcLayer2D .npc-greek-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-size: 8.5px;
+  line-height: 1.25;
+}
+#npcLayer2D .npc-speech-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+#npcLayer2D .npc-speech-search-input {
+  flex: 1 1 auto;
+  width: 100%;
+  background: rgba(10, 16, 28, 0.92);
+  border: 1px solid rgba(79, 209, 255, 0.45);
+  border-radius: 6px;
+  padding: 4px 7px;
+  font-size: 10px;
+  color: #e8ecf4;
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+#npcLayer2D .npc-speech-search-input:focus {
+  border-color: #4fd1ff;
+  box-shadow: 0 0 6px rgba(79, 209, 255, 0.35);
+}
+#npcLayer2D .npc-speech-search-input::placeholder {
+  color: rgba(207, 214, 224, 0.55);
+}
+#npcLayer2D .npc-speech-search-clear {
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #cfd6e0;
+  border-radius: 5px;
+  padding: 3px 6px;
+  font-size: 9.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+#npcLayer2D .npc-speech-search-clear:hover {
+  border-color: #4fd1ff;
+  color: #ffffff;
+}
+#npcLayer2D .npc-speech-feed-list {
+  max-height: 185px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 2px;
+}
+.npc-speech-entry {
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 2.5px solid #4fd1ff;
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 10px;
+  line-height: 1.3;
+  text-align: left;
+  color: #e8ecf4;
+  cursor: pointer;
+}
+.npc-speech-entry.positive { border-left-color: #6dff9b; background: rgba(109, 255, 155, 0.06); }
+.npc-speech-entry.danger { border-left-color: #ffd54a; background: rgba(255, 213, 74, 0.08); }
+.npc-speech-entry.negative { border-left-color: #ff4a4a; background: rgba(255, 74, 74, 0.08); }
+.npc-speech-entry.camp { border-left-color: #ff9a3d; background: rgba(255, 154, 61, 0.08); }
+.npc-speech-entry-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #9ec7ff;
+  margin-bottom: 1px;
+}
+.npc-speech-elapsed {
+  display: inline-block;
+  background: rgba(79, 209, 255, 0.14);
+  border: 1px solid rgba(79, 209, 255, 0.35);
+  color: #9ec7ff;
+  border-radius: 4px;
+  padding: 0.5px 4px;
+  font-size: 8.5px;
+  font-weight: 700;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+.npc-speech-entry-msg {
+  color: #f5f8ff;
+  font-style: italic;
+}
+
 /* NPC Relations Modal & Faction Trust Progress Bar */
 #npcRelationsOvl {
   position: fixed;
@@ -620,6 +913,43 @@ table.lb .you{background:rgba(79,209,255,.14)}
 .mem-node.conflict { border-color: rgba(255, 74, 74, 0.5); color: #ff8a8a; }
 .mem-node.kills { border-color: rgba(79, 209, 255, 0.55); color: #4fd1ff; background: rgba(79, 209, 255, 0.12); font-weight: 700; }
 .mem-node.rescues { border-color: rgba(109, 255, 155, 0.6); color: #6dff9b; background: rgba(109, 255, 155, 0.12); font-weight: 700; }
+.adv-rel-last-quote {
+  margin-top: 4px;
+  padding: 3px 6px;
+  background: rgba(79, 209, 255, 0.07);
+  border-left: 2px solid #4fd1ff;
+  border-radius: 4px;
+  font-size: 10px;
+  font-style: italic;
+  color: #dceaff;
+}
+.npc-interaction-log-box {
+  background: rgba(13, 19, 33, 0.96);
+  border: 1.5px solid rgba(158, 199, 255, 0.38);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  text-align: left;
+}
+.npc-interaction-log-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #9ec7ff;
+  margin-bottom: 7px;
+}
+.npc-speech-history-list {
+  max-height: 165px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-right: 4px;
+}
 .battle-stats-box {
   background: rgba(14, 21, 36, 0.96);
   border: 1.5px solid rgba(79, 209, 255, 0.45);
@@ -937,8 +1267,13 @@ table.lb .you{background:rgba(79,209,255,.14)}
   <div class="hud-bars">
    <div class="bar"><div id="hpf"></div><span id="hpt"></span></div>
    <div class="bar xp" id="xpBar"><div id="xpf"></div></div>
+   <div class="bar rift" id="d3RiftBarWrap"><div id="riftf" style="width:0%"></div><span id="riftt">🌀 Nephalemportal 0%</span></div>
   </div>
   <div id="inf"></div>
+  <div class="d3-hud-badges" id="d3HudBadges">
+   <div class="d3-pill massacre" id="d3MassacreBadge">🔥 Massaker: 0</div>
+   <div class="d3-pill glory" id="d3GloryBadge">☀️ Nephalem-Ruhm</div>
+  </div>
   <div id="minionHud" class="minion-hud-wrap">
    <div class="bar minion" id="minb"><div id="minf"></div><span id="mint"></span></div>
    <div class="minion-badge" id="minionBadge"></div>
@@ -1003,6 +1338,14 @@ table.lb .you{background:rgba(79,209,255,.14)}
     <div class="shake-btn" data-shake="1.5">Stark (150%)</div>
    </div>
   </div>
+  <div class="pause-sec" id="pauseD3Box">
+   <div class="pause-sec-title">
+    <span id="d3DiffHeader">🔥 Sanktuario Qual-Stufe (Diablo III Regelwerk)</span>
+    <span id="d3DiffValLbl" style="color:#ffd54a">Normal</span>
+   </div>
+   <div class="shake-opts" id="d3DiffOpts" style="grid-template-columns:repeat(3,1fr)"></div>
+   <div id="d3PauseSummary" style="font-size:10.5px;color:#9ec7ff;margin-top:6px;line-height:1.35"></div>
+  </div>
   <div class="btnrow">
    <button id="btnResume">Weiterspielen</button>
    <button class="secondary" id="btnSkillTree" style="border-color:#4fd1ff;background:rgba(79,209,255,0.12)">🌳 Klassen-Skillbaum &amp; Angriffe</button>
@@ -1042,6 +1385,13 @@ table.lb .you{background:rgba(79,209,255,.14)}
   </div>
   <div style="font-weight:800;font-size:13px;text-align:left;color:#ffd54a;margin-bottom:6px">📜 Gefährten &amp; Gedächtnis-Knoten (Memory Nodes):</div>
   <div class="adv-relations-list" id="advRelationsList"></div>
+  <div class="npc-interaction-log-box" id="npcInteractionLogBox">
+   <div class="npc-interaction-log-head">
+    <span id="npcSpeechHistoryTitle">💬 Letzte NPC-Interaktionen &amp; Dialog-Verlauf</span>
+    <span class="battle-stats-totals" id="npcSpeechHistoryCount">0 Einträge</span>
+   </div>
+   <div class="npc-speech-history-list" id="npcSpeechHistoryList"></div>
+  </div>
   <button class="lb-close" id="btnCloseRelations" style="margin-top:6px">Schließen</button>
  </div>
 </div>
@@ -1096,15 +1446,16 @@ table.lb .you{background:rgba(79,209,255,.14)}
 </div>
 <div id="villageOvl">
  <div class="village-card">
-  <h2 id="villageTitle">Das Dorf</h2>
-  <div id="villageGold">Gold: 0</div>
+  <h2 id="villageTitle">Πόλις Ἐλευσῖνος · Polis Eleusinos (Mysterien-Zuflucht)</h2>
+  <div id="villageGold">Χρυσός (Gold): 0</div>
   <div class="village-tabs">
-   <div class="village-tab active" id="vtNPCs">Bewohner</div>
-   <div class="village-tab" id="vtShop">Laden</div>
-   <div class="village-tab" id="vtQuests">Aufträge</div>
+   <div class="village-tab active" id="vtNPCs">Μύσται (Mystai)</div>
+   <div class="village-tab" id="vtShop">Χαλκεῖον &amp; Κάπηλος</div>
+   <div class="village-tab" id="vtQuests">Ἄθλοι (Athloi)</div>
+   <div class="village-tab" id="vtCube">🔮 Κύβος τοῦ Καναΐ</div>
   </div>
   <div id="vtContent"></div>
-  <button class="village-close" id="villageClose">Dorf verlassen</button>
+  <button class="village-close" id="villageClose">Πόλιν ἐκλείπειν (Verlassen)</button>
  </div>
 </div>
 <div id="ovl"></div>
@@ -1265,34 +1616,34 @@ de:{
  ctrl_pc:'Steuerung: Linker Stick bewegen · Rechter Stick zielen & schießen · Buttons unten für Dash, Nova, Suche & Beutel',
  ctrl_touch:'Play Games Cloud-Speicher & Globale Top-30 Rangliste sind aktiv!',
  tip:'Tipp: Risse in Wänden mit schwachem Leuchten verraten Geheimgänge – schieß drauf oder drück 🔍 in der Nähe.',
- slot_weapon:'Waffe',slot_helm:'Helm',slot_chest:'Rüstung',slot_boots:'Stiefel',slot_relic:'Relikt',
- rarity_common:'Gewöhnlich',rarity_magic:'Magisch',rarity_rare:'Selten',rarity_epic:'Episch',rarity_legendary:'Legendär',
- affix_dmgP:'% Schaden',affix_rateP:'% Angriffstempo',affix_crit:'% Krit-Chance',affix_critD:'% Krit-Schaden',affix_hp:' Leben',affix_regen:' Leben/Sek.',affix_speedP:'% Lauftempo',affix_armor:' Rüstung',affix_lifeKill:' Leben pro Kill',affix_proj:' Projektil',affix_pierce:' Durchschlag',affix_mf:'% Beutefund',affix_xpP:'% Erfahrung',affix_novaP:'% Nova-Schaden',affix_dashCd:'% kürzere Ausweich-Pause',
- affix_n_Zerstörung:'Zerstörung',affix_n_Raserei:'Raserei',affix_n_Präzision:'Präzision',affix_n_Grausamkeit:'Grausamkeit',affix_n_Zähigkeit:'Zähigkeit',affix_n_Erneuerung:'Erneuerung',affix_n_Eile:'Eile',affix_n_Festung:'Festung',affix_n_Gier:'Gier',affix_n_Vielfalt:'Vielfalt',affix_n_Lanze:'Lanze',affix_n_Fortuna:'Fortuna',affix_n_Weisheit:'Weisheit',affix_n_Supernova:'Supernova',affix_n_Wendigkeit:'Wendigkeit',
+ slot_weapon:'Ὅπλον (Waffe)',slot_helm:'Κράνος (Helm)',slot_chest:'Θώραξ (Rüstung)',slot_boots:'Κνημῖδες (Stiefel)',slot_relic:'Κειμήλιον (Relikt)',
+ rarity_common:'Κοινόν (Gewöhnlich)',rarity_magic:'Μαγικόν (Magisch)',rarity_rare:'Σπάνιον (Selten)',rarity_epic:'Ἡρωικόν (Episch)',rarity_legendary:'Μυθικόν (Legendär)',
+ affix_dmgP:'% Βλάβη (Schaden)',affix_rateP:'% Ταχυχειρία (Angriffstempo)',affix_crit:'% Καιρία Τύχη (Krit-Chance)',affix_critD:'% Καιρία Βλάβη (Krit-Schaden)',affix_hp:' Βίος (Leben)',affix_regen:' Βίος/Sek.',affix_speedP:'% Ταχύτης (Lauftempo)',affix_armor:' Πανοπλία (Rüstung)',affix_lifeKill:' Βίος pro Kill',affix_proj:' Βέλος (Projektil)',affix_pierce:' Διάτρησις (Durchschlag)',affix_mf:'% Εὕρεσις (Beutefund)',affix_xpP:'% Εμπειρία (Erfahrung)',affix_novaP:'% Ἐκπύρωσις (Nova-Schaden)',affix_dashCd:'% Εὐστροφία (Ausweich-Pause)',
+ affix_n_Zerstörung:'Ὄλεθρος (Olethros)',affix_n_Raserei:'Μανία (Mania)',affix_n_Präzision:'Ἀκρίβεια (Akribeia)',affix_n_Grausamkeit:'Ὠμότης (Omotes)',affix_n_Zähigkeit:'Καρτερία (Karteria)',affix_n_Erneuerung:'Παλιγγενεσία (Palingenesia)',affix_n_Eile:'Ταχύτης (Tachytes)',affix_n_Festung:'Ἀκρόπολις (Akropolis)',affix_n_Gier:'Πλεονεξία (Pleonexia)',affix_n_Vielfalt:'Πολυβολία (Polybolia)',affix_n_Lanze:'Διάτρησις (Diatresis)',affix_n_Fortuna:'Τύχη (Tyche)',affix_n_Weisheit:'Σοφία (Sophia)',affix_n_Supernova:'Ἐκπύρωσις (Ekpyrosis)',affix_n_Wendigkeit:'Εὐστροφία (Eustrophia)',
  pause:'Pause', resume:'Weiterspielen', restart:'Run neu starten', save:'Spielstand speichern', load:'Spielstand laden',
  main_menu:'Hauptmenü', leaderboard:'Rangliste', top30:'Top 30', local:'Lokal', global:'Global (Cloud)',
  lb_name:'Name', lb_level:'Level', lb_floor:'Etage', lb_kills:'Kills', lb_items:'Items', lb_date:'Datum', lb_score:'Score',
  lb_note_local:'Deine besten Runs auf diesem Gerät.', lb_note_global:'Globale Google Play Games & Cloud Bestenliste (Top 30).',
  save_ok:'Spielstand in Cloud & Lokal gespeichert!', load_ok:'Cloud-Spielstand geladen!', no_save:'Kein Spielstand gefunden.',
  lb_submit_name:'Dein Name für die Bestenliste:', lb_submit:'Speichern',
- meta:'Meta-Upgrades', meta_shards:'Relikt-Splitter: {0}', meta_dmg:'Waffen-Schaden', meta_hp:'Max. Leben', meta_inv:'Inventarplätze',
- meta_cost:'Kosten: {0}', meta_level:'Stufe {0}/{1}', meta_max:'Maximiert', meta_gold:'Gold: {0}', meta_inv_upg:'Inventar-Slot (+5)',
- classes:'Helden-Klassen', class_warrior:'Krieger', class_rogue:'Schurke', class_mage:'Magier', class_tank:'Paladin', class_necromancer:'Nekromant',
- class_desc_warrior:'Reiner Nahkämpfer. Startet mit Runen-Kriegsklinge (Starker Schwertstreich).', class_desc_rogue:'Schneller, höhere DPS, weniger Leben.', class_desc_mage:'Stärkere Nova, startet mit Äther-Stab.', class_desc_tank:'Heiliger Nahkämpfer mit Streitkolben und Schild. Hohe Zähigkeit, 2,65m Nahkampf-Schwung.',
- class_desc_necromant:'Beschwört Skelett-Minions. Startet mit Knochenstab.',
+ meta:'Meta-Upgrades', meta_shards:'Θραύσματα (Relikt-Splitter): {0}', meta_dmg:'Ὅπλου Κράτος (Waffen-Schaden)', meta_hp:'Μέγιστος Βίος (Max. Leben)', meta_inv:'Θύλακος (Inventarplätze)',
+ meta_cost:'Kosten: {0}', meta_level:'Stufe {0}/{1}', meta_max:'Maximiert', meta_gold:'Χρυσός (Gold): {0}', meta_inv_upg:'Θύλακος-Slot (+5)',
+ classes:'Γένη τῶν Ημιθέων (Hemitheoi · Rassen & Kulte)', class_warrior:'Ὁπλίτης Γίγας (Hoplites · Barbar)', class_rogue:'Τοξότης Νυκτός (Toxotes · Dämonenjäger)', class_mage:'Θεουργὸς Αἰθέρος (Theourgos · Zauberer)', class_tank:'Ἱεροφάντης Ταξίαρχος (Hierophantes · Kreuzritter)', class_necromancer:'Νεκρομάντης Ὀρφικός (Nekromantes · Totenbeschwörer)',
+ class_desc_warrior:'Γένος Γιγάντων (Θυμός & Ῥώμη). Archaischer Hoplit im Nahkampf mit Ξίφος Ὀρειχάλκου (Kriegsklinge), Στρόβιλος & Μανία Ἄρεως.', class_desc_rogue:'Θίασος Ἀρτέμιδος (Νέμεσις & Σωφροσύνη). Nacht-Toxotes mit Γαστραφέτης, Πολυβολία & Σκιᾶς Ἅλμα.', class_desc_mage:'Σύνοδος Θεουργῶν (Αἰθήρ & Νοῦς). Elementarer Theourgos mit Ἐκπύρωσις, Μετέωρα τοῦ Ἑρμοῦ & Αἰθέριος Ἀρχών.', class_desc_tank:'Τάγμα Ἐλευσίνιον (Μῆνις & Κράτος). Geweihter Hierophant mit Σφῦρα Κεραυνοῦ (Streitkolben), Δίκη Διός & Αἰγίς (2,65m).',
+ class_desc_necromant:'Ὀρφικοὶ Μύσται (Ψυχή & Σοφία). Gebietet über Σκελετοὶ Εἴδωλα (Minions), Σκῆπτρον Ὀστέινον & Αἱματικὴ Τελετή.',
  achievements:'Erfolge', ach_first_boss:'Erster Boss besiegt', ach_floor10:'Ebene 10 erreicht', ach_secret5:'5 Geheimgänge gefunden',
- ach_level20:'Level 20 erreicht', ach_kills100:'100 Kills', ach_necromant:'Nekromant: 5 Minions gleichzeitig',
+ ach_level20:'Level 20 erreicht', ach_kills100:'100 Kills', ach_necromant:'Νεκρομάντης: 5 Εἴδωλα gleichzeitig',
  run_over:'Run beendet', score:'Score',
- village:'Dorf', village_leave:'Dorf verlassen', village_hire:'Anheuern ({0} Gold)', village_quest:'Auftrag: {0} ({1} {2})',
- village_reward:'Belohnung: {0} Gold + {1} XP', minions:'Minions: {0}/{1}', summon_cd:'Beschwörung bereit',
- cemetery:'Der Friedhof', raid_boss:'Raid-Boss erscheint!', raid_defeated:'Raid-Boss besiegt! Große Beute!',
- shop:'Laden', shop_buy:'Kaufen', shop_owned:'Besitzt', shop_weapon:'Waffe', shop_potion:'Trank', shop_relic:'Relikt',
- quest_complete:'Auftrag abgeschlossen!', quest_reward_item:'Item: {0}', quest_reward_shards:'{0} Relikt-Splitter',
- quest_reward_buff:'Segen {0}s',
- as_title:'⚙️ Auto-Zerlegen Filter (Beim Aufheben → XP)',
- as_scrap_bag:'Gefilterte im Beutel zerlegen (+{0} XP)',
- ql_title:'📜 Dorf-Aufträge (Quest-Log)',
- ql_new:'🔄 Neue Aufträge',
+ village:'Πόλις Ἐλευσῖνος (Polis Eleusinos)', village_leave:'Πόλιν ἐκλείπειν (Verlassen)', village_hire:'Σύμμαχον μισθοῦν ({0} Gold)', village_quest:'Ἄθλος: {0} ({1} {2})',
+ village_reward:'Belohnung: {0} Gold + {1} XP', minions:'Εἴδωλα (Minions): {0}/{1}', summon_cd:'Ἐπίκλησις bereit',
+ cemetery:'Νεκρόπολις τοῦ Ἀχέροντος (Krypta)', raid_boss:'Θάνατος Κοσμοκράτωρ erscheint!', raid_defeated:'Κοσμοκράτωρ besiegt! Ὀρφικὰ Κειμήλια!',
+ shop:'Χαλκεῖον τῶν Τελχίνων', shop_buy:'Kaufen', shop_owned:'Besitzt', shop_weapon:'Ὅπλον', shop_potion:'Φάρμακον', shop_relic:'Κειμήλιον',
+ quest_complete:'Ἄθλος abgeschlossen!', quest_reward_item:'Κειμήλιον: {0}', quest_reward_shards:'{0} Αἱματόλιθοι (Splitter)',
+ quest_reward_buff:'Εὐλογία τῶν Ημιθέων {0}s',
+ as_title:'⚙️ Χαλκεὺς Ἥφαιστος: Auto-Zerlegen Filter (Beim Aufheben → XP)',
+ as_scrap_bag:'Gefilterte im Θύλακος zerlegen (+{0} XP)',
+ ql_title:'📜 Ἄθλοι τῆς Δίκης (Mysterien-Aufträge)',
+ ql_new:'🔄 Neue Ἄθλοι',
  ql_hunt:'Besiege {0}× {1}',
  ql_done:'✓ Abgeschlossen',
  ql_active:'In Arbeit',
@@ -1339,34 +1690,34 @@ en:{
  ctrl_pc:'Controls: Left thumb move · Right thumb aim & shoot · Buttons below for Dash, Nova, Search & Bag',
  ctrl_touch:'Play Games Cloud Save & Global Top-30 Leaderboard active!',
  tip:'Tip: Wall cracks with faint glow reveal secret passages – shoot them or press 🔍 nearby.',
- slot_weapon:'Weapon',slot_helm:'Helmet',slot_chest:'Armor',slot_boots:'Boots',slot_relic:'Relic',
- rarity_common:'Common',rarity_magic:'Magic',rarity_rare:'Rare',rarity_epic:'Epic',rarity_legendary:'Legendary',
- affix_dmgP:'% Damage',affix_rateP:'% Attack Speed',affix_crit:'% Crit Chance',affix_critD:'% Crit Dmg',affix_hp:' HP',affix_regen:' HP/s',affix_speedP:'% Move Speed',affix_armor:' Armor',affix_lifeKill:' HP per Kill',affix_proj:' Projectile',affix_pierce:' Pierce',affix_mf:'% Loot Find',affix_xpP:'% XP',affix_novaP:'% Nova Dmg',affix_dashCd:'% shorter Dash Cooldown',
- affix_n_Zerstörung:'Destruction',affix_n_Raserei:'Frenzy',affix_n_Präzision:'Precision',affix_n_Grausamkeit:'Cruelty',affix_n_Zähigkeit:'Toughness',affix_n_Erneuerung:'Renewal',affix_n_Eile:'Haste',affix_n_Festung:'Fortress',affix_n_Gier:'Greed',affix_n_Vielfalt:'Multishot',affix_n_Lanze:'Lance',affix_n_Fortuna:'Fortuna',affix_n_Weisheit:'Wisdom',affix_n_Supernova:'Supernova',affix_n_Wendigkeit:'Agility',
+ slot_weapon:'Ὅπλον (Weapon)',slot_helm:'Κράνος (Helmet)',slot_chest:'Θώραξ (Armor)',slot_boots:'Κνημῖδες (Boots)',slot_relic:'Κειμήλιον (Relic)',
+ rarity_common:'Κοινόν (Common)',rarity_magic:'Μαγικόν (Magic)',rarity_rare:'Σπάνιον (Rare)',rarity_epic:'Ἡρωικόν (Epic)',rarity_legendary:'Μυθικόν (Legendary)',
+ affix_dmgP:'% Βλάβη (Damage)',affix_rateP:'% Ταχυχειρία (Attack Speed)',affix_crit:'% Καιρία Τύχη (Crit Chance)',affix_critD:'% Καιρία Βλάβη (Crit Dmg)',affix_hp:' Βίος (HP)',affix_regen:' Βίος/s',affix_speedP:'% Ταχύτης (Move Speed)',affix_armor:' Πανοπλία (Armor)',affix_lifeKill:' Βίος per Kill',affix_proj:' Βέλος (Projectile)',affix_pierce:' Διάτρησις (Pierce)',affix_mf:'% Εὕρεσις (Loot Find)',affix_xpP:'% Εμπειρία (XP)',affix_novaP:'% Ἐκπύρωσις (Nova Dmg)',affix_dashCd:'% Εὐστροφία (Dash Cooldown)',
+ affix_n_Zerstörung:'Ὄλεθρος (Olethros)',affix_n_Raserei:'Μανία (Mania)',affix_n_Präzision:'Ἀκρίβεια (Akribeia)',affix_n_Grausamkeit:'Ὠμότης (Omotes)',affix_n_Zähigkeit:'Καρτερία (Karteria)',affix_n_Erneuerung:'Παλιγγενεσία (Palingenesia)',affix_n_Eile:'Ταχύτης (Tachytes)',affix_n_Festung:'Ἀκρόπολις (Akropolis)',affix_n_Gier:'Πλεονεξία (Pleonexia)',affix_n_Vielfalt:'Πολυβολία (Polybolia)',affix_n_Lanze:'Διάτρησις (Diatresis)',affix_n_Fortuna:'Τύχη (Tyche)',affix_n_Weisheit:'Σοφία (Sophia)',affix_n_Supernova:'Ἐκπύρωσις (Ekpyrosis)',affix_n_Wendigkeit:'Εὐστροφία (Eustrophia)',
  pause:'Pause', resume:'Resume', restart:'Restart Run', save:'Save Game', load:'Load Game',
  main_menu:'Main Menu', leaderboard:'Leaderboard', top30:'Top 30', local:'Local', global:'Global (Cloud)',
  lb_name:'Name', lb_level:'Level', lb_floor:'Floor', lb_kills:'Kills', lb_items:'Items', lb_date:'Date', lb_score:'Score',
  lb_note_local:'Your best runs stored on this device.', lb_note_global:'Global Google Play Games & Cloud Leaderboard (Top 30).',
  save_ok:'Game saved to Cloud & Local!', load_ok:'Cloud save loaded!', no_save:'No save found.',
  lb_submit_name:'Your name for the leaderboard:', lb_submit:'Save',
- meta:'Meta-Upgrades', meta_shards:'Relic Shards: {0}', meta_dmg:'Weapon Damage', meta_hp:'Max Health', meta_inv:'Inventory Slots',
- meta_cost:'Cost: {0}', meta_level:'Level {0}/{1}', meta_max:'Maxed', meta_gold:'Gold: {0}', meta_inv_upg:'Inventory Slot (+5)',
- classes:'Hero Classes', class_warrior:'Warrior', class_rogue:'Rogue', class_mage:'Mage', class_tank:'Paladin', class_necromancer:'Necromancer',
- class_desc_warrior:'Pure Melee Fighter. Starts with Runic Warblade (Wide Cleave Slash).', class_desc_rogue:'Faster, less HP.', class_desc_mage:'Stronger Nova, slightly less DPS.', class_desc_tank:'Holy melee fighter with warhammer and shield. High toughness, 2.65m melee cleave.',
- class_desc_necromant:'Summons skeletons. Starts with Bone Staff.',
+ meta:'Meta-Upgrades', meta_shards:'Θραύσματα (Relic Shards): {0}', meta_dmg:'Ὅπλου Κράτος (Weapon Damage)', meta_hp:'Μέγιστος Βίος (Max Health)', meta_inv:'Θύλακος (Inventory Slots)',
+ meta_cost:'Cost: {0}', meta_level:'Level {0}/{1}', meta_max:'Maxed', meta_gold:'Χρυσός (Gold): {0}', meta_inv_upg:'Θύλακος Slot (+5)',
+ classes:'Γένη τῶν Ημιθέων (Hemitheoi · Races & Cults)', class_warrior:'Ὁπλίτης Γίγας (Hoplites · Barbarian)', class_rogue:'Τοξότης Νυκτός (Toxotes · Demon Hunter)', class_mage:'Θεουργὸς Αἰθέρος (Theourgos · Wizard)', class_tank:'Ἱεροφάντης Ταξίαρχος (Hierophantes · Crusader)', class_necromancer:'Νεκρομάντης Ὀρφικός (Nekromantes)',
+ class_desc_warrior:'Γένος Γιγάντων (Θυμός & Ῥώμη). Pure Melee Hoplite with Ξίφος Ὀρειχάλκου, Στρόβιλος & Μανία Ἄρεως.', class_desc_rogue:'Θίασος Ἀρτέμιδος (Νέμεσις & Σωφροσύνη). Night Toxotes with Γαστραφέτης, Πολυβολία & Σκιᾶς Ἅλμα.', class_desc_mage:'Σύνοδος Θεουργῶν (Αἰθήρ & Νοῦς). Elemental Theourgos with Ἐκπύρωσις, Μετέωρα τοῦ Ἑρμοῦ & Αἰθέριος Ἀρχών.', class_desc_tank:'Τάγμα Ἐλευσίνιον (Μῆνις & Κράτος). Sacred Hierophant with Σφῦρα Κεραυνοῦ, Δίκη Διός & Αἰγίς (2.65m).',
+ class_desc_necromant:'Ὀρφικοὶ Μύσται (Ψυχή & Σοφία). Commands Σκελετοὶ Εἴδωλα, Σκῆπτρον Ὀστέινον & Αἱματικὴ Τελετή.',
  achievements:'Achievements', ach_first_boss:'First Boss defeated', ach_floor10:'Reached Floor 10', ach_secret5:'Found 5 Secrets',
- ach_level20:'Reached Level 20', ach_kills100:'100 Kills', ach_necromant:'Necromancer: 5 Minions at once',
+ ach_level20:'Reached Level 20', ach_kills100:'100 Kills', ach_necromant:'Νεκρομάντης: 5 Εἴδωλα at once',
  run_over:'Run Over', score:'Score',
- village:'Village', village_leave:'Leave Village', village_hire:'Hire ({0} Gold)', village_quest:'Quest: {0} ({1} {2})',
- village_reward:'Reward: {0} Gold + {1} XP', minions:'Minions: {0}/{1}', summon_cd:'Summon ready',
- cemetery:'The Cemetery', raid_boss:'Raid Boss incoming!', raid_defeated:'Raid Boss defeated! Great loot!',
- shop:'Shop', shop_buy:'Buy', shop_owned:'Owned', shop_weapon:'Weapon', shop_potion:'Potion', shop_relic:'Relic',
- quest_complete:'Quest completed!', quest_reward_item:'Item: {0}', quest_reward_shards:'{0} Relic Shards',
- quest_reward_buff:'Blessing {0}s',
- as_title:'⚙️ Auto-Scrap Filter (On Pickup → XP)',
- as_scrap_bag:'Scrap Filtered in Bag (+{0} XP)',
- ql_title:'📜 Village Quests (Quest Log)',
- ql_new:'🔄 New Quests',
+ village:'Πόλις Ἐλευσῖνος (Polis Eleusinos)', village_leave:'Leave Polis', village_hire:'Hire Σύμμαχος ({0} Gold)', village_quest:'Ἄθλος: {0} ({1} {2})',
+ village_reward:'Reward: {0} Gold + {1} XP', minions:'Εἴδωλα (Minions): {0}/{1}', summon_cd:'Ἐπίκλησις ready',
+ cemetery:'Νεκρόπολις τοῦ Ἀχέροντος (Crypt)', raid_boss:'Θάνατος Κοσμοκράτωρ incoming!', raid_defeated:'Κοσμοκράτωρ defeated! Orphic Cache!',
+ shop:'Χαλκεῖον τῶν Τελχίνων', shop_buy:'Buy', shop_owned:'Owned', shop_weapon:'Ὅπλον', shop_potion:'Φάρμακον', shop_relic:'Κειμήλιον',
+ quest_complete:'Ἄθλος completed!', quest_reward_item:'Κειμήλιον: {0}', quest_reward_shards:'{0} Αἱματόλιθοι (Shards)',
+ quest_reward_buff:'Εὐλογία τῶν Ημιθέων {0}s',
+ as_title:'⚙️ Χαλκεὺς Ἥφαιστος: Auto-Salvage Filter (On Pickup → XP)',
+ as_scrap_bag:'Salvage Filtered in Θύλακος (+{0} XP)',
+ ql_title:'📜 Ἄθλοι τῆς Δίκης (Mystery Bounties)',
+ ql_new:'🔄 New Ἄθλοι',
  ql_hunt:'Defeat {0}× {1}',
  ql_done:'✓ Completed',
  ql_active:'In Progress',
@@ -1414,6 +1765,12 @@ function saveGame(forceCloud=false){
     metaShards:S.metaShards||0, gold:S.gold||0, metaUpg:S.metaUpg||{dmg:0,hp:0,inv:0}, playerClass:S.playerClass||'warrior',
     skillTree:S.skillTree||{},
     skillPts:S.skillPts!==undefined?S.skillPts:1,
+    d3Difficulty:S.d3Difficulty||'normal',
+    paragonLvl:S.paragonLvl||0,
+    paragonXp:S.paragonXp||0,
+    paragonPts:S.paragonPts||0,
+    riftProgress:S.riftProgress||0,
+    kanaiCube:S.kanaiCube||{weapon:null,armor:null,jewelry:null,extracted:[]},
     npcFactionTrust:S.npcFactionTrust!==undefined?S.npcFactionTrust:0,
     earnedQuestTrust:S.earnedQuestTrust||0,
     factionDmgBonus:S.factionDmgBonus||0,
@@ -1444,6 +1801,12 @@ function applyLoadedData(d){
      metaShards:d.metaShards||0,gold:d.gold||0,metaUpg:d.metaUpg||{dmg:0,hp:0,inv:0},playerClass:d.playerClass||'warrior',
      skillTree:d.skillTree||{},
      skillPts:d.skillPts!==undefined?d.skillPts:1,
+     d3Difficulty:d.d3Difficulty||'normal',
+     paragonLvl:d.paragonLvl||0,
+     paragonXp:d.paragonXp||0,
+     paragonPts:d.paragonPts||0,
+     riftProgress:d.riftProgress||0,
+     kanaiCube:d.kanaiCube||{weapon:null,armor:null,jewelry:null,extracted:[]},
      npcFactionTrust:d.npcFactionTrust!==undefined?d.npcFactionTrust:0,
      earnedQuestTrust:d.earnedQuestTrust||0,
      factionDmgBonus:d.factionDmgBonus||0,
@@ -1604,19 +1967,44 @@ const barBg=new Tt.MeshBasicMaterial({color:0,transparent:true,opacity:.65,depth
 const part=(g,m,x,y,z,sx,sy,sz)=>{const o=new Tt.Mesh(g,m);o.position.set(x,y,z);o.scale.set(sx,sy==null?sx:sy,sz==null?sx:sz);return o};
 const dm=new Tt.Object3D();
 
-/* ================= THEMES ================= */
+/* ================= THEMES (ANCIENT GREEK REGIONS & DIABLO III SANCTUARY ACTS I–V) ================= */
 const TH=[
-{n:'Stahl-Kathedrale',fl:['#2d3340','#363d4c','#262b36'],wl:['#4d596e','#5c6a82','#3a4457'],ac:'#4fd1ff',bg:0x06080e,dc:0},
-{n:'Arkane Krypta',fl:['#2f2838','#383044','#251f2d'],wl:['#5e4c70','#6f5b84','#463a5b'],ac:'#c77dff',bg:0x0a060e,dc:1},
-{n:'Zahnrad-Festung',fl:['#3b3025','#47392b','#2c241b'],wl:['#6e5538','#826441','#503e29'],ac:'#ffb347',bg:0x0d0905,dc:2},
-{n:'Void-Tempel',fl:['#17302f','#1e3b3a','#112524'],wl:['#2f6d65','#3b8076','#245650'],ac:'#3dffc0',bg:0x040b0b,dc:3},
-{n:'Kristall-Zitadelle',fl:['#2a3050','#323a5e','#202543'],wl:['#4f5f9a','#6174b4','#3c4a7e'],ac:'#7fb0ff',bg:0x060811,dc:0},
-{n:'Glut-Bastion',fl:['#3a2723','#47302b','#2b1c19'],wl:['#7a4034','#92503f','#5a2f27'],ac:'#ff6a3d',bg:0x0e0605,dc:2},
-{n:'Der Friedhof',fl:['#2a2a30','#33333b','#1f1f28'],wl:['#5a5a66','#6e6e7e','#44444e'],ac:'#b0b0d0',bg:0x0a0a0e,dc:4},
+{n:'Ἔρεβος · Ναὸς τῆς Τριστράμης (Akt I: Kathedrale von Neu-Tristram)',act:1,d3Zone:'Ἄδυτον τοῦ Ἄλγους (Hallen der Agonie)',fl:['#2d3340','#363d4c','#262b36'],wl:['#4d596e','#5c6a82','#3a4457'],ac:'#4fd1ff',bg:0x06080e,dc:0},
+{n:'Δελφοί · Ἀρχεῖα τοῦ Ζολτοῦν Κούλ (Akt II: Archive von Zoltun Kull)',act:2,d3Zone:'Ἔρημος τῆς Λήθης (Oase & Trostlose Sande)',fl:['#3b3025','#47392b','#2c241b'],wl:['#6e5538','#826441','#503e29'],ac:'#ffb347',bg:0x0d0905,dc:2},
+{n:'Τάρταρος & Πυριφλεγέθων (Akt III: Arreatkrater & Bastionsfestung)',act:3,d3Zone:'Καρδία τῆς Ἄτης (Herz der Sünde)',fl:['#3a2723','#47302b','#2b1c19'],wl:['#7a4034','#92503f','#5a2f27'],ac:'#ff6a3d',bg:0x0e0605,dc:2},
+{n:'Ὄλυμπος · Ἀργυρᾶ Κορυφή (Akt IV: Die Silberne Spitze (Hohe Himmel))',act:4,d3Zone:'Ἠλύσιον Πεδίον (Gärten der Hoffnung)',fl:['#2a3050','#323a5e','#202543'],wl:['#4f5f9a','#6174b4','#3c4a7e'],ac:'#7fb0ff',bg:0x060811,dc:0},
+{n:'Κωκυτὸς & Πανδαιμόνιον (Akt V: Pandämonium-Festung (Westmark))',act:5,d3Zone:'Νεκρόπολις τῆς Στυγός (Seelenernte)',fl:['#2f2838','#383044','#251f2d'],wl:['#5e4c70','#6f5b84','#463a5b'],ac:'#c77dff',bg:0x0a060e,dc:1},
+{n:'Χάσμα τῶν Ημιθέων · Nephalemportal: Sanktuario-Riss',act:6,isRift:true,d3Zone:'Ἄβυσσος τῶν Τιτάνων (Großes Portal der Urahnen)',fl:['#17302f','#1e3b3a','#112524'],wl:['#2f6d65','#3b8076','#245650'],ac:'#3dffc0',bg:0x040b0b,dc:3},
+{n:'Ἀσφόδελος Λειμών · König Leorics Krypta (Der Friedhof)',act:1,d3Zone:'Τύμβος τοῦ Βασιλέως Λεωρίκου',fl:['#2a2a30','#33333b','#1f1f28'],wl:['#5a5a66','#6e6e7e','#44444e'],ac:'#b0b0d0',bg:0x0a0a0e,dc:4},
 ];
 
+/* ================= DIABLO III DIFFICULTY TIERS & NEPHALEM RULES ================= */
+const D3_DIFFICULTIES=[
+ {id:'normal',de:'Κοινόν (Normal)',en:'Koino (Normal)',hpM:1.0,dmgM:1.0,xpM:1.0,goldM:1.0,mfB:0,hpMult:1.0,dmgMult:1.0,xpMult:1.0,goldMult:1.0,mfBonus:0,color:'#cfd6e0'},
+ {id:'hard',de:'Χαλεπόν (Schwer)',en:'Chalepon (Hard)',hpM:1.4,dmgM:1.2,xpM:1.75,goldM:1.75,mfB:15,hpMult:1.4,dmgMult:1.2,xpMult:1.75,goldMult:1.75,mfBonus:15,color:'#6dff9b'},
+ {id:'master',de:'Ἄριστον (Meister)',en:'Ariston (Master)',hpM:2.0,dmgM:1.45,xpM:3.0,goldM:3.0,mfB:35,hpMult:2.0,dmgMult:1.45,xpMult:3.0,goldMult:3.0,mfBonus:35,color:'#4fd1ff'},
+ {id:'torment1',de:'Βάσανος Αʹ (Qual I)',en:'Basanos I (Torment I)',hpM:2.8,dmgM:1.75,xpM:5.0,goldM:5.0,mfB:65,hpMult:2.8,dmgMult:1.75,xpMult:5.0,goldMult:5.0,mfBonus:65,color:'#ffb347'},
+ {id:'torment6',de:'Βάσανος Ϛʹ (Qual VI)',en:'Basanos VI (Torment VI)',hpM:4.2,dmgM:2.15,xpM:9.0,goldM:9.0,mfB:120,hpMult:4.2,dmgMult:2.15,xpMult:9.0,goldMult:9.0,mfBonus:120,color:'#c77dff'},
+ {id:'torment16',de:'Βάσανος ΙϚʹ (Qual XVI)',en:'Basanos XVI (Torment XVI)',hpM:6.5,dmgM:2.65,xpM:16.0,goldM:16.0,mfB:250,hpMult:6.5,dmgMult:2.65,xpMult:16.0,goldMult:16.0,mfBonus:250,color:'#ff4a4a'}
+];
+function getD3Diff(id){
+ const k=id||(typeof S!=='undefined'&&S&&S.d3Difficulty)||'normal';
+ return D3_DIFFICULTIES.find(d=>d.id===k)||D3_DIFFICULTIES[0];
+}
+window.D3_DIFFICULTIES=D3_DIFFICULTIES;
+window.getD3Diff=getD3Diff;
+
+const D3_CLASS_META={
+ warrior:{d3NameDe:'Ὁπλίτης Γίγας (Barbar)',d3NameEn:'Hoplites Gigas (Barbarian)',res:'Θυμός (Thymos / Wut)',resCol:'#ff7a3d',resourceDe:'Θυμός (Wut)',resourceEn:'Thymos (Fury)',primaryAttr:'str',setKey:'wastes'},
+ tank:{d3NameDe:'Ἱεροφάντης (Kreuzritter)',d3NameEn:'Hierophantes (Crusader)',res:'Μῆνις (Menis / Zorn)',resCol:'#ffd54a',resourceDe:'Μῆνις (Zorn)',resourceEn:'Menis (Wrath)',primaryAttr:'str',setKey:'akkhan'},
+ rogue:{d3NameDe:'Τοξότης Νυκτός (Dämonenjäger)',d3NameEn:'Toxotes Nyktos (Demon Hunter)',res:'Νέμεσις & Σωφροσύνη',resCol:'#ff4a6a',resourceDe:'Νέμεσις & Σωφροσύνη',resourceEn:'Nemesis & Sophrosyne',primaryAttr:'dex',setKey:'unhallowed'},
+ mage:{d3NameDe:'Θεουργὸς Αἰθέρος (Zauberer)',d3NameEn:'Theourgos Aitheros (Wizard)',res:'Αἰθήρ (Aither / Arkankraft)',resCol:'#c77dff',resourceDe:'Αἰθήρ (Arkankraft)',resourceEn:'Aither (Arcane Power)',primaryAttr:'arc',setKey:'talrasha'},
+ necromancer:{d3NameDe:'Νεκρομάντης Ὀρφικός (Totenbeschwörer)',d3NameEn:'Nekromantes Orphikos (Necromancer)',res:'Ψυχή (Psyche / Essenz)',resCol:'#3dffc0',resourceDe:'Ψυχή (Essenz)',resourceEn:'Psyche (Essence)',primaryAttr:'arc',setKey:'tragoul'}
+};
+window.D3_CLASS_META=D3_CLASS_META;
+
 /* ================= STATE ================= */
-let S={lvl:1,xp:0,pts:0,at:{str:0,dex:0,vit:0,arc:0},eq:{},inv:[],floor:1,kills:0,found:0,secrets:0,autoS:1,scrapFilter:[true,false,false],shakeMult:1,metaShards:0,gold:0,metaUpg:{dmg:0,hp:0,inv:0},playerClass:'warrior',achievements:[],npcFactionTrust:0,earnedQuestTrust:0,dailyQuests:[],dailyResetTime:0};
+let S={lvl:1,xp:0,pts:0,at:{str:0,dex:0,vit:0,arc:0},eq:{},inv:[],floor:1,kills:0,found:0,secrets:0,autoS:1,scrapFilter:[true,false,false],shakeMult:1,metaShards:0,gold:0,metaUpg:{dmg:0,hp:0,inv:0},playerClass:'warrior',achievements:[],npcFactionTrust:0,earnedQuestTrust:0,dailyQuests:[],dailyResetTime:0,d3Difficulty:'normal',paragonLvl:0,paragonXp:0,paragonPts:0,riftProgress:0,riftGuardianSpawned:false,kanaiCube:{weapon:null,armor:null,jewelry:null,unlocked:[]}};
 let M,P,ST={},en=[],crates=[],chests=[],shrines=[],hazards=[],campfires=[],drops=[],secrets=[],portal=null,boss=null,pb=[],eb=[],flick=[],disp=[],ex,mmx,sel=null;
 let minions=[], villageNPCs=[], activeQuests=[], hiredHelpers=[], villageShop=[], adventurers=[], activeQuestTab='daily';
 let mode='menu',tm=0,wt=45,vig=0,vigHeavy=0,shake=0,uid=0,lastTh=-1,invOpen=false,inputM='touch',dtN=0,fullT=0,last=0,hudT=0,expT=0,flowKey=-1,camX=0,camZ=0,isPaused=false;
@@ -1653,6 +2041,10 @@ const RC=['#cfd6e0','#4dff88','#4aa3ff','#c26bff','#ff8a2b'],RH=[0xcfd6e0,0x4dff
 const SI={weapon:'🔫',helm:'⛑️',chest:'🛡️',boots:'👢',relic:'💠'},SL={weapon:'w',helm:'h',chest:'c',boots:'b',relic:'r'};
 const WI={sword:'⚔️',hammer:'🔨',pistol:'🔫',rifle:'🎯',shot:'💥',lance:'🔱',staff:'🪄',bone_staff:'🦴',scythe:'🌙',grimoire:'📖'};
 const AI_ICO={
+ 'Κράνος Κορίνθιον (Visierhelm)':'⛑️','Στεφάνη Ὀρφική (Runenkrone)':'👑','Κυνέη Ἅιδου (Neuro-Haube)':'🥽','Κράνος Σιδηροῦν (Eisenhelm)':'🪖',
+ 'Θώραξ Γιγάντων (Exo-Panzer)':'🦺','Λινοθώραξ Χάλκεος (Kettenhemd)':'⛓️','Πέπλος Αἰθέρος (Äther-Robe)':'👘','Πανοπλία Αἰγίδος (Plattenpanzer)':'🛡️',
+ 'Πέδιλα Πτερωτά (Schubstiefel)':'🚀','Κνημῖδες Σιδηραῖ (Eisenstiefel)':'🥾','Ἐμβάδες Σκιᾶς (Schleierschuhe)':'👟','Κρηπῖδες Μαγνήτιδος (Magnetstiefel)':'🧲',
+ 'Θραῦσμα Χρυσοῦν (Aurion-Splitter)':'💎','Φυλακτήριον Ὀρφικόν (Runen-Amulett)':'📿','Δακτύλιος Κρόνου (Quantenring)':'💍','Καρδία τοῦ Ἰχῶρος (Herzkristall)':'❤️‍🔥',
  'Visierhelm':'⛑️','Runenkrone':'👑','Neuro-Haube':'🥽','Eisenhelm':'🪖',
  'Exo-Panzer':'🦺','Kettenhemd':'⛓️','Äther-Robe':'👘','Plattenpanzer':'🛡️',
  'Schubstiefel':'🚀','Eisenstiefel':'🥾','Schleierschuhe':'👟','Magnetstiefel':'🧲',
@@ -1721,38 +2113,94 @@ window.getItemIconHtml=getItemIconHtml;
 const getRN=()=>[T('rarity_common'),T('rarity_magic'),T('rarity_rare'),T('rarity_epic'),T('rarity_legendary')];
 const getSN=()=>({weapon:T('slot_weapon'),helm:T('slot_helm'),chest:T('slot_chest'),boots:T('slot_boots'),relic:T('slot_relic')});
 const WB=[
-{k:'sword',n:'Runen-Kriegsklinge',d:26,r:2.6,s:0,c:1,sp:0,pr:2,l:0.35,col:0xff8a2b,melee:true},
-{k:'hammer',n:'Heiliger Streitkolben',d:30,r:2.2,s:0,c:1,sp:0,pr:3,l:0.38,col:0xffd54a,melee:true},
-{k:'pistol',n:'Plasma-Pistole',d:15,r:3.2,s:24,c:1,sp:.03,pr:0,l:1.1,col:0x4fd1ff},
-{k:'rifle',n:'Runen-Gewehr',d:8,r:6.4,s:27,c:1,sp:.08,pr:0,l:1.1,col:0xffb347},
-{k:'shot',n:'Arkan-Schrotflinte',d:7,r:1.5,s:21,c:5,sp:.38,pr:0,l:.55,col:0xff5ad1},
-{k:'lance',n:'Void-Lanze',d:42,r:1.1,s:36,c:1,sp:0,pr:3,l:1,col:0x3dffc0},
-{k:'staff',n:'Äther-Stab',d:12,r:2.4,s:19,c:2,sp:.12,pr:0,l:1.2,col:0xc77dff},
-{k:'bone_staff',n:'Knochenstab',d:10,r:2.0,s:22,c:1,sp:.06,pr:1,l:1.0,col:0xa0a0b0},
-{k:'scythe',n:'Sense des Todes',d:28,r:1.4,s:18,c:1,sp:0,pr:2,l:.9,col:0x555555,melee:true},
-{k:'grimoire',n:'Buch der Toten',d:6,r:4.0,s:20,c:3,sp:.1,pr:0,l:1.1,col:0x2a1a4a}];
-const AB={helm:['Visierhelm','Runenkrone','Neuro-Haube','Eisenhelm'],chest:['Exo-Panzer','Kettenhemd','Äther-Robe','Plattenpanzer'],boots:['Schubstiefel','Eisenstiefel','Schleierschuhe','Magnetstiefel'],relic:['Aurion-Splitter','Runen-Amulett','Quantenring','Herzkristall']};
+{k:'sword',n:'Ξίφος Ὀρειχάλκου (Runen-Kriegsklinge)',d:26,r:2.6,s:0,c:1,sp:0,pr:2,l:0.35,col:0xff8a2b,melee:true},
+{k:'hammer',n:'Σφῦρα Κεραυνοῦ (Heiliger Streitkolben)',d:30,r:2.2,s:0,c:1,sp:0,pr:3,l:0.38,col:0xffd54a,melee:true},
+{k:'pistol',n:'Πυροβόλον Πλάσματος (Plasma-Pistole)',d:15,r:3.2,s:24,c:1,sp:.03,pr:0,l:1.1,col:0x4fd1ff},
+{k:'rifle',n:'Γαστραφέτης Ἀπόλλωνος (Runen-Gewehr)',d:8,r:6.4,s:27,c:1,sp:.08,pr:0,l:1.1,col:0xffb347},
+{k:'shot',n:'Πολυβόλον Ἑκάτης (Arkan-Schrotflinte)',d:7,r:1.5,s:21,c:5,sp:.38,pr:0,l:.55,col:0xff5ad1},
+{k:'lance',n:'Σάρισα τοῦ Χάους (Void-Lanze)',d:42,r:1.1,s:36,c:1,sp:0,pr:3,l:1,col:0x3dffc0},
+{k:'staff',n:'Ῥάβδος Αἰθέρος (Äther-Stab)',d:12,r:2.4,s:19,c:2,sp:.12,pr:0,l:1.2,col:0xc77dff},
+{k:'bone_staff',n:'Σκῆπτρον Ὀστέινον (Knochenstab)',d:10,r:2.0,s:22,c:1,sp:.06,pr:1,l:1.0,col:0xa0a0b0},
+{k:'scythe',n:'Ἅρπη τοῦ Θανάτου (Sense des Todes)',d:28,r:1.4,s:18,c:1,sp:0,pr:2,l:.9,col:0x555555,melee:true},
+{k:'grimoire',n:'Βίβλος τῶν Νεκρῶν (Buch der Toten)',d:6,r:4.0,s:20,c:3,sp:.1,pr:0,l:1.1,col:0x2a1a4a}];
+const AB={
+ helm:['Κράνος Κορίνθιον (Visierhelm)','Στεφάνη Ὀρφική (Runenkrone)','Κυνέη Ἅιδου (Neuro-Haube)','Κράνος Σιδηροῦν (Eisenhelm)'],
+ chest:['Θώραξ Γιγάντων (Exo-Panzer)','Λινοθώραξ Χάλκεος (Kettenhemd)','Πέπλος Αἰθέρος (Äther-Robe)','Πανοπλία Αἰγίδος (Plattenpanzer)'],
+ boots:['Πέδιλα Πτερωτά (Schubstiefel)','Κνημῖδες Σιδηραῖ (Eisenstiefel)','Ἐμβάδες Σκιᾶς (Schleierschuhe)','Κρηπῖδες Μαγνήτιδος (Magnetstiefel)'],
+ relic:['Θραῦσμα Χρυσοῦν (Aurion-Splitter)','Φυλακτήριον Ὀρφικόν (Runen-Amulett)','Δακτύλιος Κρόνου (Quantenring)','Καρδία τοῦ Ἰχῶρος (Herzkristall)']
+};
 const AR={helm:4,chest:9,boots:3,relic:0};
-const SETS={aurion:{2:{dmgP:10},4:{novaM:0.2}},runic:{2:{rateP:10},4:{critD:25}},iron:{2:{armor:8},4:{lifeKill:2}},bone:{2:{summons:1},4:{minionDmg:25}}};
-const RP=['Aschen','Dornen','Sturm','Nebel','Glut','Frost','Schatten','Eisen','Sternen','Blut'],LP=['Aurions','Morwens','Kaels','Nyxaras','Vexors','Eldraths','Zhor-Kais','Solaras'];
+const SETS={
+ aurion:{name:'Κληρονομία τοῦ Ὑπερίονος (Aurions Vermächtnis)',2:{dmgP:10},4:{novaM:0.2}},
+ runic:{name:'Ἱερὰ Στολὴ τῶν Μυστῶν (Runen-Ornat)',2:{rateP:10},4:{critD:25}},
+ iron:{name:'Πανοπλία τῶν Τιτάνων (Eisen-Bollwerk)',2:{armor:8},4:{lifeKill:2}},
+ bone:{name:'Συμμαχία τοῦ Χάρωνος (Knochen-Pakt)',2:{summons:1},4:{minionDmg:25}},
+ wastes:{name:'Μῆνις τῶν Γιγάντων (Zorn der Ödlande · Hoplit)',2:{dmgP:18,speedP:8},4:{critD:45,areaDmgP:25}},
+ akkhan:{name:'Αἰγὶς τοῦ Ἱεροφάντου (Akkhans Rüstung · Hierophant)',2:{armor:16,cdrP:10},4:{dmgP:28,thorns:35}},
+ unhallowed:{name:'Ἀνόσιος Οὐσία τῶν Κηρῶν (Unheilige Essenz · Toxotes)',2:{rateP:14,crit:6},4:{dmgP:30,proj:1}},
+ talrasha:{name:'Στοιχεῖα τοῦ Ἑρμοῦ Τρισμεγίστου (Tal Rashas Elemente)',2:{novaP:25,cdrP:10},4:{dmgP:25,critD:40}},
+ tragoul:{name:'Εἴδωλον τοῦ Ὀρφέως (Trag\'Ouls Avatar · Nekromant)',2:{summons:1,lifeKill:4},4:{minionDmg:45,dmgP:22}}
+};
+window.SETS=SETS;
+const RP=['Σποδοῦ (Aschen)','Ἀκάνθης (Dornen)','Θυέλλης (Sturm)','Ὁμίχλης (Nebel)','Πυρός (Glut)','Κρυστάλλου (Frost)','Σκιᾶς (Schatten)','Σιδήρου (Eisen)','Ἀστέρων (Sternen)','Αἵματος (Blut)','Ημιθέων (Nephalem)','Καβείρων (Horadrim)'],LP=['Ἀπόλλωνος (Apollons)','Ἑκάτης (Hekates)','Ἄρεως (Ares\')','Νυκτός (Nyx\')','Κρόνου (Kronos\')','Ἀθηνᾶς (Athenes)','Ἅιδου (Hades\')','Ἡφαίστου (Hephaistos\')','Τυφῶνος (Typhons)','Λεωρίκου (Leorics)','Θανάτου (Thanatos\')','Ὀρφέως (Orpheus\')'];
 const AF=[
-{k:'dmgP',t:'% Schaden',a:[6,14],s:'wcr',n:'Zerstörung'},
-{k:'rateP',t:'% Angriffstempo',a:[5,12],s:'whr',n:'Raserei'},
-{k:'crit',t:'% Krit-Chance',a:[3,8],s:'whr',n:'Präzision'},
-{k:'critD',t:'% Krit-Schaden',a:[15,40],s:'wr',n:'Grausamkeit'},
-{k:'hp',t:' Leben',a:[15,40],s:'hcbr',n:'Zähigkeit'},
-{k:'regen',t:' Leben/Sek.',a:[.6,1.8],s:'hcr',n:'Erneuerung',dec:1},
-{k:'speedP',t:'% Lauftempo',a:[4,10],s:'br',n:'Eile'},
-{k:'armor',t:' Rüstung',a:[6,18],s:'hcb',n:'Festung'},
-{k:'lifeKill',t:' Leben pro Kill',a:[1,3],s:'wr',n:'Gier'},
-{k:'proj',t:' Projektil',a:[1,1],s:'w',n:'Vielfalt',int:1,ep:1},
-{k:'pierce',t:' Durchschlag',a:[1,2],s:'w',n:'Lanze',int:1},
-{k:'mf',t:'% Beutefund',a:[6,16],s:'hbr',n:'Fortuna'},
-{k:'xpP',t:'% Erfahrung',a:[5,12],s:'hr',n:'Weisheit'},
-{k:'novaP',t:'% Nova-Schaden',a:[10,25],s:'cr',n:'Supernova'},
-{k:'dashCd',t:'% kürzere Ausweich-Pause',a:[5,12],s:'br',n:'Wendigkeit'},
-{k:'summons',t:' Minions',a:[1,1],s:'wr',n:'Nekromantie',int:1},
-{k:'minionDmg',t:'% Minion-Schaden',a:[10,30],s:'wr',n:'Todesmacht',int:1}];
+{k:'dmgP',t:'% Βλάβη (Schaden)',a:[6,14],s:'wcr',n:'Ὀλέθρου (Zerstörung)'},
+{k:'rateP',t:'% Ταχυχειρία (Angriffstempo)',a:[5,12],s:'whr',n:'Μανίας (Raserei)'},
+{k:'crit',t:'% Καιρία Τύχη (Krit-Chance)',a:[3,8],s:'whr',n:'Ἀκριβείας (Präzision)'},
+{k:'critD',t:'% Καιρία Βλάβη (Krit-Schaden)',a:[15,40],s:'wr',n:'Ὠμότητος (Grausamkeit)'},
+{k:'hp',t:' Βίος (Leben)',a:[15,40],s:'hcbr',n:'Καρτερίας (Zähigkeit)'},
+{k:'regen',t:' Βίος/Sek.',a:[.6,1.8],s:'hcr',n:'Παλιγγενεσίας (Erneuerung)',dec:1},
+{k:'speedP',t:'% Ταχύτης (Lauftempo)',a:[4,10],s:'br',n:'Ταχύτητος (Eile)'},
+{k:'armor',t:' Πανοπλία (Rüstung)',a:[6,18],s:'hcb',n:'Ἀκροπόλεως (Festung)'},
+{k:'lifeKill',t:' Βίος pro Kill',a:[1,3],s:'wr',n:'Πλεονεξίας (Gier)'},
+{k:'proj',t:' Βέλος (Projektil)',a:[1,1],s:'w',n:'Πολυβολίας (Vielfalt)',int:1,ep:1},
+{k:'pierce',t:' Διάτρησις (Durchschlag)',a:[1,2],s:'w',n:'Διατρήσεως (Lanze)',int:1},
+{k:'mf',t:'% Εὕρεσις (Beutefund)',a:[6,16],s:'hbr',n:'Τύχης (Fortuna)'},
+{k:'xpP',t:'% Εμπειρία (Erfahrung)',a:[5,12],s:'hr',n:'Σοφίας (Weisheit)'},
+{k:'novaP',t:'% Ἐκπύρωσις (Nova-Schaden)',a:[10,25],s:'cr',n:'Ἐκπυρώσεως (Supernova)'},
+{k:'dashCd',t:'% Εὐστροφία (Ausweich-Pause)',a:[5,12],s:'br',n:'Εὐστροφίας (Wendigkeit)'},
+{k:'summons',t:' Εἴδωλα (Minions)',a:[1,1],s:'wr',n:'Νεκρομαντείας (Nekromantie)',int:1},
+{k:'minionDmg',t:'% Κράτος Εἰδώλων (Minion-Schaden)',a:[10,30],s:'wr',n:'Κράτους Νεκρῶν (Todesmacht)',int:1},
+{k:'areaDmgP',t:'% Καταστροφή (Flächenschaden)',a:[10,24],s:'wcr',n:'Καταστροφῆς (Verheerung)'},
+{k:'cdrP',t:'% Φρόνησις (Abklingzeit-Reduktion)',a:[6,14],s:'whcr',n:'Φρονήσεως (Einsicht)'},
+{k:'thorns',t:' Ἄκανθαι (Dornenschaden)',a:[12,35],s:'hcb',n:'Νεμέσεως (Vergeltung)'},
+{k:'eliteDmgP',t:'% Ἀριστεία (Elite-Schaden)',a:[8,18],s:'wr',n:'Ἀριστείας (Bezwingung)'},
+{k:'allRes',t:' Ἀπάθεια (Alle Widerstände)',a:[8,20],s:'hcbr',n:'Ἀπαθείας (Prisma)'}];
+
+const D3_LEGENDARY_POWERS=[
+ {id:'thunderfury',cat:'weapon',slot:'weapon',n:'Κεραυνὸς τοῦ Διός (Donnerzorn)',nameDe:'Κεραυνὸς τοῦ Διός (Donnerzorn)',nameEn:'Keraunos tou Dios (Thunderfury)',d:'Treffer entfesseln Διὸς Κεραυνός (Kettenblitze: 85% Waffenschaden auf 3 Ziele).',descDe:'Treffer entfesseln Διὸς Κεραυνός (Kettenblitze: 85% Waffenschaden auf 3 Ziele).',descEn:'Hits unleash Keraunos chain lightning (85% weapon dmg to 3 targets).'},
+ {id:'furnace',cat:'weapon',slot:'weapon',n:'Κάμινος τοῦ Ἡφαίστου (Schmelzofen)',nameDe:'Κάμινος τοῦ Ἡφαίστου (Schmelzofen)',nameEn:'Kaminos tou Hephaistou (The Furnace)',d:'Erhöht den Schaden gegen Ἄριστοι (Elite & Bosse) um +45%.',descDe:'Erhöht den Schaden gegen Ἄριστοι (Elite & Bosse) um +45%.',descEn:'Increases damage against Aristoi Elites and Bosses by +45%.'},
+ {id:'messerschmidt',cat:'weapon',slot:'weapon',n:'Πέλεκυς τοῦ Ἄρεως (Messerschmidts Räuber)',nameDe:'Πέλεκυς τοῦ Ἄρεως (Messerschmidts Räuber)',nameEn:'Pelekys tou Areos (Reaver)',d:'Jeder Kill reduziert alle aktiven Abklingzeiten um 0,6 Sek.',descDe:'Jeder Kill reduziert alle aktiven Abklingzeiten um 0,6 Sek.',descEn:'Each kill reduces all active cooldowns by 0.6s.'},
+ {id:'nemesis',cat:'armor',slot:'armor',n:'Ψέλια τῆς Νεμέσεως (Nemesis-Armschienen)',nameDe:'Ψέλια τῆς Νεμέσεως (Nemesis-Armschienen)',nameEn:'Pselia tes Nemeseos (Nemesis Bracers)',d:'Schreine beschwören zusätzlich einen Ἄριστος-Champion für Bonus-Beute.',descDe:'Schreine beschwören zusätzlich einen Ἄριστος-Champion für Bonus-Beute.',descEn:'Shrines spawn an additional Aristos Champion for extra loot.'},
+ {id:'aquila',cat:'armor',slot:'armor',n:'Θώραξ τοῦ Ἀετοῦ Διός (Aquilakürass)',nameDe:'Θώραξ τοῦ Ἀετοῦ Διός (Aquilakürass)',nameEn:'Thorax tou Aetou (Aquila Cuirass)',d:'Solange über 75% Βίος: +35 Πανοπλία & -25% erlittener Schaden.',descDe:'Solange über 75% Βίος: +35 Πανοπλία & -25% erlittener Schaden.',descEn:'While above 75% Bios: +35 Armor & -25% damage taken.'},
+ {id:'leoric_crown',cat:'armor',slot:'armor',n:'Στέφανος τοῦ Λεωρίκου (Leorics Krone)',nameDe:'Στέφανος τοῦ Λεωρίκου (Leorics Krone)',nameEn:'Stephanos tou Leorikou (Leoric\'s Crown)',d:'Verdoppelt die Wirkung von gesockelten Λίθοι (+100% Edelstein-Kraft).',descDe:'Verdoppelt die Wirkung von gesockelten Λίθοι (+100% Edelstein-Kraft).',descEn:'Doubles the effect of socketed Lithoi gems (+100% Gem power).'},
+ {id:'rorg',cat:'jewelry',slot:'jewelry',n:'Δακτύλιος τῆς Βασιλικῆς Μεγαλοπρεπείας',nameDe:'Δακτύλιος τῆς Βασιλικῆς Μεγαλοπρεπείας (Prunkring)',nameEn:'Daktylios tes Basilikes Megaloprepeias (RoRG)',d:'Reduziert die für Πανοπλία-Sets benötigten Gegenstände um 1 (Minimum 2).',descDe:'Reduziert die für Πανοπλία-Sets benötigten Gegenstände um 1 (Minimum 2).',descEn:'Reduces the number of items needed for Panoply Set bonuses by 1 (min 2).'},
+ {id:'convention',cat:'jewelry',slot:'jewelry',n:'Σύνοδος τῶν Στοιχείων (Elemente-Ring)',nameDe:'Σύνοδος τῶν Στοιχείων (Zusammenkunft der Elemente)',nameEn:'Synodos ton Stoicheion (Convention of Elements)',d:'Gewährt +30% Βλάβη und +25% Ἐκπύρωσις-Kraft durch rotierende Στοιχεῖα.',descDe:'Gewährt +30% Βλάβη und +25% Ἐκπύρωσις-Kraft durch rotierende Στοιχεῖα.',descEn:'Grants +30% Damage and +25% Ekpyrosis Nova power via rotating Stoicheia.'},
+ {id:'unity',cat:'jewelry',slot:'jewelry',n:'Ὁμόνοια τῶν Μυστῶν (Einheit der Nephalem)',nameDe:'Ὁμόνοια τῶν Μυστῶν (Einheit der Nephalem)',nameEn:'Homonoia ton Myston (Unity)',d:'Teilt erlittenen Schaden auf Σύμμαχοι/Εἴδωλα auf (-20% Schaden + 4 HP/Kill).',descDe:'Teilt erlittenen Schaden auf Σύμμαχοι/Εἴδωλα auf (-20% Schaden + 4 HP/Kill).',descEn:'Splits damage taken with Symmachoi/Eidola (-20% dmg + 4 HP/kill).'}
+];
+window.D3_LEGENDARY_POWERS=D3_LEGENDARY_POWERS;
+
+const D3_GEMS=[
+ {id:'ruby',n:'Ἄνθραξ Βασιλικός (Rubin)',name:'Ἄνθραξ Βασιλικός (Rubin)',icon:'🔴',color:'#ff4a4a',stat:'dmgP',val:12,desc:'+12% Βλάβη (Schaden)'},
+ {id:'emerald',n:'Σμάραγδος Ἑρμοῦ (Smaragd)',name:'Σμάραγδος Ἑρμοῦ (Smaragd)',icon:'🟢',color:'#4dff88',stat:'critD',val:30,desc:'+30% Καιρία Βλάβη (Krit-Schaden)'},
+ {id:'topaz',n:'Τοπάζιον Ἡλίου (Topas)',name:'Τοπάζιον Ἡλίου (Topas)',icon:'🟡',color:'#ffd54a',stat:'mf',val:18,desc:'+18% Εὕρεσις & +15 Ἄκανθαι'},
+ {id:'diamond',n:'Ἀδάμας Ὀλύμπιος (Diamant)',name:'Ἀδάμας Ὀλύμπιος (Diamant)',icon:'💎',color:'#9ec7ff',stat:'cdrP',val:10,desc:'+10% Φρόνησις (CDR) & +15% Ἀριστεία'},
+ {id:'amethyst',n:'Ἀμέθυστος Διονύσου (Amethyst)',name:'Ἀμέθυστος Διονύσου (Amethyst)',icon:'🟣',color:'#c77dff',stat:'hp',val:35,desc:'+35 Βίος & +3 Βίος/Kill'}
+];
+window.D3_GEMS=D3_GEMS;
+
+function hasActiveLegendaryPower(powerId){
+ if(typeof S==='undefined'||!S)return false;
+ if(S.kanaiCube&&(S.kanaiCube.weapon===powerId||S.kanaiCube.armor===powerId||S.kanaiCube.jewelry===powerId))return true;
+ if(S.eq){
+  for(const k in S.eq){
+   const lp=S.eq[k]&&S.eq[k].legPower;
+   if(lp===powerId||(lp&&lp.id===powerId))return true;
+  }
+ }
+ return false;
+}
+window.hasActiveLegendaryPower=hasActiveLegendaryPower;
 
 /**
  * Mathematical Drop Rate & Rarity Curve:
@@ -1855,27 +2303,89 @@ window.rollMonsterLootRarity=rollMonsterLootRarity;
 function genItem(il,o){o=o||{};
  let rar=o.rar!=null?o.rar:rollRar((o.bonus||0), il, o.diffFactor||1.0);if(o.minRar!=null&&rar<o.minRar)rar=o.minRar;
  const slot=o.slot||pick(['weapon','weapon','helm','chest','boots','relic']);
- const it={id:++uid,slot,rar,il,affs:[],set:null};
+ const it={id:++uid,slot,rar,il,affs:[],set:null,d3Tier:null,legPower:null,gem:null};
+ // Diablo 3 Ancient (Archaisch, +30% stats) & Primal Ancient (Uralt, +60% stats) for Epic/Legendary items
+ let tierMult=1.0;
+ if(rar>=3){
+  const tRoll=R();
+  if(o.d3Tier==='primal'||(rar===4&&tRoll<0.04)){it.d3Tier='primal';tierMult=1.55;}
+  else if(o.d3Tier==='ancient'||tRoll<0.18){it.d3Tier='ancient';tierMult=1.28;}
+ }
  if(slot==='weapon'){const b=o.base?WB.find(x=>x.k===o.base):pick(WB);it.bn=b.n;it.col=b.col;it.wk=b.k;
-  it.wd=Math.max(1,Math.round(b.d*(1+(il-1)*.2)*(.9+R()*.2)*(1+rar*.06)));it.wc=b.c;it.wr=+(b.r*(.92+R()*.16)).toFixed(2);it.ws=b.s;it.wsp=b.sp;it.wp=b.pr;it.wl=b.l}
- else{it.bn=pick(AB[slot]);it.ar=AR[slot]?Math.round(AR[slot]*(1+(il-1)*.2)*(.9+R()*.2)):0}
- if(il>=3 && R()<0.15+rar*0.05)it.set=pick(['aurion','runic','iron','bone']);
+  it.wd=Math.max(1,Math.round(b.d*(1+(il-1)*.2)*(.9+R()*.2)*(1+rar*.06)*tierMult));it.wc=b.c;it.wr=+(b.r*(.92+R()*.16)).toFixed(2);it.ws=b.s;it.wsp=b.sp;it.wp=b.pr;it.wl=b.l}
+ else{it.bn=pick(AB[slot]);it.ar=AR[slot]?Math.round(AR[slot]*(1+(il-1)*.2)*(.9+R()*.2)*tierMult):0}
+ // Diablo 3 Smart Loot 2.0 & Class Set assignment
+ const clsKey=(typeof S!=='undefined'&&S&&S.playerClass)||'warrior';
+ const clsSet=(D3_CLASS_META[clsKey]&&D3_CLASS_META[clsKey].setKey)||'wastes';
+ if(o.set){it.set=o.set;}
+ else if(il>=2 && (rar>=2 || R()<0.22+rar*0.06)){
+  it.set=R()<0.58?clsSet:pick(['aurion','runic','iron','bone','wastes','akkhan','unhallowed','talrasha','tragoul']);
+ }
  const cnt=[R()<.4?1:0,2,3,4,5][rar],pool=AF.filter(a=>a.s.includes(SL[slot])&&!(a.ep&&rar<3));
  for(let i=0;i<cnt&&pool.length;i++){const a=pool.splice(Math.floor(R()*pool.length),1)[0];
-  let v=a.int?ri(a.a[0],a.a[1]):rnd(a.a[0],a.a[1])*(1+(il-1)*.07)*(rar===4?1.2:1);
+  let v=a.int?ri(a.a[0],a.a[1]):(it.d3Tier==='primal'?a.a[1]:rnd(a.a[0],a.a[1]))*(1+(il-1)*.07)*(rar===4?1.2:1)*tierMult;
   v=a.dec?Math.round(v*10)/10:Math.round(v);if(!a.int&&!a.dec&&v<1)v=1;it.affs.push({k:a.k,v,t:a.t,n:a.n})}
+ // Diablo 3 Legendary Power & Gem Socket
+ if(rar===4||o.legPower){
+  const cat=slot==='weapon'?'weapon':slot==='relic'?'jewelry':'armor';
+  const lPool=D3_LEGENDARY_POWERS.filter(p=>p.slot===cat);
+  const chosen=o.legPower?D3_LEGENDARY_POWERS.find(p=>p.id===o.legPower):pick(lPool);
+  if(chosen)it.legPower=chosen.id;
+ }
+ if(rar>=2&&(o.gem||R()<0.35+rar*0.12)){
+  const gObj=o.gem?D3_GEMS.find(g=>g.id===o.gem):pick(D3_GEMS);
+  if(gObj)it.gem=gObj.id;
+ }
  const nn=it.affs.map(f=>f.n);
- it.n=rar===0||!nn.length?it.bn:rar===1?`${it.bn} der ${nn[0]}`:rar===2?`${pick(RP)}-${it.bn} der ${nn[0]}`:rar===3?`${pick(RP)}-${it.bn} der ${nn[0]} und ${nn[1]}`:`${pick(LP)} ${it.bn}`;
+ const legObj=it.legPower?D3_LEGENDARY_POWERS.find(p=>p.id===it.legPower):null;
+ if(legObj&&rar===4){
+  it.n=(typeof lang!=='undefined'&&lang==='en')?legObj.nameEn:legObj.nameDe;
+ }else{
+  it.n=rar===0||!nn.length?it.bn:rar===1?`${it.bn} der ${nn[0]}`:rar===2?`${pick(RP)}-${it.bn} der ${nn[0]}`:rar===3?`${pick(RP)}-${it.bn} der ${nn[0]} und ${nn[1]}`:`${pick(LP)} ${it.bn}`;
+ }
+ if(it.d3Tier==='primal')it.n='🔥 [Uralt] '+it.n;
+ else if(it.d3Tier==='ancient')it.n='⚡ [Archaisch] '+it.n;
  return it}
 const dps=it=>Math.round(it.wd*it.wc*it.wr),scrapXp=it=>Math.round(it.il*3*(1+it.rar*1.5));
  function recalc(){
   const mb=getMetaBonus();
   const sm=(typeof getClassSkillMods==='function')?getClassSkillMods():{};
-  const a={dmgP:mb.dmgP,rateP:0,crit:5,critD:50,hp:mb.hpP,regen:0,speedP:0,armor:0,lifeKill:0,proj:0,pierce:0,mf:0,xpP:0,novaP:0,dashCd:0,summons:0,minionDmg:0};
+  const pLvl=(S&&S.paragonLvl)||0;
+  const diffObj=getD3Diff();
+  const a={dmgP:mb.dmgP+pLvl*2,rateP:0,crit:5,critD:50,hp:mb.hpP+pLvl*4,regen:0,speedP:Math.min(25,pLvl*0.5),armor:0,lifeKill:0,proj:0,pierce:0,mf:(diffObj.mfBonus||0)+pLvl*2,xpP:0,novaP:0,dashCd:0,summons:0,minionDmg:0,areaDmgP:0,cdrP:0,thorns:0,eliteDmgP:0,allRes:0};
   let setCount={};
-  for(const s in S.eq){const it=S.eq[s];if(!it)continue;if(it.ar)a.armor+=it.ar;if(it.set){setCount[it.set]=(setCount[it.set]||0)+1;}for(const f of it.affs)a[f.k]=(a[f.k]||0)+f.v}
-  for(const setId in setCount){const cnt=setCount[setId];const sb=SETS[setId];if(!sb)continue;for(const lvl in sb){if(cnt>=parseInt(lvl)){const b=sb[lvl];for(const k in b)a[k]=(a[k]||0)+b[k];}}}
+  const leoricMult=hasActiveLegendaryPower('leoric_crown')?2:1;
+  for(const s in S.eq){
+   const it=S.eq[s];if(!it)continue;
+   if(it.ar)a.armor+=it.ar;
+   if(it.set){setCount[it.set]=(setCount[it.set]||0)+1;}
+   for(const f of it.affs)a[f.k]=(a[f.k]||0)+f.v;
+   if(it.gem){
+    const gmObj=D3_GEMS.find(g=>g.id===it.gem);
+    if(gmObj){
+     a[gmObj.stat]=(a[gmObj.stat]||0)+gmObj.val*leoricMult;
+     if(gmObj.id==='topaz')a.thorns=(a.thorns||0)+15*leoricMult;
+     if(gmObj.id==='diamond')a.eliteDmgP=(a.eliteDmgP||0)+15*leoricMult;
+     if(gmObj.id==='amethyst')a.lifeKill=(a.lifeKill||0)+3*leoricMult;
+    }
+   }
+  }
+  const hasRoRG=hasActiveLegendaryPower('rorg');
+  for(const setId in setCount){
+   const rawCnt=setCount[setId];
+   const effCnt=(hasRoRG&&rawCnt>=2)?rawCnt+1:rawCnt;
+   const sb=SETS[setId];if(!sb)continue;
+   for(const lvl in sb){
+    if(lvl==='name')continue;
+    if(effCnt>=parseInt(lvl,10)){const b=sb[lvl];for(const k in b)a[k]=(a[k]||0)+b[k];}
+   }
+  }
+  if(hasActiveLegendaryPower('furnace'))a.eliteDmgP=(a.eliteDmgP||0)+45;
+  if(hasActiveLegendaryPower('convention')){a.dmgP+=30;a.novaP+=25;}
+  if(hasActiveLegendaryPower('unity')){a.armor+=20;a.lifeKill+=4;}
+  if(hasActiveLegendaryPower('aquila')&&(!P||P.hp>=P.mh*0.75)){a.armor+=35;}
   const t=S.at||{str:0,dex:0,vit:0,arc:0};ST=a;
+  ST.armor+=Math.round((a.allRes||0)*0.5);
   const clsObj=CLASSES[S.playerClass||'warrior']||CLASSES.warrior;
   const skillDmgMul = (1 + (sm.meleeDmgP||0)/100) * (1 + (sm.holyHitDmgP||0)/100);
   ST.dm=(1+t.str*.05+S.lvl*.02+a.dmgP/100)*(1+mb.dmgP/100)*(1+(S.factionDmgBonus||0)/100)*clsObj.dmgMult*skillDmgMul;
@@ -1883,8 +2393,9 @@ const dps=it=>Math.round(it.wd*it.wc*it.wr),scrapXp=it=>Math.round(it.il*3*(1+it
   ST.spd=6.2*(1+t.dex*.01+a.speedP/100)*clsObj.spdMult;
   ST.maxhp=Math.round((100+S.lvl*8+t.vit*12+a.hp)*clsObj.hpMult);
   ST.rg=a.regen+t.vit*.25+.4;ST.novaM=(1+t.arc*.08+a.novaP/100)*clsObj.novaMult;
-  ST.cdM=cl(1-a.dashCd/100-t.arc*.015,.4,1);ST.crit=a.crit+t.arc*.5+(sm.critBonus||0);
+  ST.cdM=cl(1-(a.dashCd+(a.cdrP||0))/100-t.arc*.015,.35,1);ST.crit=a.crit+t.arc*.5+(sm.critBonus||0);
   ST.summons=a.summons;ST.minionDmg=a.minionDmg;
+  ST.eliteDmgP=a.eliteDmgP||0;ST.areaDmgP=a.areaDmgP||0;ST.thorns=a.thorns||0;
   if(P){P.mh=ST.maxhp;P.hp=Math.min(P.hp,P.mh);CAP=28+mb.invP;}
   const bSum=$('bSummon');if(bSum)bSum.style.display=S.playerClass==='necromancer'?'inline-block':'none';
  }
@@ -2018,7 +2529,7 @@ function clearWorld(){
  for(const d of drops)if(d.lbl)d.lbl.material.map.dispose();
  while(world.children.length)world.remove(world.children[0]);
  disp.forEach(d=>d.dispose());disp=[];en=[];crates=[];chests=[];shrines=[],hazards=[],campfires=[],drops=[],secrets=[],portal=null;boss=null;pb.length=0;eb.length=0;flick=[];minions=[];villageNPCs=[];hiredHelpers=[];villageShop=[];adventurers=[];villageActive=false;
- const nl=$('npcLayer2D');if(nl)nl.innerHTML='';}
+ if(typeof resetNpcLayer2D==='function')resetNpcLayer2D();else{const nl=$('npcLayer2D');if(nl)nl.innerHTML='';}}
 function paintFloor(th,rg){
  return cTex(W*TP,H*TP,x=>{
   x.fillStyle='#020304';x.fillRect(0,0,W*TP,H*TP);
@@ -2113,6 +2624,7 @@ function populate(th){
   if(r.type==='boss'||r.type==='raidboss'){spawnBoss(r,r.type==='raidboss');continue}
   const n=ri(3,5)+Math.min(S.floor,5)+(r.type==='treasure'?2:0)+(r.type==='arena'?4:0);
   for(let k=0;k<n;k++){const p=rndIn(r);if(p)spawnE(pickT(),p[0],p[1],R()<.09+S.floor*.012)}
+  if(r.type==='normal'&&R()<0.18){const gp=rndIn(r);if(gp)spawnE('goblin',gp[0],gp[1],false,false);}
   if(r.type==='treasure')mkChest(r.c[0]+.5,r.c[1]+.5,1);
   if(r.type==='shrine')mkShrine(r.c[0]+.5,r.c[1]+.5,false);
   if(r.type==='arena'){r.spawned=false;r.arenaWave=0;}
@@ -2222,13 +2734,14 @@ function openPortal(x,y){if(!isF(x|0,y|0)){const r=M.rooms.find(r=>r.type==='bos
 /* ================= VILLAGE & SHOP & QUESTS ================= */
 function spawnVillageNPCs(room){
   const c=rndIn(room)||[room.cx+.5,room.cy+.5];
+  const greekMercs=['Μύστης Δορυφόρος (Mystes-Söldner)','Ὁπλίτης Σύμμαχος (Hoplit-Gefährte)'];
   for(let k=0;k<2;k++){
     const nx=c[0]+rnd(-2,2),ny=c[1]+rnd(-2,2);
     const g=new Tt.Group();g.position.set(nx,.3,ny);
     g.add(part(cylG,lam(0x8a6d3b),0,.4,0,.3,.8,.3));
     g.add(part(sphG,bas(0xe0c3a6),0,.8,0,.22));
     world.add(g);
-    villageNPCs.push({x:nx,y:ny,r:.32,cr:.28,g,type:'hire',cost:25+S.floor*10,name:'Söldner',hp:50+S.floor*10,dmg:8+S.floor*2});
+    villageNPCs.push({x:nx,y:ny,r:.32,cr:.28,g,type:'hire',cost:25+S.floor*10,name:greekMercs[k%greekMercs.length],hp:50+S.floor*10,dmg:8+S.floor*2});
   }
 }
 /* ================= CENTRAL QUEST MANAGER (WITHIN GAMEMONITOR) ================= */
@@ -2659,26 +3172,26 @@ function generateShop(){
   const scaleCost=base=>Math.max(5,Math.round(base*priceMult));
   const shopWeapons=pick(WB);
   villageShop.push({kind:'weapon',item:genItem(ilv()+1,{slot:'weapon',base:shopWeapons.k,rar:1}),cost:scaleCost(40+S.floor*10)});
-  villageShop.push({kind:'potion',item:{n:'Heiltrank',desc:'Stellt 50% Leben wieder her'},cost:scaleCost(30+S.floor*5)});
-  villageShop.push({kind:'relic',item:{n:'Relikt-Splitter-Paket (+5)',desc:'+5 Relikt-Splitter für permanente Upgrades'},cost:scaleCost(60+S.floor*15)});
+  villageShop.push({kind:'potion',item:{n:'Νέκταρ Ἰάσεως (Heiltrank)',desc:'Stellt 50% Βίος (Leben) wieder her'},cost:scaleCost(30+S.floor*5)});
+  villageShop.push({kind:'relic',item:{n:'Θραύσματα Ὀρφικά (+5 Splitter)',desc:'+5 Θραύσματα für permanente Upgrades'},cost:scaleCost(60+S.floor*15)});
 
   // Faction Trust & Combat Metric unlocks strictly derived via verifyNpcRelationsData
   if(mods.unlockedPotion){
     const healPct=Math.round((mods.potionHealRatio||0.65)*100);
     const blessSec=mods.blessingDurationSec||25;
-    villageShop.push({kind:'potion',item:{n:'Abenteurer-Trank (Tier 1)',desc:`+${healPct}% Leben & ${blessSec}s Segen (Aus HistoryNodes & Kampf-Metriken)`},cost:scaleCost(25+S.floor*5)});
+    villageShop.push({kind:'potion',item:{n:'Φάρμακον τῶν Μυστῶν (Abenteurer-Trank Tier 1)',desc:`+${healPct}% Βίος & ${blessSec}s Εὐλογία (Aus HistoryNodes & Kampf-Metriken)`},cost:scaleCost(25+S.floor*5)});
   }
   if(mods.unlockedRation){
-    villageShop.push({kind:'ration',item:{n:'Gilden-Ration (Tier 2)',desc:'+15 Max. Leben permanent & volle Heilung'},cost:scaleCost(55+S.floor*10)});
+    villageShop.push({kind:'ration',item:{n:'Ἀμβροσία τῆς Συνόδου (Gilden-Ration Tier 2)',desc:'+15 Max. Βίος permanent & volle Heilung'},cost:scaleCost(55+S.floor*10)});
   }
   if(mods.unlockedWhetstone){
-    villageShop.push({kind:'whetstone',item:{n:'Klingen-Schärfstein (Tier 3)',desc:'+12% Waffenschaden permanent'},cost:scaleCost(80+S.floor*15)});
+    villageShop.push({kind:'whetstone',item:{n:'Ἀκόνη τοῦ Ἡφαίστου (Klingen-Schärfstein Tier 3)',desc:'+12% Ὅπλου Κράτος permanent'},cost:scaleCost(80+S.floor*15)});
   }
   if(mods.unlockedBrotherhoodRelic){
     const uniqueRelic=genItem(ilv()+2,{slot:'relic',rar:4});
-    uniqueRelic.n=lang==='de'?'Relikt der Abenteurer-Bruderschaft (Tier 4)':'Relic of the Brotherhood (Tier 4)';
-    uniqueRelic.affs.push({k:'proj',v:1,t:' Projektil',n:'Bruderschaft'});
-    uniqueRelic.affs.push({k:'speedP',v:15,t:'% Lauftempo',n:'Eile'});
+    uniqueRelic.n=lang==='de'?'Κειμήλιον τῆς Ἑταιρείας (Relikt der Bruderschaft Tier 4)':'Keimelion tes Hetaireias (Relic of the Brotherhood Tier 4)';
+    uniqueRelic.affs.push({k:'proj',v:1,t:' Βέλος (Projektil)',n:'Ἑταιρείας (Bruderschaft)'});
+    uniqueRelic.affs.push({k:'speedP',v:15,t:'% Ταχύτης (Lauftempo)',n:'Ταχύτητος (Eile)'});
     villageShop.push({kind:'weapon',item:uniqueRelic,cost:scaleCost(110+S.floor*20)});
   }
 }
@@ -2707,6 +3220,7 @@ function renderVillageTab(tab){
   $('vtNPCs').classList.toggle('active',tab==='vtNPCs');
   $('vtShop').classList.toggle('active',tab==='vtShop');
   $('vtQuests').classList.toggle('active',tab==='vtQuests');
+  if($('vtCube'))$('vtCube').classList.toggle('active',tab==='vtCube');
   const c=$('vtContent');c.innerHTML='';
   if(tab==='vtNPCs'){
     villageNPCs.forEach((v,i)=>{
@@ -2749,11 +3263,84 @@ function renderVillageTab(tab){
         bar.style.width=(bar.getAttribute('data-target-pct')||'0')+'%';
       });
     });
+  }else if(tab==='vtCube'){
+    if(!S.kanaiCube)S.kanaiCube={weapon:null,armor:null,jewelry:null,extracted:[]};
+    $('villageGold').innerHTML=`<div>💰 Gold: <b>${S.gold||0}</b> · 💎 Splitter: <b>${S.metaShards||0}</b> · 🔮 Extrahiert: <b>${(S.kanaiCube.extracted||[]).length}/${D3_LEGENDARY_POWERS.length}</b></div>`;
+    const getPwr=id=>D3_LEGENDARY_POWERS.find(p=>p.id===id);
+    const wP=getPwr(S.kanaiCube.weapon),aP=getPwr(S.kanaiCube.armor),jP=getPwr(S.kanaiCube.jewelry);
+    const box=document.createElement('div');
+    box.className='kanai-box';
+    box.innerHTML=`<div style="font-size:12px;color:#ffb347;font-weight:800;margin-bottom:6px">🔮 Kanais Würfel (Artefakt von Zoltun Kull)</div>
+    <div style="font-size:11px;opacity:.85;margin-bottom:8px">Wähle bis zu 3 extrahierte legendäre Eigenschaften, die dauerhaft passiv wirken:</div>
+    <div class="kanai-slots">
+      <div class="kanai-slot ${wP?'active':''}" onclick="cycleKanaiSlot('weapon')"><b>⚔️ Waffe</b><span>${wP?wP.n:'(Leer – Tippen)'}</span></div>
+      <div class="kanai-slot ${aP?'active':''}" onclick="cycleKanaiSlot('armor')"><b>🛡️ Rüstung</b><span>${aP?aP.n:'(Leer – Tippen)'}</span></div>
+      <div class="kanai-slot ${jP?'active':''}" onclick="cycleKanaiSlot('jewelry')"><b>💍 Schmuck</b><span>${jP?jP.n:'(Leer – Tippen)'}</span></div>
+    </div>
+    <div class="shop-item"><div class="si-name">🔥 <b>Kulls Archiv-Extraktion</b><br><small style="opacity:.8">Extrahiert eine legendäre Eigenschaft aus dem Beutel (oder schaltet 1 neue frei) · 5 Splitter & 50 Gold</small></div><button onclick="kanaiExtractPower()">Extrahieren</button></div>
+    <div class="shop-item"><div class="si-name">⚒️ <b>Hoffnung von Cain (Seltenes Item aufwerten)</b><br><small style="opacity:.8">Wertet ein seltenes Item im Beutel zu Legendär/Set auf (oder schmiedet neu) · 8 Splitter & 80 Gold</small></div><button onclick="kanaiUpgradeRare()">Aufwerten</button></div>
+    <div class="shop-item"><div class="si-name">💎 <b>Juwelen-Transmutation</b><br><small style="opacity:.8">Veredelt das angelegte Waffen- oder Helm-Item mit einem makellosen Sockel-Edelstein · 60 Gold</small></div><button onclick="kanaiReforgeGem()">Sockeln</button></div>`;
+    c.appendChild(box);
   }
+}
+function cycleKanaiSlot(cat){
+  if(!S||!S.kanaiCube)return;
+  const unlocked=D3_LEGENDARY_POWERS.filter(p=>p.cat===cat&&(S.kanaiCube.extracted||[]).includes(p.id));
+  if(!unlocked.length){toast('Noch keine Eigenschaft dieser Kategorie extrahiert!','#ffb347');return;}
+  const curIdx=unlocked.findIndex(p=>p.id===S.kanaiCube[cat]);
+  const next=unlocked[(curIdx+1)%unlocked.length];
+  S.kanaiCube[cat]=next.id;
+  recalc();saveGame(true);sndBuy();
+  toast(`🔮 Kanai [${cat.toUpperCase()}]: ${next.n}`,'#ff8a2b');
+  renderVillageTab('vtCube');
+}
+function kanaiExtractPower(){
+  if((S.metaShards||0)<5||(S.gold||0)<50){toast('Benötigt 5 Splitter & 50 Gold!','#ff7a7a');return;}
+  if(!S.kanaiCube)S.kanaiCube={weapon:null,armor:null,jewelry:null,extracted:[]};
+  const invLegIdx=S.inv.findIndex(it=>it.legPower&&!S.kanaiCube.extracted.includes(it.legPower.id));
+  let pwr=null;
+  if(invLegIdx>=0){
+    const it=S.inv.splice(invLegIdx,1)[0];
+    pwr=it.legPower;
+  }else{
+    const locked=D3_LEGENDARY_POWERS.filter(p=>!S.kanaiCube.extracted.includes(p.id));
+    if(!locked.length){toast('Alle legendären Eigenschaften bereits extrahiert!','#6dff9b');return;}
+    pwr=pick(locked);
+  }
+  S.metaShards-=5;S.gold-=50;
+  S.kanaiCube.extracted.push(pwr.id);
+  if(!S.kanaiCube[pwr.cat])S.kanaiCube[pwr.cat]=pwr.id;
+  recalc();saveGame(true);sndLevelUp();
+  toast(`🔮 Extrahiert: ${pwr.n} — ${pwr.d}`,'#ff8a2b');
+  renderVillageTab('vtCube');
+}
+function kanaiUpgradeRare(){
+  if((S.metaShards||0)<8||(S.gold||0)<80){toast('Benötigt 8 Splitter & 80 Gold!','#ff7a7a');return;}
+  S.metaShards-=8;S.gold-=80;
+  const rareIdx=S.inv.findIndex(it=>it.rar<=2);
+  let slot='weapon';
+  if(rareIdx>=0){slot=S.inv[rareIdx].slot;S.inv.splice(rareIdx,1);}
+  else{slot=pick(['weapon','helm','chest','boots','relic']);}
+  const newIt=genItem(ilv()+2,{slot,rar:R()<0.7?4:3});
+  S.inv.push(newIt);
+  saveGame(true);sndChest();
+  toast(`⚒️ Hoffnung von Cain: ${newIt.n}`,'#ff8a2b');
+  renderVillageTab('vtCube');
+}
+function kanaiReforgeGem(){
+  if((S.gold||0)<60){toast('Benötigt 60 Gold!','#ff7a7a');return;}
+  const target=S.eq.weapon||S.eq.helm||S.eq.chest;
+  if(!target){toast('Lege zuerst eine Waffe oder Rüstung an!','#ff7a7a');return;}
+  S.gold-=60;
+  target.gem=pick(D3_GEMS);
+  recalc();saveGame(true);sndBuy();
+  toast(`💎 Gesockelt: ${target.gem.icon} ${target.gem.n}`,'#6dff9b');
+  renderVillageTab('vtCube');
 }
 $('vtNPCs').onclick=()=>renderVillageTab('vtNPCs');
 $('vtShop').onclick=()=>renderVillageTab('vtShop');
 $('vtQuests').onclick=()=>{QUEST_MANAGER.ensureVillageQuests();renderVillageTab('vtQuests');};
+if($('vtCube'))$('vtCube').onclick=()=>renderVillageTab('vtCube');
 $('villageClose').onclick=leaveVillage;
 function hireNPC(i){
   const v=villageNPCs[i];
@@ -3059,19 +3646,29 @@ const lvlRing2=new Tt.Mesh(new Tt.RingGeometry(.86,1,48).rotateX(-Math.PI/2),lvl
 const lvlBeam=new Tt.Mesh(beamG,lvlBeamMat);lvlBeam.position.y=0;lvlBeam.visible=false;scene.add(lvlBeam);
 let lvlUpFxT=0;
 
-/* ================= ENEMIES ================= */
+/* ================= ENEMIES (ANCIENT GREEK SPECIES & MYTHIC DAIMONES) ================= */
 const ET={
- husk:{n:'Schreckling',hp:34,dmg:9,spd:3.6,r:.4,xp:8,col:0x7a3b3b,ai:'melee',sc:1,w:50},
- drone:{n:'Schwebe-Drohne',hp:26,dmg:7,spd:2.6,r:.35,xp:10,col:0x4a6a8a,ai:'shoot',fire:1.6,bs:9,sc:1,w:25},
- mage:{n:'Runen-Magier',hp:44,dmg:8,spd:2.2,r:.4,xp:14,col:0x5a3a7a,ai:'ring',fire:2.8,bs:6.5,sc:1,w:15},
- brute:{n:'Eisen-Golem',hp:150,dmg:22,spd:2.1,r:.7,xp:30,col:0x5a5f66,ai:'melee',sc:1.7,w:10},
- archer:{n:'Schatten-Bogenschütze',hp:30,dmg:11,spd:2.8,r:.35,xp:12,col:0x3a5a3a,ai:'shoot',fire:2.2,bs:12,sc:1,w:20},
- teleporter:{n:'Void-Stalker',hp:40,dmg:12,spd:3.2,r:.38,xp:16,col:0x5a3a5a,ai:'teleport',fire:3,bs:8,sc:1,w:15},
- bomber:{n:'Glut-Bomber',hp:28,dmg:15,spd:2.4,r:.45,xp:14,col:0x7a3a00,ai:'kamikaze',fire:99,bs:3,sc:1,w:10},
- boss:{n:'Relikt-Wächter',hp:900,dmg:14,spd:1.6,r:1.1,xp:300,col:0x4a3a6a,ai:'boss',sc:1.6},
- raidboss:{n:'Totenfürst',hp:2500,dmg:20,spd:1.4,r:1.4,xp:800,col:0x4a1a1a,ai:'raidboss',sc:2.0}};
-const EP=['Eisenhart','Grimmzahn','Nachtschatten','Glutkern','Frostgrab','Sturmbringer'];
-function pickT(){const f=S.floor,ws=[['husk',50],['drone',25],['mage',f>1?15:0],['brute',f>2?10:0],['archer',f>2?10:0],['teleporter',f>4?5:0],['bomber',f>3?8:0]];let r=R()*ws.reduce((a,b)=>a+b[1],0);for(const w of ws){r-=w[1];if(r<=0)return w[0]}return'husk'}
+ husk:{n:'Εἴδωλον Νεκρόν (Eidolon · Ghul)',hp:34,dmg:9,spd:3.6,r:.4,xp:8,col:0x7a3b3b,ai:'melee',sc:1,w:50},
+ drone:{n:'Κὴρ Ψυχοπόμπος (Ker · Seelen-Schnitter)',hp:26,dmg:7,spd:2.6,r:.35,xp:10,col:0x4a6a8a,ai:'shoot',fire:1.6,bs:9,sc:1,w:25},
+ mage:{n:'Μύστης τῶν Τελχίνων (Telchin-Kultist)',hp:44,dmg:8,spd:2.2,r:.4,xp:14,col:0x5a3a7a,ai:'ring',fire:2.8,bs:6.5,sc:1,w:15},
+ brute:{n:'Γίγας Χάλκεος (Gigas · Hammerfürst)',hp:150,dmg:22,spd:2.1,r:.7,xp:30,col:0x5a5f66,ai:'melee',sc:1.7,w:10},
+ archer:{n:'Σκελετὸς Τοξότης (Skeletos · Bogenschütze)',hp:30,dmg:11,spd:2.8,r:.35,xp:12,col:0x3a5a3a,ai:'shoot',fire:2.2,bs:12,sc:1,w:20},
+ teleporter:{n:'Ἔμπουσα Νυκτερινή (Empousa · Assassine)',hp:40,dmg:12,spd:3.2,r:.38,xp:16,col:0x5a3a5a,ai:'teleport',fire:3,bs:8,sc:1,w:15},
+ bomber:{n:'Πυρίγονος Δαίμων (Pyrigonos · Gefallener)',hp:28,dmg:15,spd:2.4,r:.45,xp:14,col:0x7a3a00,ai:'kamikaze',fire:99,bs:3,sc:1,w:10},
+ goblin:{n:'Schatzgoblin · Κόβαλος Χρυσοφόρος',hp:95,dmg:0,spd:4.4,r:.38,xp:45,col:0xffd54a,ai:'goblin',sc:0.95,w:4},
+ boss:{n:'Φύλαξ τοῦ Χάσματος (Phylax · Portalwächter)',hp:900,dmg:14,spd:1.6,r:1.1,xp:300,col:0x4a3a6a,ai:'boss',sc:1.6},
+ raidboss:{n:'Θάνατος Κοσμοκράτωρ (Thanatos · Oberstes Übel)',hp:2500,dmg:20,spd:1.4,r:1.4,xp:800,col:0x4a1a1a,ai:'raidboss',sc:2.0}};
+const EP=['Σιδηρόφρων (Siderophron)','Λυκόδους (Lykodous)','Νυκτόβιος (Nyktobios)','Πυρίκαρδος (Pyrikardos)','Κρυμοπαγής (Krymopages)','Κεραυνόβλητος (Keraunobletos)'];
+const D3_ELITE_AFFIXES=[
+ {id:'arcane',de:'Αἰθερόδετος (Arkanverzaubert)',en:'Aitherodetos (Arcane Enchanted)',col:'#d06bff'},
+ {id:'molten',de:'Πυρίφλεκτος (Geschmolzen)',en:'Pyriphlektos (Molten)',col:'#ff6a2b'},
+ {id:'frozen',de:'Κρυσταλλόπηκτος (Vereist)',en:'Krystallopektos (Frozen)',col:'#5ce1ff'},
+ {id:'mortar',de:'Λιθοβόλος (Mörser)',en:'Lithobolos (Mortar)',col:'#ffb347'},
+ {id:'vortex',de:'Δίνη Χάους (Vortex)',en:'Dine Chaous (Vortex)',col:'#7fb0ff'},
+ {id:'jailer',de:'Δεσμοφύλαξ (Aufseher)',en:'Desmophylax (Jailer)',col:'#e08aff'},
+ {id:'electrified',de:'Κεραυνοφόρος (Elektrisiert)',en:'Keraunophoros (Electrified)',col:'#4fd1ff'}
+];
+function pickT(){const f=S.floor,ws=[['husk',50],['drone',25],['mage',f>1?15:0],['brute',f>2?10:0],['archer',f>2?10:0],['teleporter',f>4?5:0],['bomber',f>3?8:0],['goblin',f>1?3:0]];let r=R()*ws.reduce((a,b)=>a+b[1],0);for(const w of ws){r-=w[1];if(r<=0)return w[0]}return'husk'}
 function mkEM(t,col,el,sc){
  const root=new Tt.Group(),body=new Tt.Group();root.add(body);
  const L=lam(col,dk(col,.18)),D=lam(dk(col,.55)),B=lam(lt(col,.28)),boneM=lam(0xd8d2c5),metalM=lam(0x4a5262,0x10141d);
@@ -3178,6 +3775,13 @@ function mkEM(t,col,el,sc){
   body.add(part(sphG,bas(0xfff0a0),.42,.7,-.14,.07));
   body.add(part(boxG,D,0,.14,.18,.18,.28,.18));body.add(part(boxG,D,0,.14,-.18,.18,.28,.18));
   hh=1.55;
+ }else if(t==='goblin'){
+  body.add(part(boxG,lam(0x8a6220),.02,.48,0,.44,.48,.42));
+  body.add(part(sphG,lam(0x55a646),.18,.82,0,.22));
+  const sack=part(sphG,lam(0xffd54a,0x443300),-.28,.72,0,.34,.42,.34);
+  body.add(sack);
+  ring=part(torG,bm(0xffd54a,.88),0,.12,0,.58);ring.rotation.x=Math.PI/2;body.add(ring);
+  hh=1.45;
  }else if(t==='raidboss'){
   const b=new Tt.Group();b.position.y=1.55;
   b.add(part(icoG,lam(col,0x3a0808),0,0,0,.92));
@@ -3186,7 +3790,7 @@ function mkEM(t,col,el,sc){
   for(let i=0;i<6;i++){const a=i*1.047;const crn=part(coneG,lam(0xffb347,0x441100),Math.cos(a)*.52,.98,Math.sin(a)*.52,.12,.45,.12);b.add(crn);}
   for(const sz of[-1,1]){
    b.add(part(boxG,metalM,.1,.45,sz*1.05,.55,.38,.55));
-   const h=part(coneG,boneM,.2,.85,sz*1.15,.16,.55,.16);h.rotation.x=sz*.35;b.add(h);
+   const h=part(coneG,boneM,.2,.85,sz*1.15,.16,.55,.16);h.rotation.x=sz*.35;body.add(h);
   }
   ring=new Tt.Group();ring.position.y=1.55;
   for(let i=0;i<4;i++){
@@ -3223,16 +3827,31 @@ function mkEM(t,col,el,sc){
  return{root,body,ring,bar,fill,bw:bw-.06}}
 function spawnE(t,x,y,el,chase){
  const d=ET[t],f=S.floor-1,sc=d.sc*(el?1.25:1),m=mkEM(t,d.col,el,sc);
- const diffMult=1.35;
+ const d3d=getD3Diff();
+ const diffMult=1.35*d3d.hpM;
+ const dmgMult=1.35*d3d.dmgM;
  const diffFactor=getEnemyDifficultyFactor({t,el,boss:(t==='boss'||t==='raidboss')});
- const e={t,x,y,diffFactor,hp:Math.round(d.hp*(1+.22*f)*(el?3.5:1)*diffMult),r:d.r*sc*(t==='boss'||t==='raidboss'?.6:1),dmg:Math.max(1,Math.round(d.dmg*(1+.13*f)*(el?1.4:1)*diffMult)),spd:d.spd*(el?1.1:1),el,name:el?'★ '+pick(EP)+' · '+d.n:d.n,st:chase?1:0,cd:rnd(.5,1.5),atk:0,fl:0,lunge:0,sc,ph:R()*6,sg:1,dead:false,xp:d.xp*(1+.1*f)*(el?3:1),d:99,ang:0,los:false,m,root:m.root,body:m.body,ring:m.ring,bar:m.bar,fill:m.fill,bw:m.bw,boss:(t==='boss'||t==='raidboss'),teleportT:0,raidT:0};
+ let eliteAffixes=[];
+ let eliteTitle=d.n;
+ if(el&&t!=='boss'&&t!=='raidboss'&&t!=='goblin'){
+  const affPool=D3_ELITE_AFFIXES.slice();
+  const affCnt=Math.min(3,1+Math.floor(S.floor/3));
+  for(let k=0;k<affCnt&&affPool.length;k++){
+   const pickAff=affPool.splice(Math.floor(R()*affPool.length),1)[0];
+   eliteAffixes.push(pickAff);
+  }
+  const affNames=eliteAffixes.map(a=>lang==='de'?a.de:a.en).join(' · ');
+  eliteTitle=`★ ${pick(EP)} (${affNames})`;
+ }
+ const e={t,x,y,diffFactor,eliteAffixes,affixCd:rnd(2.2,4.0),hp:Math.round(d.hp*(1+.22*f)*(el?3.5:1)*diffMult),r:d.r*sc*(t==='boss'||t==='raidboss'?.6:1),dmg:Math.max(1,Math.round(d.dmg*(1+.13*f)*(el?1.4:1)*dmgMult)),spd:d.spd*(el?1.1:1),el,name:el?eliteTitle:d.n,st:chase?1:0,cd:rnd(.5,1.5),atk:0,fl:0,lunge:0,sc,ph:R()*6,sg:1,dead:false,xp:Math.round(d.xp*(1+.1*f)*(el?3:1)*d3d.xpM),d:99,ang:0,los:false,m,root:m.root,body:m.body,ring:m.ring,bar:m.bar,fill:m.fill,bw:m.bw,boss:(t==='boss'||t==='raidboss'),teleportT:0,raidT:0};
  e.mh=e.hp;e.cr=Math.min(e.r,.42);world.add(e.root);en.push(e);return e}
 function spawnBoss(r,raid=false){
  const t=raid?'raidboss':'boss';
+ const d3d=getD3Diff();
  const e=spawnE(t,r.c[0]+.5,r.c[1]+.5,false,false);
  e.diffFactor=getEnemyDifficultyFactor(e);
- if(raid){e.hp=e.mh=Math.round(2500*(1+.4*(S.floor/5))*1.35);e.name=ET.raidboss.n;toast(T('raid_boss'),'#ff4a4a');shake=1;}
- else{e.hp=e.mh=Math.round(900*(1+.35*(S.floor-1))*1.35);e.name=ET.boss.n;}
+ if(raid){e.hp=e.mh=Math.round(2500*(1+.4*(S.floor/5))*1.35*d3d.hpM);e.name=ET.raidboss.n;toast(T('raid_boss'),'#ff4a4a');shake=1;}
+ else{e.hp=e.mh=Math.round(900*(1+.35*(S.floor-1))*1.35*d3d.hpM);e.name=ET.boss.n;}
  e.sp=0;e.t1=1;e.t2=2;e.t3=6;e.phz=0;e.r=raid?1.3:1.0;e.cr=.42;boss=e;raidBossSpawned=raid;}
 function ebul(x,y,a,sp,dmg,r,life){if(eb.length>=EB.max)return;eb.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,dmg,r,life})}
 function calcFlow(){const px=P.x|0,py=P.y|0;flow.fill(-1);if(!isF(px,py))return;let h=0,t=0;fq[t++]=py*W+px;flow[py*W+px]=0;
@@ -3249,16 +3868,46 @@ function aiE(e,dt){
  const dx=P.x-e.x,dy=P.y-e.y;e.d=Math.hypot(dx,dy);e.ang=Math.atan2(dy,dx);
  if(e.st===0){if(e.d<12&&(e.d<6||los(e.x,e.y,P.x,P.y)))e.st=1;else return}
  e.los=e.d<20&&los(e.x,e.y,P.x,P.y);e.atk-=dt;e.cd-=dt;e.teleportT-=dt;e.raidT-=dt;
+ if(e.eliteAffixes&&e.eliteAffixes.length&&e.d<11){
+  e.affixCd=(e.affixCd||3)-dt;
+  if(e.affixCd<=0){
+   e.affixCd=rnd(3.0,4.8);
+   const af=pick(e.eliteAffixes);
+   if(af.id==='arcane'){
+    for(let i=0;i<4;i++)ebul(e.x,e.y,e.ph+i*1.5708,4.6,e.dmg*0.65,.22,3.5);
+    emit(e.x,e.y,.8,'#d06bff',16,3.5,.5,2);
+   }else if(af.id==='frozen'){
+    emit(e.x,e.y,.8,'#5ce1ff',26,5.5,.7,2.5);
+    if(e.d<4.2){hurtP(Math.round(e.dmg*0.55));if(!P.eff)P.eff={};P.eff.slow=1.6;setTimeout(()=>{if(P&&P.eff)P.eff.slow=0;},1600);}
+   }else if(af.id==='mortar'&&e.d>3.2){
+    for(let i=0;i<3;i++)ebul(e.x,e.y,e.ang+rnd(-.28,.28),7.8,e.dmg*0.75,.25,2.4);
+    emit(e.x,e.y,1.1,'#ffb347',14,4,.45,3);
+   }else if(af.id==='vortex'&&e.d<7.5&&e.d>1.8){
+    mv(P,(e.x-P.x)*0.42,(e.y-P.y)*0.42);
+    emit(P.x,P.y,.8,'#7fb0ff',18,3.8,.45,2);
+   }else if(af.id==='jailer'&&e.d<8){
+    hurtP(Math.round(e.dmg*0.4));
+    emit(P.x,P.y,.8,'#e08aff',16,3,.45,2);
+   }
+  }
+ }
  if(e.boss){
   if(e.t==='raidboss')return raidBossAI(e,dt);
   return bossAI(e,dt);
  }
  const d=ET[e.t];
- if(d.ai==='melee'){chase(e,dt,e.spd);if(e.d<e.r+P.r+.4&&e.atk<=0){e.atk=.9;e.lunge=.2;hurtP(e.dmg);sndEnemyHit()}}
+ if(d.ai==='goblin'){
+  if(e.d<9){
+   mv(e,-(dx/(e.d||1))*e.spd*dt,-(dy/(e.d||1))*e.spd*dt);
+   if(R()<dt*3.5){S.gold=(S.gold||0)+2;emit(e.x,e.y,.6,'#ffd54a',4,2.5,.35,2);}
+  }
+  return;
+ }
+ if(d.ai==='melee'){chase(e,dt,e.spd);if(e.d<e.r+P.r+.4&&e.atk<=0){e.atk=.9;e.lunge=.2;hurtP(e.dmg,e);sndEnemyHit()}}
  else if(d.ai==='shoot'){if(e.d>d.bs+1.5)chase(e,dt,e.spd);else if(e.d<d.bs-2)mv(e,-dx/e.d*e.spd*dt,-dy/e.d*e.spd*dt);else{mv(e,-dy/e.d*e.spd*.6*dt*e.sg,dx/e.d*e.spd*.6*dt*e.sg);if(R()<dt*.3)e.sg=-e.sg}
   if(e.cd<=0&&e.los){e.cd=d.fire*(e.el?.8:1)*rnd(.85,1.15);const n=e.el?3:1;for(let i=0;i<n;i++)ebul(e.x,e.y,e.ang+(i-(n-1)/2)*.22+rnd(-.05,.05),9,e.dmg*.8,.2,3)}}
- else if(d.ai==='teleport'){if(e.teleportT<=0&&e.d<10){e.teleportT=4;const nx=P.x+rnd(-4,4),ny=P.y+rnd(-4,4);if(isF(nx|0,ny|0)){e.x=nx;e.y=ny;emit(e.x,e.y,1,'#c77dff',20,4,.5,2);}} chase(e,dt,e.spd*.8); if(e.d<e.r+P.r+.4&&e.atk<=0){e.atk=1;e.lunge=.2;hurtP(e.dmg);sndEnemyHit();}}
- else if(d.ai==='kamikaze'){chase(e,dt,e.spd*1.4);if(e.d<e.r+P.r+.3&&e.atk<=0){e.atk=.5;hurtP(e.dmg*1.5);emit(e.x,e.y,1,'#ff6a3d',30,6,.8,3);killE(e);sndEnemyHit();}}
+ else if(d.ai==='teleport'){if(e.teleportT<=0&&e.d<10){e.teleportT=4;const nx=P.x+rnd(-4,4),ny=P.y+rnd(-4,4);if(isF(nx|0,ny|0)){e.x=nx;e.y=ny;emit(e.x,e.y,1,'#c77dff',20,4,.5,2);}} chase(e,dt,e.spd*.8); if(e.d<e.r+P.r+.4&&e.atk<=0){e.atk=1;e.lunge=.2;hurtP(e.dmg,e);sndEnemyHit();}}
+ else if(d.ai==='kamikaze'){chase(e,dt,e.spd*1.4);if(e.d<e.r+P.r+.3&&e.atk<=0){e.atk=.5;hurtP(e.dmg*1.5,e);emit(e.x,e.y,1,'#ff6a3d',30,6,.8,3);killE(e);sndEnemyHit();}}
  function ringMage(){if(e.cd<=0&&e.los){e.cd=d.fire*(e.el?.8:1)*rnd(.85,1.15);const n=Math.min(8+Math.floor(S.floor/2)*2,16)+(e.el?4:0);e.ph+=.3;for(let i=0;i<n;i++)ebul(e.x,e.y,e.ph+i*6.283/n,5.5,e.dmg*.7,.22,4)}}
  if(d.ai==='ring'){if(e.d>d.bs+1.5)chase(e,dt,e.spd);else if(e.d<d.bs-2)mv(e,-dx/e.d*e.spd*dt,-dy/e.d*e.spd*dt);else{mv(e,-dy/e.d*e.spd*.6*dt*e.sg,dx/e.d*e.spd*.6*dt*e.sg);if(R()<dt*.3)e.sg=-e.sg} ringMage();}}
 function raidBossAI(e,dt){
@@ -3278,27 +3927,79 @@ function bossAI(e,dt){
  if(e.t1<=0){e.t1=z===0?.16:z===1?.2:.11;e.sp+=z===2?.33:.42;const arms=z===2?4:2;for(let a=0;a<arms;a++)ebul(e.x,e.y,e.sp+a*6.283/arms,6.2,e.dmg*.55,.22,5)}
  if(e.t2<=0){e.t2=z===0?2.4:1.7;if(z===0){for(let i=-1;i<=1;i++)ebul(e.x,e.y,e.ang+i*.18,8.5,e.dmg*.7,.25,4)}else{const n=z===1?18:22,o=R()*6;for(let i=0;i<n;i++)ebul(e.x,e.y,o+i*6.283/n,5.2,e.dmg*.6,.24,5)}}
  if(e.t3<=0&&z>=1){e.t3=9;for(let k=0;k<2;k++)spawnE(R()<.5?'husk':'drone',e.x+rnd(-2,2),e.y+rnd(-2,2),false,true)}}
-function hitE(e,d,c){if(e.dead)return;if(e.eff&&e.eff.vulnerable)d*=1.4;e.hp-=d;e.fl=.07;if(e.st===0)e.st=1;dmgTxt(e.x,e.y,d,c?'c':'');emit(e.x,e.y,.9,c?'#ffd54a':'#ff8a6a',c?8:4,3.5,.38,3);if(e.hp<=0)killE(e)}
+function hitE(e,d,c,fromProc){
+ if(e.dead)return;
+ if(e.eff&&e.eff.vulnerable)d*=1.4;
+ if((e.el||e.boss)&&ST.eliteDmgP)d*=1+ST.eliteDmgP/100;
+ if(e.boss&&hasActiveLegendaryPower('furnace'))d*=1.4;
+ if(P&&P.nephalemGloryT>0)d*=1.15;
+ d=Math.max(1,Math.round(d));
+ e.hp-=d;e.fl=.07;if(e.st===0)e.st=1;dmgTxt(e.x,e.y,d,c?'c':'');emit(e.x,e.y,.9,c?'#ffd54a':'#ff8a6a',c?8:4,3.5,.38,3);
+ if(!fromProc){
+  if(ST.areaDmgP>0&&R()<0.20){
+   const ad=Math.max(1,Math.round(d*(ST.areaDmgP/100)));
+   for(const o of en){if(o!==e&&!o.dead&&Math.hypot(o.x-e.x,o.y-e.y)<2.5)hitE(o,ad,false,true);}
+  }
+  if(hasActiveLegendaryPower('thunderfury')&&R()<0.30){
+   const td=Math.max(5,Math.round(d*0.55));
+   emit(e.x,e.y,1.0,'#4fd1ff',14,4,.35,2);
+   let cnt=0;
+   for(const o of en){if(o!==e&&!o.dead&&cnt<3&&Math.hypot(o.x-e.x,o.y-e.y)<4.5){hitE(o,td,false,true);cnt++;}}
+  }
+  if(e.eliteAffixes&&e.eliteAffixes.some(a=>a.id==='electrified')&&R()<0.35){
+   for(let i=0;i<3;i++)ebul(e.x,e.y,R()*6.283,6.5,Math.max(2,Math.round(e.dmg*0.45)),.18,1.8);
+  }
+ }
+ if(e.hp<=0)killE(e);
+}
 function killE(e){e.dead=true;world.remove(e.root);S.kills++;emit(e.x,e.y,.8,e.el||e.boss?'#ffd54a':'#ff6a4a',e.boss?65:18,5.5,.75,4);addXp(e.xp);if(ST.lifeKill)P.hp=Math.min(P.mh,P.hp+ST.lifeKill);
+ if(hasActiveLegendaryPower('messerschmidt')){P.novaCd=Math.max(0,(P.novaCd||0)-1);P.dashCd=Math.max(0,(P.dashCd||0)-0.4);}
+ if(P){
+  P.massacreCount=(P.massacreCount||0)+1;
+  P.massacreTimer=4.5;
+  if(P.massacreCount>0&&P.massacreCount%10===0){
+   const mXp=Math.round(P.massacreCount*4*(1+S.floor*0.25));
+   addXp(mXp);
+   dmgTxt(P.x,P.y,`🔥 MASSAKER ${P.massacreCount}× (+${mXp} XP)`,'c');
+  }
+ }
+ if(e.eliteAffixes&&e.eliteAffixes.some(a=>a.id==='molten')){
+  emit(e.x,e.y,.9,'#ff4500',38,6,.85,3.5);
+  if(P&&Math.hypot(P.x-e.x,P.y-e.y)<2.6)hurtP(Math.round(e.dmg*1.25));
+ }
+ if(S&&M&&M.th&&M.th.isRift&&boss&&!boss.dead&&S.riftProgress<100){
+  const gain=e.el?14:(e.t==='goblin'?20:4);
+  S.riftProgress=Math.min(100,(S.riftProgress||0)+gain);
+  if(S.riftProgress>=100&&boss.st===0){
+   boss.st=1;
+   toast(lang==='de'?'🌀 Nephalemportal 100%! Der Portalwächter erwacht!':'🌀 Nephalem Rift 100%! The Rift Guardian awakens!','#ff8a2b');
+   shake=Math.max(shake,0.8);
+  }
+ }
  QUEST_MANAGER.recordEnemyKill(e);
  const diffFactor=e.diffFactor||getEnemyDifficultyFactor(e);
  const pLvl=(typeof S!=='undefined'&&S&&typeof S.lvl==='number')?S.lvl:1;
- const rolls=e.t==='raidboss'?ri(5,7):e.boss?ri(3,5):e.el?ri(1,2):1;
+ const rolls=e.t==='goblin'?ri(4,6):e.t==='raidboss'?ri(5,7):e.boss?ri(3,5):e.el?ri(1,2):1;
+ if(e.t==='goblin'){
+  S.gold=(S.gold||0)+45+S.floor*15;
+  S.metaShards=(S.metaShards||0)+4;
+  toast('💰 Schatzgoblin erlegt! Reiche Beute!','#ffd54a');
+ }
  for(let i=0;i<rolls;i++){
-  const droppedRar=rollMonsterLootRarity(e, pLvl);
+  const droppedRar=e.t==='goblin'?Math.max(2,rollMonsterLootRarity(e, pLvl)):rollMonsterLootRarity(e, pLvl);
   if(droppedRar>=0){
    spawnDrop(e.x,e.y,genItem(ilv(),{rar:droppedRar,diffFactor}));
   }else if(e.boss&&i===0){
    spawnDrop(e.x,e.y,genItem(ilv(),{diffFactor,minRar:1}));
   }
  }
- if(R()<.2)spawnDrop(e.x,e.y,null,true);
+ if(R()<.22)spawnDrop(e.x,e.y,null,true);
  if(e.boss){
   boss=null;openPortal(e.x,e.y);
   if(e.t==='raidboss'){toast(T('raid_defeated'),'#ffd54a');S.gold=(S.gold||0)+200+S.floor*50;S.metaShards=(S.metaShards||0)+15;checkAch('first_boss');}
   else{toast(T('boss_defeated'),'#ffd54a');shake=1;eb.length=0;S.metaShards=(S.metaShards||0)+5;checkAch('first_boss');}
   saveGame(true);
- }else if(R()<.15){S.gold=(S.gold||0)+1+Math.floor(S.floor/2);}
+ }else if(R()<.15){S.gold=(S.gold||0)+Math.max(1,Math.round((1+Math.floor(S.floor/2))*getD3Diff().goldM));}
  checkAch('kills100');
 }
 function completeQuest(q){
@@ -3345,7 +4046,11 @@ function updDrops(dt){
   const can=d.orb||S.inv.length<CAP||shouldAutoScrap(d.item.rar);
   if(can&&dd<14&&dd>.01&&d.t>.35){const l=Math.sqrt(dd),s=Math.min(l,8*dt);d.x+=dx/l*s;d.y+=dy/l*s;d.g.position.x=d.x;d.g.position.z=d.y}
   if(dd<.9&&d.t>.35){let ok=true;
-   if(d.orb){P.hp=Math.min(P.mh,P.hp+P.mh*.2);dmgTxt(P.x,P.y,'+'+Math.round(P.mh*.2),'hl')}
+   if(d.orb){
+    P.hp=Math.min(P.mh,P.hp+P.mh*.2);
+    P.nephalemGloryT=Math.min(60,(P.nephalemGloryT||0)+20);
+    dmgTxt(P.x,P.y,'+'+Math.round(P.mh*.2)+' HP · ✨ Nephalemruhm','hl');
+   }
    else ok=take(d);
    if(ok){world.remove(d.g);if(d.lbl)d.lbl.material.map.dispose();drops.splice(i,1)}}}}
 function triggerLevelUpVisuals(){
@@ -3374,11 +4079,23 @@ function triggerLevelUpVisuals(){
  if(xb){xb.classList.remove('lvl-glow');void xb.offsetWidth;xb.classList.add('lvl-glow');}
  if(navigator.vibrate){try{navigator.vibrate([35,45,65]);}catch(e){}}
 }
-function addXp(v){S.xp+=v*(1+(ST.xpP||0)/100);let up=false;while(S.xp>=need(S.lvl)){S.xp-=need(S.lvl);S.lvl++;S.pts+=3;S.skillPts=(S.skillPts||0)+1;up=true;checkAch('level20');}
- if(up){recalc();P.hp=P.mh;toast(T('level_up')+' '+T('level_up_text').replace('{0}',S.lvl)+' (+1 Skillpunkt)','#ffd54a');sndLevelUp();triggerLevelUpVisuals();if(invOpen)renderInv();saveGame(true);}}
+function addXp(v){
+ const gain=v*(1+(ST.xpP||0)/100);
+ S.xp+=gain;
+ S.paragonXp=(S.paragonXp||0)+gain*0.45;
+ const pNeed=Math.floor(140*Math.pow((S.paragonLvl||0)+1,1.35));
+ while(S.paragonXp>=pNeed){
+  S.paragonXp-=pNeed;
+  S.paragonLvl=(S.paragonLvl||0)+1;
+  S.paragonPts=(S.paragonPts||0)+1;
+  toast(`💠 Paragonstufe ${S.paragonLvl} erreicht! (+2% Schaden, +15 HP)`,`#59b6ff`);
+ }
+ let up=false;while(S.xp>=need(S.lvl)){S.xp-=need(S.lvl);S.lvl++;S.pts+=3;S.skillPts=(S.skillPts||0)+1;up=true;checkAch('level20');}
+ if(up){recalc();P.hp=P.mh;toast(T('level_up')+' '+T('level_up_text').replace('{0}',S.lvl)+' (+1 Skillpunkt)','#ffd54a');sndLevelUp();triggerLevelUpVisuals();if(invOpen)renderInv();saveGame(true);}
+}
 
 /* ================= COMBAT ================= */
-function hurtP(d){
+function hurtP(d,attacker){
  if(P.iT>0||mode!=='play')return;
  if(P.shieldHits&&P.shieldHits>0){
   P.shieldHits--;
@@ -3390,7 +4107,10 @@ function hurtP(d){
   return;
  }
  const armorBonus=(P.templarArmorT&&P.templarArmorT>0)?(P.templarArmorVal||35):0;
- d*=100/(100+ST.armor+armorBonus);
+ d*=100/(100+ST.armor+armorBonus+(ST.allRes||0)*1.2);
+ if(hasActiveLegendaryPower('aquila'))d*=0.70;
+ if(hasActiveLegendaryPower('unity'))d*=0.75;
+ if(attacker&&!attacker.dead&&(ST.thorns||0)>0)hitE(attacker,ST.thorns,false,true);
  P.hp-=d;P.iT=.3;
  const dmgRatio=d/Math.max(1,P.mh);
  const isHeavy=dmgRatio>=0.14||d>=16;
@@ -3684,13 +4404,24 @@ function dmgTxt(x,y,t,cls){if(dtN>26)return;const v=new Tt.Vector3(x,1.6,y).proj
 function showOvl(h,cb){const o=$('ovl');o.innerHTML='<div class="card">'+h+'</div>';o.style.display='flex';const b=$('go');if(b)b.onclick=()=>{o.style.display='none';cb();AUDIO.init();AUDIO.startMusic();}}
 function cellH(it,cls,attr){const b=it?`border-color:${RC[it.rar]};box-shadow:inset 0 0 8px ${RC[it.rar]}66`:'';return`<div class="cell ${cls||''}" ${attr||''} style="${b}" title="${it?it.n:''}">${it?`${getItemIconHtml(it)}<em>${it.il}</em>`:''}</div>`}
 const cmp=d=>d===0?'':` <span style="color:${d>0?'#6dff9b':'#ff7a7a'}">${d>0?'▲':'▼'}${Math.abs(d)}</span>`;
-function tip(it){const RN=getRN(),SN=getSN(),e=S.eq[it.slot],oth=e&&e!==it;let h=`<div class="nm" style="color:${RC[it.rar]}">${getItemSymbol(it)} ${it.n}</div><div class="sb">${RN[it.rar]} · ${SN[it.slot]}${it.wk?` (${it.bn})`:''} · Itemlevel ${it.il} · 3D-Modell aktiv</div>`;
- if(it.set)h+=`<div style="color:#ffd54a;font-size:11px">Set: ${it.set}</div>`;
+function tip(it){const RN=getRN(),SN=getSN(),e=S.eq[it.slot],oth=e&&e!==it;
+ const ancBadge=(it.d3Tier==='primal'||it.ancient===2)?` <span style="color:#ff4545;font-weight:900">[URALT / PRIMAL]</span>`:(it.d3Tier==='ancient'||it.ancient===1)?` <span style="color:#ffb347;font-weight:800">[ARCHAISCH / ANCIENT]</span>`:'';
+ let h=`<div class="nm" style="color:${it.set?'#4eff4e':RC[it.rar]}">${getItemSymbol(it)} ${it.n}${ancBadge}</div><div class="sb">${RN[it.rar]} · ${SN[it.slot]}${it.wk?` (${it.bn})`:''} · Itemlevel ${it.il} · Loot 2.0</div>`;
+ if(it.set){const sObj=SETS[it.set];h+=`<div class="d3-set-txt">🟢 Klassen-Set: ${sObj&&(sObj.name||sObj.n)?(sObj.name||sObj.n):it.set} (2er / 4er Bonus)</div>`;}
  if(it.slot==='weapon'){const d=dps(it);h+=`<div>⚔ <b>${d}</b> DPS <small>(${it.wd} × ${it.wc} Schuss · ${it.wr.toFixed(1)}/s)</small>${oth?cmp(d-dps(e)):''}</div>`}
  else if(it.ar)h+=`<div>🛡 <b>${it.ar}</b> Rüstung${oth?cmp(it.ar-(e.ar||0)):''}</div>`;
- for(const f of it.affs)h+=`<div class="af">+${String(f.v).replace('.',',')}${f.t}</div>`;return h}
+ for(const f of it.affs)h+=`<div class="af">◆ +${String(f.v).replace('.',',')}${f.t}</div>`;
+ if(it.gem){
+  const gObj=typeof it.gem==='object'?it.gem:D3_GEMS.find(g=>g.id===it.gem);
+  if(gObj)h+=`<div class="d3-gem-txt">${gObj.icon} Gesockelt: ${gObj.name||gObj.n} (${gObj.desc})</div>`;
+ }
+ if(it.legPower){
+  const lObj=typeof it.legPower==='object'?it.legPower:D3_LEGENDARY_POWERS.find(p=>p.id===it.legPower);
+  if(lObj)h+=`<div class="leg-pwr">🟠 ${lObj.nameDe||lObj.n}: ${lObj.descDe||lObj.d}</div>`;
+ }
+ return h}
 function selItem(){if(!sel)return null;return sel.s==='eq'?S.eq[sel.k]:S.inv[sel.k]}
-const ATT=[['str','Kraft','+5% Schaden'],['dex','Geschick','+3% Tempo, +1% Laufen'],['vit','Vitalität','+12 Leben, +0,25 Regen'],['arc','Arkana','+8% Nova, +0,5% Krit, kürzere Pausen']];
+const ATT=[['str','Ῥώμη (Kraft)','+5% Schaden'],['dex','Ταχύτης (Geschick)','+3% Tempo, +1% Laufen'],['vit','Ζωή (Vitalität)','+12 Leben, +0,25 Regen'],['arc','Αἰθήρ (Arkana)','+8% Nova, +0,5% Krit, kürzere Pausen']];
 function renderInv(){
  const SN=getSN(),RN=getRN();
  if(!S.scrapFilter||!Array.isArray(S.scrapFilter))S.scrapFilter=[S.autoS>=1,S.autoS>=2,false];
@@ -3711,8 +4442,11 @@ function renderInv(){
  }
  const w=S.eq.weapon||{wd:10,wc:1,wr:2},dpsT=Math.round(dps(w)*ST.dm*ST.rateM);
  const dc=calcDropCurve(ilv(),1.0,0);
- $('stat').innerHTML=`<b>${T('lvl')} ${S.lvl}</b> · XP ${Math.floor(S.xp)}/${need(S.lvl)} · <b style="color:#ffd54a">${S.pts}</b> ${T('free_points')}`+ATT.map(([k,n,d])=>`<div class="at"><span>${n} ${S.at[k]}</span><small>${d}</small><button class="t" data-at="${k}" ${S.pts?'':'disabled'}>＋</button></div>`).join('')+
+ const d3m=D3_CLASS_META[S.playerClass||'warrior']||D3_CLASS_META.warrior;
+ const d3d=getD3Diff();
+ $('stat').innerHTML=`<b>${T('lvl')} ${S.lvl}</b> <span style="color:#59b6ff;font-weight:800">(Paragon ${S.paragonLvl||0})</span> · XP ${Math.floor(S.xp)}/${need(S.lvl)} · <b style="color:#ffd54a">${S.pts}</b> ${T('free_points')}`+ATT.map(([k,n,d])=>`<div class="at"><span>${n} ${S.at[k]}</span><small>${d}</small><button class="t" data-at="${k}" ${S.pts?'':'disabled'}>＋</button></div>`).join('')+
  `<div style="margin-top:6px;opacity:.9">${T('stats_dps').replace('{0}',dpsT)} · ${T('stats_hp').replace('{0}',ST.maxhp)} · ${T('stats_armor').replace('{1}',Math.round(ST.armor)).replace('{2}',Math.round(ST.armor/(100+ST.armor)*100))} · ${T('stats_crit').replace('{0}',ST.crit.toFixed(1)).replace('{1}',ST.critD)} · ${T('stats_move').replace('{1}',ST.spd.toFixed(1))} · ${T('stats_loot').replace('{0}',ST.mf)}${(ST.proj?T('proj').replace('{0}',ST.proj)+' · ':'')}${ST.pierce?T('pierce').replace('{0}',ST.pierce):''}</div>`+
+ `<div style="margin-top:5px;font-size:10.5px;color:#ffb347;border-top:1px solid #232d42;padding-top:4px">🔥 <b>Diablo III Nephalem-Status:</b> Schwierigkeit <b>${lang==='de'?d3d.de:d3d.en}</b> · Ressource: <span style="color:${d3m.resCol}">${d3m.res}</span> · Flächenschaden <b>+${ST.areaDmgP||0}%</b> · Abklingzeit <b>-${ST.cdrP||0}%</b> · Dornen <b>${ST.thorns||0}</b> · Elite-Schaden <b>+${ST.eliteDmgP||0}%</b> · Widerstände <b>${ST.allRes||0}</b></div>`+
  `<div style="margin-top:5px;font-size:10.5px;color:#9ec7ff;border-top:1px solid #232d42;padding-top:4px">🎲 <b>Drop-Kurve (Lv ${ilv()}):</b> Normal <span style="color:${RC[0]}">${dc.normal.toFixed(1)}%</span> · Grün <span style="color:${RC[1]}">${dc.green.toFixed(1)}%</span> · Selten <span style="color:${RC[2]}">${dc.rare.toFixed(1)}%</span> · Episch/Legendär <span style="color:${RC[3]}">${dc.rarestCombined.toFixed(2)}%</span></div>`;
  $('bBag').firstChild.textContent=S.pts?'🎒❗':'🎒';}
 function equip(i){const it=S.inv[i];if(!it)return;const old=S.eq[it.slot];S.inv.splice(i,1);S.eq[it.slot]=it;if(old)S.inv.push(old);recalc();refreshModel();sel={s:'eq',k:it.slot};if(invOpen)renderInv();saveGame();}
@@ -3821,6 +4555,18 @@ function renderPausePanel(){
     const levels=[[0,T('shake_off')],[0.5,T('shake_low')],[1,T('shake_norm')],[1.5,T('shake_high')]];
     sOpts.innerHTML=levels.map(([val,lbl])=>`<button class="shake-btn ${Math.abs(sm-val)<0.05?'active':''}" data-shake="${val}">${lbl}</button>`).join('');
   }
+  const d3d=getD3Diff();
+  if($('d3DiffValLbl'))$('d3DiffValLbl').textContent=lang==='de'?d3d.de:d3d.en;
+  const d3Opts=$('d3DiffOpts');
+  if(d3Opts){
+    d3Opts.innerHTML=D3_DIFFICULTIES.map(d=>`<button class="shake-btn ${(S&&S.d3Difficulty||'normal')===d.id?'active':''}" data-d3diff="${d.id}">${lang==='de'?d.de:d.en}</button>`).join('');
+  }
+  const d3Sum=$('d3PauseSummary');
+  if(d3Sum&&S){
+    const kCube=S.kanaiCube||{};
+    const kCnt=[kCube.weapon,kCube.armor,kCube.jewelry].filter(Boolean).length;
+    d3Sum.innerHTML=`Paragon: <b style="color:#59b6ff">${S.paragonLvl||0}</b> ·XP +${Math.round((d3d.xpM-1)*100)}% · Gold +${Math.round((d3d.goldM-1)*100)}% · Beutefund +${d3d.mfB}% · Kanais Würfel: <b>${kCnt}/3</b>`;
+  }
 }
 if($('qtabDaily'))$('qtabDaily').onclick=()=>{activeQuestTab='daily';QUEST_MANAGER.ensureAllQuests();renderPausePanel();sndBuy();};
 if($('qtabVillage'))$('qtabVillage').onclick=()=>{activeQuestTab='village';QUEST_MANAGER.ensureAllQuests();renderPausePanel();sndBuy();};
@@ -3832,7 +4578,15 @@ if($('shakeOpts'))$('shakeOpts').onclick=e=>{
   if(S.shakeMult>0){shake=0.35;}
   renderPausePanel();saveGame();sndBuy();
 };
-function togglePause(){if(mode!=='play')return;isPaused=!isPaused;const ovl=$('pauseOvl');ovl.style.display=isPaused?'flex':'none';$('pauseTitle').textContent=T('pause');$('pauseSub').textContent=`${T('floor')} ${S.floor} · Lv ${S.lvl} · Gold ${S.gold}`;if(isPaused){for(const k in keys)keys[k]=false;mouse.down=false;QUEST_MANAGER.ensureAllQuests();renderPausePanel();startPauseTimerInterval();}else{stopPauseTimerInterval();}}
+if($('d3DiffOpts'))$('d3DiffOpts').onclick=e=>{
+  const b=e.target.closest('[data-d3diff]');
+  if(!b||!S)return;
+  S.d3Difficulty=b.getAttribute('data-d3diff');
+  recalc();renderPausePanel();saveGame(true);sndBuy();
+  const d=getD3Diff();
+  toast(`🔥 Diablo III Schwierigkeit: ${lang==='de'?d.de:d.en}`,'#ffb347');
+};
+function togglePause(){if(mode!=='play')return;isPaused=!isPaused;const ovl=$('pauseOvl');ovl.style.display=isPaused?'flex':'none';$('pauseTitle').textContent=T('pause');$('pauseSub').textContent=`${T('floor')} ${S.floor} · Lv ${S.lvl} (P${S.paragonLvl||0}) · Gold ${S.gold}`;if(isPaused){for(const k in keys)keys[k]=false;mouse.down=false;QUEST_MANAGER.ensureAllQuests();renderPausePanel();startPauseTimerInterval();}else{stopPauseTimerInterval();}}
 function pauseResume(){isPaused=false;stopPauseTimerInterval();$('pauseOvl').style.display='none';}
 function pauseRestart(){isPaused=false;stopPauseTimerInterval();$('pauseOvl').style.display='none';startRun();}
 function pauseSave(){saveGame(true);toast(T('save_ok'),'#6dff9b');}
@@ -3898,95 +4652,95 @@ if($('btnCloseSkillTree'))$('btnCloseSkillTree').onclick=closeSkillTree;
 if($('btnCloseSkillTreeBtm'))$('btnCloseSkillTreeBtm').onclick=closeSkillTree;
 if($('btnResetSkills'))$('btnResetSkills').onclick=resetSkillTree;
 
-/* ================= CLASS SKILL TREES & ATTACK MODS ================= */
+/* ================= CLASS SKILL TREES & ANCIENT GREEK MYSTERY ORDERS ================= */
 const SKILL_TREES = {
  warrior: {
   branchA: {
-   id: 'berserker', name: 'Berserker (Klingensturm)', icon: '🌪️', desc: 'Fokus auf massiven Flächenschaden, Schwungradius & Klingenwirbel.',
+   id: 'berserker', name: 'Κορύβαντες τοῦ Ἄρεως (Korybanten · Klingensturm)', icon: '🌪️', desc: 'Fokus auf massiven Flächenschaden, Schwungradius & Στρόβιλος Χαλκοῦ (Klingenwirbel).',
    tiers: [
-    { tier: 1, type: 'auto', name: 'Wirbelspaltung', icon: '🪓', desc: '+25% Nahkampf-Reichweite & +18% Auto-Attack-Schaden.', stats: { meleeReach: 0.7, meleeDmgP: 18 } },
-    { tier: 2, type: 'dash', name: 'Sturm-Ansturm', icon: '💨', desc: 'Dash stößt Feinde nieder und rammt sie für 45 physischen Schaden weg.', stats: { dashRamDmg: 45, dashKnockback: 1.8 } },
-    { tier: 3, type: 'combo', name: 'Klingenwirbel-Kombo', icon: '🌀', desc: 'Jeder 3. Angriff entfesselt einen 360°-Rundumschlag mit 220% Bonusschaden.', stats: { combo360: true, comboDmgMult: 2.2 } }
+    { tier: 1, type: 'auto', name: 'Στρόβιλος Δοράτων (Wirbelspaltung)', icon: '🪓', desc: '+25% Nahkampf-Reichweite & +18% Auto-Attack-Schaden.', stats: { meleeReach: 0.7, meleeDmgP: 18 } },
+    { tier: 2, type: 'dash', name: 'Ὁρμὴ Γιγάντων (Sturm-Ansturm)', icon: '💨', desc: 'Dash stößt Feinde nieder und rammt sie für 45 physischen Schaden weg.', stats: { dashRamDmg: 45, dashKnockback: 1.8 } },
+    { tier: 3, type: 'combo', name: 'Κυκλὼν Ὀρειχάλκου (Klingenwirbel-Kombo)', icon: '🌀', desc: 'Jeder 3. Angriff entfesselt einen 360°-Rundumschlag mit 220% Bonusschaden.', stats: { combo360: true, comboDmgMult: 2.2 } }
    ]
   },
   branchB: {
-   id: 'blademaster', name: 'Klingenmeister (Präzision)', icon: '🗡️', desc: 'Fokus auf kritische Treffer, Blutung & tödliche Exekution.',
+   id: 'blademaster', name: 'Μαχαιροφόροι τῆς Δίκης (Klingenmeister)', icon: '🗡️', desc: 'Fokus auf kritische Treffer, Αἱμορραγία (Blutung) & tödliche Exekution.',
    tiers: [
-    { tier: 1, type: 'auto', name: 'Präziser Stoß', icon: '🎯', desc: '+15% Krit-Chance; kritische Nahkampf-Hiebe lassen Gegner bluten.', stats: { critBonus: 15, bleedOnCrit: true } },
-    { tier: 2, type: 'dash', name: 'Phantom-Schritt', icon: '👤', desc: 'Dash erzeugt eine Schockwelle, die Feinde 3s lang um 45% verlangsamt.', stats: { dashSlow: true, dashSlowPct: 45 } },
-    { tier: 3, type: 'combo', name: 'Tödliche Exekution', icon: '⚡', desc: 'Jeder 3. Angriff ignoriert 50% Rüstung und fügt Bossen +50% Schaden zu.', stats: { executeBossDmgP: 50, armorPierceP: 50 } }
+    { tier: 1, type: 'auto', name: 'Καιρία Πληγή (Präziser Stoß)', icon: '🎯', desc: '+15% Krit-Chance; kritische Nahkampf-Hiebe lassen Gegner bluten.', stats: { critBonus: 15, bleedOnCrit: true } },
+    { tier: 2, type: 'dash', name: 'Βῆμα Εἰδώλου (Phantom-Schritt)', icon: '👤', desc: 'Dash erzeugt eine Schockwelle, die Feinde 3s lang um 45% verlangsamt.', stats: { dashSlow: true, dashSlowPct: 45 } },
+    { tier: 3, type: 'combo', name: 'Θανάσιμος Κρίσις (Tödliche Exekution)', icon: '⚡', desc: 'Jeder 3. Angriff ignoriert 50% Rüstung und fügt Bossen +50% Schaden zu.', stats: { executeBossDmgP: 50, armorPierceP: 50 } }
    ]
   }
  },
  tank: {
   branchA: {
-   id: 'crusader', name: 'Kreuzritter (Heiliges Urteil)', icon: '🛡️', desc: 'Fokus auf heiligen Hammerschaden, Schutzschilde & himmlische Vergeltung.',
+   id: 'crusader', name: 'Κάβειροι τοῦ Διός (Heiliges Urteil)', icon: '🛡️', desc: 'Fokus auf heiligen Σφῦρα-Schaden, Αἰγίς-Schutzschilde & himmlische Νέμεσις.',
    tiers: [
-    { tier: 1, type: 'auto', name: 'Heiliger Hieb', icon: '🔨', desc: 'Nahkampf-Hiebe strahlen Licht aus: +20% Schaden & -15% gegnerischer Schaden.', stats: { holyHitDmgP: 20, enemyDmgDebuffP: 15 } },
-    { tier: 2, type: 'dash', name: 'Schild-Bollwerk', icon: '🔰', desc: 'Dash blockiert die nächsten 2 Treffer komplett und wirft Feinde nieder.', stats: { dashShieldHits: 2, dashStun: true } },
-    { tier: 3, type: 'combo', name: 'Göttliche Vergeltung', icon: '☀️', desc: 'Jeder 3. Schlag ruft einen Lichtstrahl herab (95 heiliger Schaden, 4m Radius).', stats: { holySmiteDmg: 95, holySmiteRadius: 4.0 } }
+    { tier: 1, type: 'auto', name: 'Ἱερὰ Πληγή (Heiliger Hieb)', icon: '🔨', desc: 'Nahkampf-Hiebe strahlen Licht aus: +20% Schaden & -15% gegnerischer Schaden.', stats: { holyHitDmgP: 20, enemyDmgDebuffP: 15 } },
+    { tier: 2, type: 'dash', name: 'Αἰγὶς Ἀθηνᾶς (Schild-Bollwerk)', icon: '🔰', desc: 'Dash blockiert die nächsten 2 Treffer komplett und wirft Feinde nieder.', stats: { dashShieldHits: 2, dashStun: true } },
+    { tier: 3, type: 'combo', name: 'Δίκη Ὀλύμπου (Göttliche Vergeltung)', icon: '☀️', desc: 'Jeder 3. Schlag ruft einen Lichtstrahl herab (95 heiliger Schaden, 4m Radius).', stats: { holySmiteDmg: 95, holySmiteRadius: 4.0 } }
    ]
   },
   branchB: {
-   id: 'templar', name: 'Templer (Weihe & Standhaftigkeit)', icon: '🏰', desc: 'Fokus auf geweihten Boden, Rüstungs-Buffs & 360°-Hammer-Schockwellen.',
+   id: 'templar', name: 'Φύλακες τῆς Ἐλευσῖνος (Templer-Orden)', icon: '🏰', desc: 'Fokus auf Τέμενος (geweihten Boden), Rüstungs-Buffs & 360°-Hammer-Schockwellen.',
    tiers: [
-    { tier: 1, type: 'auto', name: 'Geweihte Erde', icon: '✨', desc: 'Schläge weihen den Boden für 3s (Feinde brennen, Paladin heilt 2 HP/s).', stats: { consecratedGround: true, consecrateHeal: 2 } },
-    { tier: 2, type: 'dash', name: 'Göttlicher Sprint', icon: '🏃', desc: 'Dash gewährt 4s lang +35 Rüstung & +20% Lauftempo.', stats: { dashArmorBuff: 35, dashSpeedBuffP: 20 } },
-    { tier: 3, type: 'combo', name: 'Rechtschaffener Zorn', icon: '💥', desc: 'Jeder 3. Angriff schleudert 4 rotierende goldene Hämmer in alle 4 Richtungen.', stats: { hammerOrbitCombo: true, hammerCount: 4 } }
+    { tier: 1, type: 'auto', name: 'Ἱερὸν Τέμενος (Geweihte Erde)', icon: '✨', desc: 'Schläge weihen den Boden für 3s (Feinde brennen, Hierophant heilt 2 HP/s).', stats: { consecratedGround: true, consecrateHeal: 2 } },
+    { tier: 2, type: 'dash', name: 'Δρόμος Ἡρακλέους (Göttlicher Sprint)', icon: '🏃', desc: 'Dash gewährt 4s lang +35 Rüstung & +20% Lauftempo.', stats: { dashArmorBuff: 35, dashSpeedBuffP: 20 } },
+    { tier: 3, type: 'combo', name: 'Μῆνις Κεραυνοῦ (Rechtschaffener Zorn)', icon: '💥', desc: 'Jeder 3. Angriff schleudert 4 rotierende goldene Hämmer in alle 4 Richtungen.', stats: { hammerOrbitCombo: true, hammerCount: 4 } }
    ]
   }
  },
  rogue: {
   branchA: {
-   id: 'assassin', name: 'Assassine (Schatten & Gift)', icon: '🗡️', desc: 'Fokus auf Giftkugeln, Schattenschritt & vernichtende Hinterhalte.',
+   id: 'assassin', name: 'Μύσται τῆς Νυκτός (Schatten & Gift)', icon: '🗡️', desc: 'Fokus auf Τοξικόν (Giftkugeln), Σκιᾶς Βῆμα & vernichtende Hinterhalte.',
    tiers: [
-    { tier: 1, type: 'auto', name: 'Gift-Injektion', icon: '🧪', desc: 'Schüsse vergiften Feinde für 40 Giftschaden über 4 Sekunden.', stats: { poisonDmg: 40, poisonDur: 4 } },
-    { tier: 2, type: 'dash', name: 'Schattenschritt', icon: '👥', desc: 'Dash gewährt 0.75s komplette Unsichtbarkeit & Unverwundbarkeit.', stats: { stealthDash: true, stealthDur: 0.75 } },
-    { tier: 3, type: 'combo', name: 'Todesstoß-Splitter', icon: '☠️', desc: 'Jeder 3. Schuss feuert einen Schattensplitter mit +160% kritischem Schaden ab.', stats: { shadowCritBurstP: 160 } }
+    { tier: 1, type: 'auto', name: 'Τοξικὸν Ὕδρας (Gift-Injektion)', icon: '🧪', desc: 'Schüsse vergiften Feinde für 40 Giftschaden über 4 Sekunden.', stats: { poisonDmg: 40, poisonDur: 4 } },
+    { tier: 2, type: 'dash', name: 'Σκιᾶς Ἅλμα (Schattenschritt)', icon: '👥', desc: 'Dash gewährt 0.75s komplette Unsichtbarkeit & Unverwundbarkeit.', stats: { stealthDash: true, stealthDur: 0.75 } },
+    { tier: 3, type: 'combo', name: 'Βέλος Μοίρας (Todesstoß-Splitter)', icon: '☠️', desc: 'Jeder 3. Schuss feuert einen Schattensplitter mit +160% kritischem Schaden ab.', stats: { shadowCritBurstP: 160 } }
    ]
   },
   branchB: {
-   id: 'gunslinger', name: 'Revolverheld (Querschläger)', icon: '🤠', desc: 'Fokus auf abprallende Kugeln, Ausweichsalven & 3er-Bursts.',
+   id: 'gunslinger', name: 'Τοξόται τοῦ Ἀπόλλωνος (Querschläger)', icon: '🤠', desc: 'Fokus auf abprallende Βέλη, Ausweichsalven & 3er-Bursts.',
    tiers: [
-    { tier: 1, type: 'auto', name: 'Querschläger-Kugeln', icon: '🔄', desc: 'Projektile prallen von Wänden und Feinden ab (+1 Abprall).', stats: { ricochetBounces: 1 } },
-    { tier: 2, type: 'dash', name: 'Ausweich-Salve', icon: '💥', desc: 'Dash feuert automatisch einen Fächer aus 5 Querschläger-Kugeln.', stats: { dashFanBullets: 5 } },
-    { tier: 3, type: 'combo', name: 'Kugelhagel-Kombo', icon: '⚡', desc: 'Jeder 3. Angriff entlädt einen rasanten 3er-Burst ohne Rückstoß und ohne Streuung.', stats: { burstFireCombo: 3 } }
+    { tier: 1, type: 'auto', name: 'Παλίντροπα Βέλη (Querschläger)', icon: '🔄', desc: 'Projektile prallen von Wänden und Feinden ab (+1 Abprall).', stats: { ricochetBounces: 1 } },
+    { tier: 2, type: 'dash', name: 'Καταιγὶς Βελῶν (Ausweich-Salve)', icon: '💥', desc: 'Dash feuert automatisch einen Fächer aus 5 Querschläger-Kugeln.', stats: { dashFanBullets: 5 } },
+    { tier: 3, type: 'combo', name: 'Τριπλῆ Τοξεία (Kugelhagel-Kombo)', icon: '⚡', desc: 'Jeder 3. Angriff entlädt einen rasanten 3er-Burst ohne Rückstoß und ohne Streuung.', stats: { burstFireCombo: 3 } }
    ]
   }
  },
  mage: {
   branchA: {
-   id: 'pyromancer', name: 'Pyromant (Feuer & Meteore)', icon: '🔥', desc: 'Fokus auf Explosiv-Geschosse, Flammenstreifen & Meteoriteneinschläge.',
+   id: 'pyromancer', name: 'Πυρομάντεις τοῦ Προμηθέως (Feuer & Meteore)', icon: '🔥', desc: 'Fokus auf Πῦρ-Geschosse, Flammenstreifen & Μετέωρα-Einschläge.',
    tiers: [
-    { tier: 1, type: 'auto', name: 'Feuerball-Explosion', icon: '☄️', desc: 'Zauber explodieren beim Auftreffen in 2m Radius (+20% Flächenschaden).', stats: { explosiveBullets: true, aoeRadius: 2.0, aoeDmgP: 20 } },
-    { tier: 2, type: 'dash', name: 'Flammenspur', icon: '🌋', desc: 'Dash hinterlässt 4s lang brennendes Inferno am Boden.', stats: { flameTrailDur: 4 } },
-    { tier: 3, type: 'combo', name: 'Meteor-Einschlag', icon: '🌠', desc: 'Jeder 3. Angriff ruft einen Meteor herab, der 110 Flächenschaden verursacht.', stats: { meteorStrikeDmg: 110 } }
+    { tier: 1, type: 'auto', name: 'Σφαῖρα Πυρός (Feuerball-Explosion)', icon: '☄️', desc: 'Zauber explodieren beim Auftreffen in 2m Radius (+20% Flächenschaden).', stats: { explosiveBullets: true, aoeRadius: 2.0, aoeDmgP: 20 } },
+    { tier: 2, type: 'dash', name: 'Ἴχνος Πυριφλεγέθοντος (Flammenspur)', icon: '🌋', desc: 'Dash hinterlässt 4s lang brennendes Inferno am Boden.', stats: { flameTrailDur: 4 } },
+    { tier: 3, type: 'combo', name: 'Πτῶσις Μετεώρου (Meteor-Einschlag)', icon: '🌠', desc: 'Jeder 3. Angriff ruft einen Meteor herab, der 110 Flächenschaden verursacht.', stats: { meteorStrikeDmg: 110 } }
    ]
   },
   branchB: {
-   id: 'arcanist', name: 'Arkanist (Kettenblitz & Eis)', icon: '❄️', desc: 'Fokus auf Kettenblitze, Frost-Teleport & Arkan-Orbs.',
+   id: 'arcanist', name: 'Θεουργοὶ τοῦ Αἰθέρος (Kettenblitz & Eis)', icon: '❄️', desc: 'Fokus auf Κεραυνός (Kettenblitze), Κρύσταλλος-Teleport & Αἰθήρ-Orbs.',
    tiers: [
-    { tier: 1, type: 'auto', name: 'Kettenblitz', icon: '⚡', desc: 'Angriffe springen auf bis zu 2 weitere nahe Ziele über.', stats: { chainTargets: 2 } },
-    { tier: 2, type: 'dash', name: 'Frost-Blink', icon: '🧊', desc: 'Dash teleportiert instant und friert Feinde am Startort 2.5s lang ein.', stats: { frostBlinkFreezeSec: 2.5 } },
-    { tier: 3, type: 'combo', name: 'Arkaner Orbit', icon: '🌌', desc: 'Jeder 3. Angriff entlässt 3 rotierende Arkan-Orbs gegen nahe Feinde.', stats: { arcaneOrbsCount: 3 } }
+    { tier: 1, type: 'auto', name: 'Ἅλυσις Κεραυνοῦ (Kettenblitz)', icon: '⚡', desc: 'Angriffe springen auf bis zu 2 weitere nahe Ziele über.', stats: { chainTargets: 2 } },
+    { tier: 2, type: 'dash', name: 'Κρυστάλλινον Ἅλμα (Frost-Blink)', icon: '🧊', desc: 'Dash teleportiert instant und friert Feinde am Startort 2.5s lang ein.', stats: { frostBlinkFreezeSec: 2.5 } },
+    { tier: 3, type: 'combo', name: 'Σφαῖραι Αἰθέρος (Arkaner Orbit)', icon: '🌌', desc: 'Jeder 3. Angriff entlässt 3 rotierende Arkan-Orbs gegen nahe Feinde.', stats: { arcaneOrbsCount: 3 } }
    ]
   }
  },
  necromancer: {
   branchA: {
-   id: 'legion', name: 'Armeeführer (Knochen-Legion)', icon: '💀', desc: 'Fokus auf Minion-Verstärkung, Knochen-Dash & Knochenwirbel.',
+   id: 'legion', name: 'Ψυχαγωγοὶ τοῦ Ὀρφέως (Knochen-Legion)', icon: '💀', desc: 'Fokus auf Εἴδωλα-Verstärkung, Knochen-Dash & Ὀστέινος Στρόβιλος.',
    tiers: [
-    { tier: 1, type: 'auto', name: 'Seelenernte', icon: '👻', desc: 'Eigene Angriffe heilen Minions um 8 HP und verleihen ihnen +25% Angriffstempo.', stats: { minionHealOnHit: 8, minionAtkSpeedP: 25 } },
-    { tier: 2, type: 'dash', name: 'Skelettwandler', icon: '🦴', desc: 'Dash beschwört sofort ein zusätzliches wütendes Knochenskelett.', stats: { dashSummonSkeleton: true } },
-    { tier: 3, type: 'combo', name: 'Knochensturm-Kombo', icon: '🌪️', desc: 'Jeder 3. Angriff lässt scharfe Knochenklingen um alle Minions kreisen.', stats: { minionBoneWhirlwind: true } }
+    { tier: 1, type: 'auto', name: 'Θερισμὸς Ψυχῶν (Seelenernte)', icon: '👻', desc: 'Eigene Angriffe heilen Minions um 8 HP und verleihen ihnen +25% Angriffstempo.', stats: { minionHealOnHit: 8, minionAtkSpeedP: 25 } },
+    { tier: 2, type: 'dash', name: 'Ἔγερσις Σκελετοῦ (Skelettwandler)', icon: '🦴', desc: 'Dash beschwört sofort ein zusätzliches wütendes Knochenskelett.', stats: { dashSummonSkeleton: true } },
+    { tier: 3, type: 'combo', name: 'Θύελλα Ὀστῶν (Knochensturm-Kombo)', icon: '🌪️', desc: 'Jeder 3. Angriff lässt scharfe Knochenklingen um alle Minions kreisen.', stats: { minionBoneWhirlwind: true } }
    ]
   },
   branchB: {
-   id: 'plague', name: 'Seuchenmeister (Flüche & Fäulnis)', icon: '☣️', desc: 'Fokus auf Verfallsflüche, Giftnebel & Kadaver-Explosionen.',
+   id: 'plague', name: 'Τελχῖνες τοῦ Λοιμοῦ (Flüche & Fäulnis)', icon: '☣️', desc: 'Fokus auf Ἀρά (Verfallsflüche), Giftnebel & Σῶμα-Explosionen.',
    tiers: [
-    { tier: 1, type: 'auto', name: 'Verfallsfluch', icon: '🧪', desc: 'Angriffe verfluchen Feinde (-30% Tempo, erleiden +25% mehr Schaden).', stats: { decayCurse: true, vulnBonusP: 25 } },
-    { tier: 2, type: 'dash', name: 'Nebel des Todes', icon: '🌫️', desc: 'Dash hüllt das Umfeld in Giftnebel und löst gegnerische Geschosse auf.', stats: { deathFogAbsorbBullets: true } },
-    { tier: 3, type: 'combo', name: 'Kadaver-Explosion', icon: '💣', desc: 'Jeder 3. Angriff lässt verfluchte Feinde mit 80 Giftschaden detonieren.', stats: { corpseExplodeDmg: 80 } }
+    { tier: 1, type: 'auto', name: 'Ἀρὰ Φθορᾶς (Verfallsfluch)', icon: '🧪', desc: 'Angriffe verfluchen Feinde (-30% Tempo, erleiden +25% mehr Schaden).', stats: { decayCurse: true, vulnBonusP: 25 } },
+    { tier: 2, type: 'dash', name: 'Ὁμίχλη Χάρωνος (Nebel des Todes)', icon: '🌫️', desc: 'Dash hüllt das Umfeld in Giftnebel und löst gegnerische Geschosse auf.', stats: { deathFogAbsorbBullets: true } },
+    { tier: 3, type: 'combo', name: 'Ἔκρηξις Νεκρῶν (Kadaver-Explosion)', icon: '💣', desc: 'Jeder 3. Angriff lässt verfluchte Feinde mit 80 Giftschaden detonieren.', stats: { corpseExplodeDmg: 80 } }
    ]
   }
  }
@@ -4262,6 +5016,7 @@ function startFloor(){
  const seed=(R()*1e9)|0;let ti;do{ti=Math.floor(R()*TH.length)}while(ti===lastTh);lastTh=ti;
  const th=TH[ti];
  M=genMap(seed,S.floor,th);M.th=th;M.seed=seed;
+ S.riftProgress=0;
  ex=new Uint8Array(W*H);const c=document.createElement('canvas');c.width=W;c.height=H;mmx=c.getContext('2d');
  buildFloor();
  P.x=M.rooms[0].c[0]+.5;P.y=M.rooms[0].c[1]+.5;P.iT=1.2;P.dashT=0;camX=P.x;camZ=P.y;wt=Math.max(30,50-S.floor*3);flowKey=-1;
@@ -4279,8 +5034,14 @@ function startRun(){
  const prevDmgBonus=S.factionDmgBonus||0;
  const prevDailyQuests=S.dailyQuests||[];
  const prevDailyReset=S.dailyResetTime||0;
+ const prevDiff=S.d3Difficulty||'normal';
+ const prevParagonLvl=S.paragonLvl||0;
+ const prevParagonXp=S.paragonXp||0;
+ const prevParagonPts=S.paragonPts||0;
+ const prevKanai=S.kanaiCube||{weapon:null,armor:null,jewelry:null,extracted:[]};
  S={lvl:1,xp:0,pts:0,at:{str:0,dex:0,vit:0,arc:0},eq:{},inv:[],floor:1,kills:0,found:0,secrets:0,autoS:1,
     scrapFilter:prevFilter,shakeMult:prevShake,
+    d3Difficulty:prevDiff,paragonLvl:prevParagonLvl,paragonXp:prevParagonXp,paragonPts:prevParagonPts,riftProgress:0,kanaiCube:prevKanai,
     npcFactionTrust:prevTrust,earnedQuestTrust:prevEarnedQuestTrust,factionDmgBonus:prevDmgBonus,
     dailyQuests:prevDailyQuests,dailyResetTime:prevDailyReset,
     skillTree:S.skillTree||{},skillPts:S.skillPts!==undefined?S.skillPts:1,
@@ -4315,7 +5076,10 @@ function explore(){const r=8,px=P.x|0,py=P.y|0;
 function update(dt){
  if(isPaused)return;
  const prevSummonCd=P.summonCd||0;
- tm+=dt;P.iT-=dt;P.fireT-=dt;P.dashCd-=dt;P.novaCd-=dt;P.summonCd=Math.max(0,(P.summonCd||0)-dt);P.buff-=dt;P.campBuff=Math.max(0,(P.campBuff||0)-dt);P.hp=Math.min(P.mh,P.hp+ST.rg*dt);
+ tm+=dt;P.iT-=dt;P.fireT-=dt;P.dashCd-=dt;P.novaCd-=dt;P.summonCd=Math.max(0,(P.summonCd||0)-dt);P.buff-=dt;P.campBuff=Math.max(0,(P.campBuff||0)-dt);
+ P.nephalemGloryT=Math.max(0,(P.nephalemGloryT||0)-dt);
+ if((P.massacreTimer||0)>0){P.massacreTimer-=dt;if(P.massacreTimer<=0)P.massacreCount=0;}
+ P.hp=Math.min(P.mh,P.hp+ST.rg*dt);
  if(prevSummonCd>0&&P.summonCd<=0&&S.playerClass==='necromancer')hud();
  let mx=0,my=0;if(keys.KeyW||keys.ArrowUp)my--;if(keys.KeyS||keys.ArrowDown)my++;if(keys.KeyA||keys.ArrowLeft)mx--;if(keys.KeyD||keys.ArrowRight)mx++;
  if(tch.mv!=null){mx=tch.mvx;my=tch.mvy}
@@ -4467,7 +5231,12 @@ function update(dt){
  for(const c of chests){if(c.open){c.t=Math.min(1,c.t+dt*3);c.lid.rotation.x=-1.25*c.t;continue}
   if(Math.hypot(c.x-P.x,c.y-P.y)<1.5){c.open=true;updateDailyProgress('daily_chests',1);const n=c.tier>1?ri(5,8):ri(3,5);for(let i=0;i<n;i++)spawnDrop(c.x,c.y,genItem(ilv()+c.tier,{bonus:c.tier>1?3:1.5,minRar:c.tier>1?2:1}));emit(c.x,c.y,.8,'#ffd54a',40,5,.9,5);toast(c.tier>1?T('secret_found'):'Schatztruhe geöffnet!','#ffd54a');sndChest();
    c.g.children[c.g.children.length-2].visible=false;c.g.children[c.g.children.length-3].visible=false}}
- for(const s of shrines){s.ring.rotation.z+=dt*2;if(s.used)continue;if(Math.hypot(s.x-P.x,s.y-P.y)<1.4){s.used=true;P.hp=P.mh;P.buff=40;if(s.sec){S.pts++;toast('Geheimer Schrein: +1 Attributpunkt & Segen!','#ffd54a')}else toast('Schrein: volle Heilung & Segen (+30% Schaden)','#6dff9b');emit(s.x,s.y,1,'#6dff9b',40,5,.9,5);s.g.children[2].material=bas(0x555555);s.ring.material=bm(0x555555,.5)}}
+ for(const s of shrines){s.ring.rotation.z+=dt*2;if(s.used)continue;if(Math.hypot(s.x-P.x,s.y-P.y)<1.4){s.used=true;P.hp=P.mh;P.buff=40;
+  if(hasActiveLegendaryPower('nemesis')){
+   spawnE(pickT(),s.x+rnd(-1.5,1.5),s.y+rnd(-1.5,1.5),true,true);
+   toast('🟠 Armschienen der Nemesis: Ein Champion erscheint am Schrein!','#ff8a2b');
+  }else if(s.sec){S.pts++;toast('Geheimer Schrein: +1 Attributpunkt & Segen!','#ffd54a')}else toast('Schrein: volle Heilung & Segen (+30% Schaden)','#6dff9b');
+  emit(s.x,s.y,1,'#6dff9b',40,5,.9,5);s.g.children[2].material=bas(0x555555);s.ring.material=bm(0x555555,.5)}}
  if(portal){portal.r1.rotation.z+=dt;portal.r2.rotation.z-=dt*1.6;if(Math.hypot(portal.x-P.x,portal.y-P.y)<1.2)nextFloor()}
  for(const s of secrets){if(s.done)continue;const d=Math.hypot(s.gx+.5-P.x,s.gy+.5-P.y);
   if(d<6){s.hint-=dt;if(s.hint<=0){s.hint=.4;emit(s.gx+.5+rnd(-.4,.4),s.gy+.5+rnd(-.4,.4),rnd(.4,1.6),M.th.ac,1,.5,.9,.6)}}
@@ -4614,19 +5383,19 @@ const NPCTalk2D = {
 window.NPCTalk2D=NPCTalk2D;
 
 const ADV_ROSTER=[
- {id:'kaelen',name:'Kaelen',icon:'⚔️',col:0x4fd1ff,trait:'Taktiker'},
- {id:'lyra',name:'Lyra',icon:'🏹',col:0x6dff9b,trait:'Späherin'},
- {id:'vex',name:'Vex',icon:'🔮',col:0xc77dff,trait:'Arkanist'},
- {id:'thora',name:'Thora',icon:'🛡️',col:0xffb347,trait:'Wächterin'},
- {id:'draven',name:'Draven',icon:'🗡️',col:0xff6a88,trait:'Jäger'}
+ {id:'kaelen',name:'Καλλίας (Kallias · Kaelen)',icon:'⚔️',col:0x4fd1ff,trait:'Στρατηγός (Strategos)'},
+ {id:'lyra',name:'Λύρα τῆς Ἀρτέμιδος (Lyra)',icon:'🏹',col:0x6dff9b,trait:'Πρόσκοπος (Proskopos)'},
+ {id:'vex',name:'Φοῖβος ὁ Θεουργός (Phoibos · Vex)',icon:'🔮',col:0xc77dff,trait:'Μύστης (Mystes)'},
+ {id:'thora',name:'Θεοδώρα ἡ Αἰγιόχος (Theodora · Thora)',icon:'🛡️',col:0xffb347,trait:'Φύλαξ (Phylax)'},
+ {id:'draven',name:'Δράκων ὁ Θηρευτής (Drakon · Draven)',icon:'🗡️',col:0xff6a88,trait:'Κυνηγός (Kynegos)'}
 ];
 
 const FACTION_TIERS=[
- {min:0,max:14,id:'neutral',name:'Neutral / Erkannt',nameEn:'Neutral / Recognized',icon:'🛡️',color:'#9ec7ff',desc:'Grundlegendes Vertrauen der Abenteurer-Gilde.'},
- {min:15,max:39,id:'recognized',name:'Anerkannter Verbündeter',nameEn:'Recognized Ally',icon:'🥉',color:'#6dff9b',desc:'10% Handels-Rabatt & Abenteurer-Trank freigeschaltet!'},
- {min:40,max:69,id:'trusted',name:'Vertrauter Waffenbruder',nameEn:'Trusted Companion',icon:'🥈',color:'#4fd1ff',desc:'Gilden-Ration (+15 Max HP permanent) freigeschaltet!'},
- {min:70,max:99,id:'champion',name:'Gilden-Champion',nameEn:'Guild Champion',icon:'🥇',color:'#c77dff',desc:'Klingen-Schärfstein (+12% Schaden permanent) freigeschaltet!'},
- {min:100,max:9999,id:'exalted',name:'Erhabene Legende',nameEn:'Exalted Legend',icon:'👑',color:'#ffd54a',desc:'Relikt der Bruderschaft (Legendäres Relikt) freigeschaltet!'}
+ {min:0,max:14,id:'neutral',name:'Ἀμύητος (Amyetos · Uneingeweiht)',nameEn:'Amyetos (Uninitiated)',icon:'🛡️',color:'#9ec7ff',desc:'Grundlegendes Vertrauen des Θίασος τῶν Μυστῶν (Mysterien-Bundes).'},
+ {min:15,max:39,id:'recognized',name:'Μύστης (Mystes · Eingeweihter)',nameEn:'Mystes (Initiate Ally)',icon:'🥉',color:'#6dff9b',desc:'10% Handels-Rabatt & Φάρμακον τῶν Μυστῶν freigeschaltet!'},
+ {min:40,max:69,id:'trusted',name:'Ἐπόπτης (Epoptes · Schauender Bruder)',nameEn:'Epoptes (Trusted Watcher)',icon:'🥈',color:'#4fd1ff',desc:'Ἀμβροσία τῆς Συνόδου (+15 Max HP permanent) freigeschaltet!'},
+ {min:70,max:99,id:'champion',name:'Δᾳδοῦχος (Dadouchos · Fackelträger)',nameEn:'Dadouchos (Torchbearer Champion)',icon:'🥇',color:'#c77dff',desc:'Ἀκόνη τοῦ Ἡφαίστου (+12% Schaden permanent) freigeschaltet!'},
+ {min:100,max:9999,id:'exalted',name:'Ἱεροφάντης Ὀλύμπιος (Hierophantes)',nameEn:'Hierophantes Olympios (Exalted)',icon:'👑',color:'#ffd54a',desc:'Κειμήλιον τῆς Ἑταιρείας (Legendäres Relikt) freigeschaltet!'}
 ];
 function getFactionTier(trust){
  const t=Math.max(0,trust!==undefined?trust:0);
@@ -4648,6 +5417,467 @@ function saveNpcMemoryStore(store){
  try{localStorage.setItem('lr_npc_mem',JSON.stringify(store));}catch(_){}
 }
 let npcMemStore=loadNpcMemoryStore();
+function loadNpcSpeechLog(){
+ try{
+  const raw=localStorage.getItem('lr_npc_speech_log');
+  if(raw){
+   const parsed=JSON.parse(raw);
+   if(Array.isArray(parsed))return parsed;
+  }
+ }catch(_){}
+ return [];
+}
+function saveNpcSpeechLog(list){
+ try{localStorage.setItem('lr_npc_speech_log',JSON.stringify(list));}catch(_){}
+}
+let npcSpeechLog=loadNpcSpeechLog();
+let npcSpeechFloatTimer=null;
+let npcSpeechDrawerOpen=false;
+
+/* ================= OLD GREEK TO NORMAL ABC PART-BY-PART WORD NORMALIZATION ================= */
+const GREEK_WORD_PARTS_LEXICON=[
+ {id:'xiphos',greek:'Ξίφος',greekParts:['Ξί','φος'],abcParts:['Xi','phos'],abcFull:'Xiphos',meaningDe:'Schwert',meaningEn:'Sword'},
+ {id:'oreichalkou',greek:'Ὀρειχάλκου',greekParts:['Ὀ','ρει','χάλ','κου'],abcParts:['O','rei','chal','kou'],abcFull:'Oreichalkou',meaningDe:'Bergkupfer',meaningEn:'Orichalcum'},
+ {id:'erebos',greek:'Ἔρεβος',greekParts:['Ἔ','ρε','βος'],abcParts:['E','re','bos'],abcFull:'Erebos',meaningDe:'Schattenreich',meaningEn:'Erebus'},
+ {id:'tartaros',greek:'Τάρταρος',greekParts:['Τάρ','τα','ρος'],abcParts:['Tar','ta','ros'],abcFull:'Tartaros',meaningDe:'Abgrund',meaningEn:'Tartarus'},
+ {id:'pyriphlegethon',greek:'Πυριφλεγέθων',greekParts:['Πυ','ρι','φλε','γέ','θων'],abcParts:['Py','ri','phle','ge','thon'],abcFull:'Pyriphlegethon',meaningDe:'Feuerstrom',meaningEn:'River of Fire'},
+ {id:'hoplites',greek:'Ὁπλίτης',greekParts:['Ὁ','πλί','της'],abcParts:['Ho','pli','tes'],abcFull:'Hoplites',meaningDe:'Schwerbewaffneter',meaningEn:'Hoplite'},
+ {id:'nekromantes',greek:'Νεκρομάντης',greekParts:['Νε','κρο','μάν','της'],abcParts:['Ne','kro','man','tes'],abcFull:'Nekromantes',meaningDe:'Totenbeschwörer',meaningEn:'Necromancer'},
+ {id:'eidolon',greek:'Εἴδωλον',greekParts:['Εἴ','δω','λον'],abcParts:['Ei','do','lon'],abcFull:'Eidolon',meaningDe:'Trugbild',meaningEn:'Phantom'},
+ {id:'thanatos',greek:'Θάνατος',greekParts:['Θά','να','τος'],abcParts:['Tha','na','tos'],abcFull:'Thanatos',meaningDe:'Tod',meaningEn:'Death'},
+ {id:'eleusinos',greek:'Ἐλευσῖνος',greekParts:['Ἐ','λευ','σῖ','νος'],abcParts:['E','leu','si','nos'],abcFull:'Eleusinos',meaningDe:'Mysterien-Zuflucht',meaningEn:'Sanctuary'},
+ {id:'keraunos',greek:'Κεραυνός',greekParts:['Κε','ραυ','νός'],abcParts:['Ke','rau','nos'],abcFull:'Keraunos',meaningDe:'Donnerkeil',meaningEn:'Thunderbolt'},
+ {id:'aitherodetos',greek:'Αἰθερόδετος',greekParts:['Αἰ','θε','ρό','δε','τος'],abcParts:['Ai','the','ro','de','tos'],abcFull:'Aitherodetos',meaningDe:'Äthergebunden',meaningEn:'Aetherbound'},
+ {id:'hierophantes',greek:'Ἱεροφάντης',greekParts:['Ἱ','ε','ρο','φάν','της'],abcParts:['Hi','e','ro','phan','tes'],abcFull:'Hierophantes',meaningDe:'Hohepriester',meaningEn:'Hierophant'},
+ {id:'strategos',greek:'Στρατηγός',greekParts:['Στρα','τη','γός'],abcParts:['Stra','te','gos'],abcFull:'Strategos',meaningDe:'Feldherr',meaningEn:'Commander'},
+ {id:'proskopos',greek:'Πρόσκοπος',greekParts:['Πρό','σκο','πος'],abcParts:['Pro','sko','pos'],abcFull:'Proskopos',meaningDe:'Späher',meaningEn:'Scout'},
+ {id:'mystes',greek:'Μύστης',greekParts:['Μύ','στης'],abcParts:['My','stes'],abcFull:'Mystes',meaningDe:'Eingeweihter',meaningEn:'Initiate'},
+ {id:'phylax',greek:'Φύλαξ',greekParts:['Φύ','λαξ'],abcParts:['Phy','lax'],abcFull:'Phylax',meaningDe:'Wächter',meaningEn:'Guardian'},
+ {id:'kynegos',greek:'Κυνηγός',greekParts:['Κυ','νη','γός'],abcParts:['Ky','ne','gos'],abcFull:'Kynegos',meaningDe:'Jäger',meaningEn:'Hunter'}
+];
+window.GREEK_WORD_PARTS_LEXICON=GREEK_WORD_PARTS_LEXICON;
+
+function loadGreekWordPartsState(){
+ try{
+  const raw=localStorage.getItem('lr_greek_word_parts');
+  if(raw){
+   const parsed=JSON.parse(raw);
+   if(parsed&&typeof parsed==='object')return parsed;
+  }
+ }catch(_){}
+ return {};
+}
+function saveGreekWordPartsState(st){
+ try{localStorage.setItem('lr_greek_word_parts',JSON.stringify(st));}catch(_){}
+}
+let npcGreekWordPartsState=loadGreekWordPartsState();
+let lastUnlockedGreekWordInfo=null;
+let npcSpeechScrollUnlockAcc=0;
+
+function formatGreekWordPartByPartText(entry, unlockedCount){
+ if(!entry)return '';
+ const total=entry.greekParts.length;
+ const u=cl(Math.floor(Number(unlockedCount)||0),0,total);
+ if(u<=0)return entry.greek;
+ if(u>=total)return entry.abcFull;
+ return entry.abcParts.slice(0,u).join('-')+'-'+entry.greekParts.slice(u).join('-');
+}
+window.formatGreekWordPartByPartText=formatGreekWordPartByPartText;
+
+function formatGreekWordPartByPartHtml(entry, unlockedCount){
+ if(!entry)return '';
+ const total=entry.greekParts.length;
+ const u=cl(Math.floor(Number(unlockedCount)||0),0,total);
+ const parts=[];
+ for(let i=0;i<total;i++){
+  if(i<u){
+   parts.push(`<span class="npc-greek-part-abc">${entry.abcParts[i]}</span>`);
+  }else{
+   parts.push(`<span class="npc-greek-part-raw">${entry.greekParts[i]}</span>`);
+  }
+ }
+ return parts.join('·');
+}
+window.formatGreekWordPartByPartHtml=formatGreekWordPartByPartHtml;
+
+function normalizeGreekTextPartByPart(text){
+ if(!text||typeof text!=='string')return text||'';
+ let out=text;
+ for(const entry of GREEK_WORD_PARTS_LEXICON){
+  const u=cl(Math.floor(Number(npcGreekWordPartsState[entry.id])||0),0,entry.greekParts.length);
+  if(u>0&&out.includes(entry.greek)){
+   const normStr=formatGreekWordPartByPartText(entry,u);
+   out=out.split(entry.greek).join(normStr);
+  }
+ }
+ return out;
+}
+window.normalizeGreekTextPartByPart=normalizeGreekTextPartByPart;
+
+function getGreekNormalizationStats(){
+ let unlockedParts=0,totalParts=0,fullyNormalizedWords=0;
+ for(const entry of GREEK_WORD_PARTS_LEXICON){
+  const tot=entry.greekParts.length;
+  const u=cl(Math.floor(Number(npcGreekWordPartsState[entry.id])||0),0,tot);
+  unlockedParts+=u;
+  totalParts+=tot;
+  if(u>=tot)fullyNormalizedWords++;
+ }
+ return {unlockedParts,totalParts,fullyNormalizedWords,totalWords:GREEK_WORD_PARTS_LEXICON.length};
+}
+window.getGreekNormalizationStats=getGreekNormalizationStats;
+
+function unlockRandomGreekWordPart(reason='history'){
+ const candidates=GREEK_WORD_PARTS_LEXICON.filter(e=>(npcGreekWordPartsState[e.id]||0)<e.greekParts.length);
+ if(!candidates.length){
+  const stats=getGreekNormalizationStats();
+  return {allUnlocked:true,...stats};
+ }
+ const chosen=candidates[Math.floor(Math.random()*candidates.length)];
+ const prev=Math.floor(Number(npcGreekWordPartsState[chosen.id])||0);
+ const next=Math.min(chosen.greekParts.length,prev+1);
+ npcGreekWordPartsState[chosen.id]=next;
+ saveGreekWordPartsState(npcGreekWordPartsState);
+ const partIdx=next-1;
+ const currentDisplay=formatGreekWordPartByPartText(chosen,next);
+ lastUnlockedGreekWordInfo={
+  id:chosen.id,
+  greek:chosen.greek,
+  abcFull:chosen.abcFull,
+  unlockedPartGreek:chosen.greekParts[partIdx],
+  unlockedPartAbc:chosen.abcParts[partIdx],
+  unlockedParts:next,
+  totalParts:chosen.greekParts.length,
+  currentDisplay,
+  meaning:lang==='de'?chosen.meaningDe:chosen.meaningEn,
+  fullyNormalized:next>=chosen.greekParts.length,
+  reason
+ };
+ renderNpcSpeechFeedInLayer();
+ return lastUnlockedGreekWordInfo;
+}
+window.unlockRandomGreekWordPart=unlockRandomGreekWordPart;
+
+function resetNpcLayer2D(){
+ const nl=$('npcLayer2D');
+ if(!nl)return;
+ const cards=nl.querySelectorAll('.npc-card-2d');
+ cards.forEach(c=>c.remove());
+ ensureNpcSpeechFeedDOM();
+}
+
+let npcSpeechSearchQuery='';
+
+function formatNpcSpeechTimeElapsed(ts, nowMs=Date.now()){
+ const numTs=Number(ts);
+ if(!Number.isFinite(numTs)||numTs<=0)return lang==='de'?'gerade eben':'just now';
+ const diffSec=Math.max(0,Math.floor((nowMs-numTs)/1000));
+ if(diffSec<5)return lang==='de'?'gerade eben':'just now';
+ if(diffSec<60)return lang==='de'?`vor ${diffSec}s`:`${diffSec}s ago`;
+ if(diffSec<3600){
+  const m=Math.floor(diffSec/60);
+  return lang==='de'?`vor ${m}m`:`${m}m ago`;
+ }
+ if(diffSec<86400){
+  const h=Math.floor(diffSec/3600);
+  return lang==='de'?`vor ${h}h`:`${h}h ago`;
+ }
+ const d=Math.floor(diffSec/86400);
+ return lang==='de'?`vor ${d}d`:`${d}d ago`;
+}
+window.formatNpcSpeechTimeElapsed=formatNpcSpeechTimeElapsed;
+
+function updateNpcSpeechElapsedLabels(nowMs=Date.now()){
+ const nl=$('npcLayer2D');
+ if(!nl)return;
+ const badges=nl.querySelectorAll('.npc-speech-elapsed[data-ts]');
+ badges.forEach(b=>{
+  const ts=Number(b.getAttribute('data-ts'));
+  if(Number.isFinite(ts)&&ts>0){
+   b.textContent=`⏱️ ${formatNpcSpeechTimeElapsed(ts,nowMs)}`;
+  }
+ });
+}
+window.updateNpcSpeechElapsedLabels=updateNpcSpeechElapsedLabels;
+
+function filterNpcSpeechLog(list=npcSpeechLog, query=npcSpeechSearchQuery){
+ if(!Array.isArray(list))return [];
+ const q=String(query||'').trim().toLowerCase();
+ if(!q)return list.slice();
+ const tokens=q.split(/\s+/).filter(Boolean);
+ return list.filter(item=>{
+  if(!item)return false;
+  const rawName=String(item.name||'').toLowerCase();
+  const normName=String(normalizeGreekTextPartByPart(item.name||'')).toLowerCase();
+  const rawText=String(item.text||'').toLowerCase();
+  const normText=String(normalizeGreekTextPartByPart(item.text||'')).toLowerCase();
+  const rawTrait=String(item.trait||'').toLowerCase();
+  const normTrait=String(normalizeGreekTextPartByPart(item.trait||'')).toLowerCase();
+  const haystack=`${rawName} ${normName} ${rawText} ${normText} ${rawTrait} ${normTrait}`;
+  return tokens.every(tok=>haystack.includes(tok));
+ });
+}
+window.filterNpcSpeechLog=filterNpcSpeechLog;
+
+function toggleNpcSpeechDrawer(forceState){
+ ensureNpcSpeechFeedDOM();
+ npcSpeechDrawerOpen=typeof forceState==='boolean'?forceState:!npcSpeechDrawerOpen;
+ const dr=$('npcSpeechDrawer');
+ if(dr)dr.classList.toggle('open',npcSpeechDrawerOpen);
+ if(npcSpeechDrawerOpen){
+  unlockRandomGreekWordPart('expand');
+ }else{
+  renderNpcSpeechFeedInLayer();
+ }
+ return npcSpeechDrawerOpen;
+}
+window.toggleNpcSpeechDrawer=toggleNpcSpeechDrawer;
+
+function ensureNpcSpeechFeedDOM(){
+ const nl=$('npcLayer2D');
+ if(!nl)return null;
+ let wrap=nl.querySelector('#npcSpeechFeedWrap');
+ if(!wrap){
+  wrap=document.createElement('div');
+  wrap.id='npcSpeechFeedWrap';
+  wrap.className='npc-speech-feed-wrap';
+  wrap.innerHTML=`
+   <div id="npcSpeechFloat" class="npc-speech-float" title="Tippen für NPC-Dialogverlauf">
+    <div class="npc-speech-float-head">
+     <span id="npcSpeechFloatSpeaker">💬 Gefährte</span>
+     <span id="npcSpeechFloatMeta" style="opacity:.8;font-size:9.5px">E1</span>
+    </div>
+    <div id="npcSpeechFloatText" class="npc-speech-float-text"></div>
+   </div>
+   <div id="npcSpeechDrawer" class="npc-speech-drawer${npcSpeechDrawerOpen?' open':''}">
+    <div class="npc-speech-drawer-head">
+     <span id="npcSpeechDrawerTitle">📜 Vollständiger NPC-Verlauf</span>
+     <button class="npc-act-btn party" id="btnOpenNpcRelFromFeed" style="flex:0 0 auto;padding:2px 7px">👥 Beziehungen</button>
+    </div>
+    <div class="npc-speech-search-wrap">
+     <input type="search" id="npcSpeechSearchInput" class="npc-speech-search-input" placeholder="🔍 NPC-Name oder Stichwort filtern..." autocomplete="off" spellcheck="false" />
+     <button type="button" id="npcSpeechSearchClear" class="npc-speech-search-clear" title="Filter zurücksetzen">✕</button>
+    </div>
+    <div id="npcGreekDecoderBox" class="npc-greek-decoder-box">
+     <div class="npc-greek-decoder-top">
+      <span id="npcGreekDecoderStats">🔤 Old Greek → ABC: 0/0</span>
+      <button type="button" id="btnUnlockGreekWordPart" class="npc-greek-unlock-btn">+ Part → ABC</button>
+     </div>
+     <div id="npcGreekDecoderActive" style="font-size:9.5px;margin-bottom:2px;color:#cfd6e0"></div>
+     <div id="npcGreekDecoderChips" class="npc-greek-chips"></div>
+    </div>
+    <div id="npcSpeechFeedList" class="npc-speech-feed-list"></div>
+   </div>
+   <div class="npc-speech-log-bar">
+    <div id="npcSpeechLogToggle" class="npc-speech-log-pill" role="button" tabindex="0">
+     <span>💬</span>
+     <span id="npcSpeechLogPillTxt">NPC-Log (${npcSpeechLog.length})</span>
+     <button type="button" id="npcSpeechLogExpand" class="npc-speech-expand-btn">Expand</button>
+    </div>
+   </div>`;
+  const searchInp=wrap.querySelector('#npcSpeechSearchInput');
+  const searchClr=wrap.querySelector('#npcSpeechSearchClear');
+  if(searchInp){
+   ['pointerdown','mousedown','touchstart','click'].forEach(ev=>{
+    searchInp.addEventListener(ev,e=>{e.stopPropagation();});
+   });
+   ['keydown','keyup'].forEach(ev=>{
+    searchInp.addEventListener(ev,e=>{
+     e.stopPropagation();
+     if(ev==='keydown'&&e.key==='Escape'){
+      npcSpeechSearchQuery='';
+      searchInp.value='';
+      renderNpcSpeechFeedInLayer();
+      searchInp.blur();
+     }
+    });
+   });
+   searchInp.addEventListener('input',()=>{
+    npcSpeechSearchQuery=searchInp.value||'';
+    renderNpcSpeechFeedInLayer();
+   });
+  }
+  if(searchClr){
+   searchClr.addEventListener('pointerdown',e=>{
+    e.stopPropagation();
+    npcSpeechSearchQuery='';
+    if(searchInp)searchInp.value='';
+    renderNpcSpeechFeedInLayer();
+   });
+  }
+  wrap.addEventListener('pointerdown',e=>{
+   e.stopPropagation();
+   if(e.target.closest('#npcSpeechSearchInput')||e.target.closest('#npcSpeechSearchClear')){
+    return;
+   }
+   if(e.target.closest('#npcSpeechLogExpand')||e.target.closest('#npcSpeechLogToggle')){
+    toggleNpcSpeechDrawer();
+    return;
+   }
+   if(e.target.closest('#btnUnlockGreekWordPart')){
+    unlockRandomGreekWordPart('button');
+    return;
+   }
+   if(e.target.closest('.npc-speech-entry')){
+    unlockRandomGreekWordPart('entry-click');
+    return;
+   }
+   if(e.target.closest('#npcSpeechFloat')){
+    toggleNpcSpeechDrawer(true);
+    return;
+   }
+   if(e.target.closest('#btnOpenNpcRelFromFeed')){
+    renderNpcRelationsModal();
+    const relOvl=$('npcRelationsOvl');
+    if(relOvl)relOvl.style.display='flex';
+    return;
+   }
+  });
+  const feedList=wrap.querySelector('#npcSpeechFeedList');
+  if(feedList){
+   feedList.addEventListener('scroll',()=>{
+    npcSpeechScrollUnlockAcc+=Math.abs(feedList.scrollTop||10);
+    if(npcSpeechScrollUnlockAcc>=65){
+     npcSpeechScrollUnlockAcc=0;
+     unlockRandomGreekWordPart('scroll');
+    }
+   },{passive:true});
+  }
+  nl.appendChild(wrap);
+ }
+ renderNpcSpeechFeedInLayer();
+ return wrap;
+}
+
+function renderNpcSpeechFeedInLayer(){
+ const pillTxt=$('npcSpeechLogPillTxt');
+ if(pillTxt){
+  pillTxt.textContent=(lang==='de'?`NPC-Log (${npcSpeechLog.length})`:`NPC Log (${npcSpeechLog.length})`);
+ }
+ const expBtn=$('npcSpeechLogExpand');
+ if(expBtn){
+  expBtn.textContent='Expand';
+  expBtn.setAttribute('aria-expanded',npcSpeechDrawerOpen?'true':'false');
+ }
+ const searchInp=$('npcSpeechSearchInput');
+ if(searchInp){
+  searchInp.placeholder=lang==='de'?'🔍 NPC-Name oder Stichwort filtern...':'🔍 Filter by NPC name or keyword...';
+  if(document.activeElement!==searchInp&&searchInp.value!==npcSpeechSearchQuery){
+   searchInp.value=npcSpeechSearchQuery;
+  }
+ }
+ const filteredLog=filterNpcSpeechLog(npcSpeechLog,npcSpeechSearchQuery);
+ const drTitle=$('npcSpeechDrawerTitle');
+ if(drTitle){
+  const countStr=npcSpeechSearchQuery.trim()?`${filteredLog.length}/${npcSpeechLog.length}`:`${npcSpeechLog.length}`;
+  drTitle.textContent=(lang==='de'?`📜 NPC-Verlauf (${countStr})`:`📜 Full NPC History (${countStr})`);
+ }
+ const statsEl=$('npcGreekDecoderStats');
+ const activeEl=$('npcGreekDecoderActive');
+ const chipsEl=$('npcGreekDecoderChips');
+ const gStats=getGreekNormalizationStats();
+ if(statsEl){
+  statsEl.textContent=`🔤 Old Greek → ABC: ${gStats.unlockedParts}/${gStats.totalParts} (${gStats.fullyNormalizedWords}/${gStats.totalWords})`;
+ }
+ if(activeEl){
+  if(lastUnlockedGreekWordInfo){
+   const inf=lastUnlockedGreekWordInfo;
+   activeEl.innerHTML=`<span>${inf.greek} → <b style="color:#6dff9b">${inf.currentDisplay}</b> (${inf.unlockedParts}/${inf.totalParts} · ${inf.unlockedPartGreek}⇒${inf.unlockedPartAbc}) <small style="opacity:.78">[${inf.meaning}]</small></span>`;
+  }else{
+   activeEl.textContent=lang==='de'
+    ?'Scrolle durch den Verlauf oder tippe "+ Part → ABC", um Altgriechisch Wortteil für Wortteil in ABC zu normalisieren.'
+    :'Scroll history or tap "+ Part → ABC" to normalize Old Greek word parts into readable ABC.';
+  }
+ }
+ if(chipsEl){
+  chipsEl.innerHTML=GREEK_WORD_PARTS_LEXICON.map(entry=>{
+   const u=cl(Math.floor(Number(npcGreekWordPartsState[entry.id])||0),0,entry.greekParts.length);
+   const htmlParts=formatGreekWordPartByPartHtml(entry,u);
+   return `<span class="npc-greek-chip" title="${entry.greek} → ${entry.abcFull} (${entry.meaningDe})">${htmlParts} <small style="opacity:.65">${u}/${entry.greekParts.length}</small></span>`;
+  }).join('');
+ }
+ const listEl=$('npcSpeechFeedList');
+ if(!listEl)return;
+ if(!npcSpeechLog.length){
+  listEl.innerHTML=`<div style="opacity:.7;font-size:10px;padding:4px">${lang==='de'?'Noch keine NPC-Nachrichten aufgezeichnet.':'No NPC messages recorded yet.'}</div>`;
+  return;
+ }
+ if(!filteredLog.length){
+  listEl.innerHTML=`<div style="opacity:.75;font-size:10px;padding:4px">${lang==='de'?'Keine Einträge für diesen Suchbegriff gefunden.':'No speech entries match this search filter.'}</div>`;
+  return;
+ }
+ const nowMs=Date.now();
+ listEl.innerHTML=filteredLog.map((item,idx)=>{
+  const catCls=item.cat||'new';
+  const lexEntry=GREEK_WORD_PARTS_LEXICON[idx%GREEK_WORD_PARTS_LEXICON.length];
+  const u=cl(Math.floor(Number(npcGreekWordPartsState[lexEntry.id])||0),0,lexEntry.greekParts.length);
+  const normName=normalizeGreekTextPartByPart(item.name||'');
+  const normText=normalizeGreekTextPartByPart(item.text||'');
+  const wordPartHtml=formatGreekWordPartByPartHtml(lexEntry,u);
+  const elapsedStr=formatNpcSpeechTimeElapsed(item.ts,nowMs);
+  return `<div class="npc-speech-entry ${catCls}" data-log-idx="${idx}">
+   <div class="npc-speech-entry-top">
+    <span>${item.icon||'🗣️'} ${normName}</span>
+    <span>E${item.floor||1} · ${item.time||''}<span class="npc-speech-elapsed" data-ts="${item.ts||''}">⏱️ ${elapsedStr}</span></span>
+   </div>
+   <div class="npc-speech-entry-msg">"${normText}"</div>
+   <div style="font-size:8.5px;margin-top:2px;opacity:.88">🔤 ${wordPartHtml} <span style="opacity:.7">(${u}/${lexEntry.greekParts.length} ABC)</span></div>
+  </div>`;
+ }).join('');
+}
+
+function recordNpcSpeech(adv, text, cat='new', showFloating=true){
+ if(!adv||!text)return text;
+ adv.talkText=text;
+ const mem=getAdvMemory(adv.id);
+ if(!Array.isArray(mem.recentLines))mem.recentLines=[];
+ const floorNum=(S&&S.floor)||1;
+ const timeStr=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+ const lastEntry=npcSpeechLog[0];
+ if(!lastEntry||lastEntry.npcId!==adv.id||lastEntry.text!==text){
+  const entry={
+   npcId:adv.id,
+   name:adv.name,
+   icon:adv.icon||'🗣️',
+   trait:adv.trait||'',
+   text,
+   cat:cat||'new',
+   floor:floorNum,
+   time:timeStr,
+   ts:Date.now()
+  };
+  npcSpeechLog.unshift(entry);
+  if(npcSpeechLog.length>120)npcSpeechLog.length=120;
+  saveNpcSpeechLog(npcSpeechLog);
+
+  mem.recentLines.unshift({text,cat:cat||'new',floor:floorNum,time:timeStr,ts:entry.ts});
+  if(mem.recentLines.length>20)mem.recentLines.length=20;
+  saveNpcMemoryStore(npcMemStore);
+  unlockRandomGreekWordPart('speech');
+ }
+ ensureNpcSpeechFeedDOM();
+ if(showFloating&&mode==='play'&&!invOpen&&!isPaused&&!villageActive){
+  const fl=$('npcSpeechFloat');
+  const spk=$('npcSpeechFloatSpeaker');
+  const meta=$('npcSpeechFloatMeta');
+  const txt=$('npcSpeechFloatText');
+  if(fl&&spk&&meta&&txt){
+   fl.className='npc-speech-float visible '+(cat||'new');
+   spk.textContent=`${adv.icon||'🗣️'} ${normalizeGreekTextPartByPart(adv.name)}`;
+   meta.textContent=`${lang==='de'?'Ebene':'Floor'} ${floorNum} · ${timeStr}`;
+   txt.textContent=`"${normalizeGreekTextPartByPart(text)}"`;
+   if(npcSpeechFloatTimer)clearTimeout(npcSpeechFloatTimer);
+   npcSpeechFloatTimer=setTimeout(()=>{
+    const curFl=$('npcSpeechFloat');
+    if(curFl)curFl.classList.remove('visible');
+   },4200);
+  }
+ }
+ return text;
+}
+window.recordNpcSpeech=recordNpcSpeech;
+window.npcSpeechLog=npcSpeechLog;
+
 function getAdvMemory(id){
  if(!npcMemStore[id]){
   npcMemStore[id]={
@@ -4664,6 +5894,7 @@ function getAdvMemory(id){
    fitness:1,
    generation:1,
    historyNodes:[],
+   recentLines:[],
    lineIdx:ri(0,5)
   };
  }
@@ -4672,15 +5903,16 @@ function getAdvMemory(id){
  if(npcMemStore[id].enemiesDefeated===undefined)npcMemStore[id].enemiesDefeated=0;
  if(npcMemStore[id].timesSavedPlayer===undefined)npcMemStore[id].timesSavedPlayer=0;
  if(!Array.isArray(npcMemStore[id].historyNodes))npcMemStore[id].historyNodes=[];
+ if(!Array.isArray(npcMemStore[id].recentLines))npcMemStore[id].recentLines=[];
  return npcMemStore[id];
 }
 
 const COMPANION_COMBAT_TIERS=[
- {level:1,id:'recruit',minScore:0,nextScore:5,icon:'🌱',name:'Rekrut',nameEn:'Recruit',color:'#9ec7ff'},
- {level:2,id:'veteran',minScore:5,nextScore:15,icon:'⚔️',name:'Veteran',nameEn:'Veteran',color:'#6dff9b'},
- {level:3,id:'elite',minScore:15,nextScore:30,icon:'🛡️',name:'Elite-Krieger',nameEn:'Elite Vanguard',color:'#4fd1ff'},
- {level:4,id:'champion',minScore:30,nextScore:50,icon:'🔥',name:'Schlacht-Champion',nameEn:'Battle Champion',color:'#c77dff'},
- {level:5,id:'warlord',minScore:50,nextScore:50,icon:'👑',name:'Kriegsfürst',nameEn:'Warlord Legend',color:'#ffd54a'}
+ {level:1,id:'recruit',minScore:0,nextScore:5,icon:'🌱',name:'Ἔφηβος (Ephebos · Rekrut)',nameEn:'Ephebos (Recruit)',color:'#9ec7ff'},
+ {level:2,id:'veteran',minScore:5,nextScore:15,icon:'⚔️',name:'Ὁπλίτης (Hoplites · Veteran)',nameEn:'Hoplites (Veteran)',color:'#6dff9b'},
+ {level:3,id:'elite',minScore:15,nextScore:30,icon:'🛡️',name:'Λοχαγός (Lochagos · Elite)',nameEn:'Lochagos (Elite Vanguard)',color:'#4fd1ff'},
+ {level:4,id:'champion',minScore:30,nextScore:50,icon:'🔥',name:'Ἀριστεύς (Aristeus · Champion)',nameEn:'Aristeus (Battle Champion)',color:'#c77dff'},
+ {level:5,id:'warlord',minScore:50,nextScore:50,icon:'👑',name:'Πολέμαρχος (Polemarchos · Kriegsfürst)',nameEn:'Polemarchos (Warlord Legend)',color:'#ffd54a'}
 ];
 function getCompanionCombatTier(enemiesDefeated=0, timesSavedPlayer=0){
  const safeKills=Math.max(0,Math.floor(Number(enemiesDefeated)||0));
@@ -4875,7 +6107,7 @@ function mkAdventurerMesh(col){
 
 function spawnAdventurersForFloor(){
  adventurers=[];
- const nl=$('npcLayer2D');if(nl)nl.innerHTML='';
+ resetNpcLayer2D();
  if(!M||!M.rooms)return;
  const candRooms=M.rooms.filter(r=>r.type!=='start'&&r.type!=='boss'&&r.type!=='raidboss'&&!r.secret);
  if(!candRooms.length)return;
@@ -4896,6 +6128,7 @@ function spawnAdventurersForFloor(){
   world.add(m.root);
   const isHostile=mem.stance==='negative';
   const initCat=isHostile?'negative':(mem.stance==='positive'?'positive':'new');
+  const initLine=NPCTalk2D.pickLine(initCat,mem.lineIdx++,mem.lastDeathDesc);
   const adv={
    id:prof.id,
    name:prof.name,
@@ -4923,11 +6156,12 @@ function spawnAdventurersForFloor(){
    generation:mem.generation||1,
    lastDeathDesc:mem.lastDeathDesc||'',
    needs:{safety:100,combat:80,greed:70,goal:'ACTION: Hunting'},
-   talkText:NPCTalk2D.pickLine(initCat,mem.lineIdx++,mem.lastDeathDesc),
+   talkText:initLine,
    m:m,
    domEl:null
   };
   createAdventurerDomCard(adv);
+  recordNpcSpeech(adv,initLine,initCat,i===0);
   adventurers.push(adv);
  }
  saveNpcMemoryStore(npcMemStore);
@@ -5016,7 +6250,7 @@ function npcHelpDanger(npcId){
  verifyNpcRelationsData(S,npcMemStore);
  adv.stance=mem.stance;
  adv.fitness=mem.fitness;
- adv.talkText=NPCTalk2D.pickLine('positive',mem.lineIdx++,mem.lastDeathDesc);
+ recordNpcSpeech(adv,NPCTalk2D.pickLine('positive',mem.lineIdx++,mem.lastDeathDesc),'positive',true);
  saveNpcMemoryStore(npcMemStore);
  addXp(35+S.floor*10);
  emit(adv.x,adv.y,1,'#6dff9b',30,4,.7,3);
@@ -5080,7 +6314,7 @@ function npcTradeWithPlayer(npcId){
  verifyNpcRelationsData(S,npcMemStore);
  if(grantedWhetstone)recalc();
  adv.stance=mem.stance;
- adv.talkText=NPCTalk2D.pickLine('positive',mem.lineIdx++,mem.lastDeathDesc);
+ recordNpcSpeech(adv,NPCTalk2D.pickLine('positive',mem.lineIdx++,mem.lastDeathDesc),'positive',true);
  saveNpcMemoryStore(npcMemStore);
  sndBuy();
  saveGame(true);
@@ -5095,7 +6329,7 @@ function npcJoinParty(npcId){
  const mem=getAdvMemory(adv.id);
  verifyNpcRelationsData(S,npcMemStore);
  adv.stance=mem.stance==='negative'?'neutral':mem.stance;
- adv.talkText=NPCTalk2D.pickLine('positive',mem.lineIdx++,mem.lastDeathDesc);
+ recordNpcSpeech(adv,NPCTalk2D.pickLine('positive',mem.lineIdx++,mem.lastDeathDesc),'positive',true);
  saveNpcMemoryStore(npcMemStore);
  sndSummon();
  toast(adv.inParty?`🤝 ${adv.name} kämpft jetzt in deiner Party!`:`${adv.name} jagt wieder eigenständig.`,'#4fd1ff');
@@ -5134,7 +6368,7 @@ function hurtAdventurer(adv,dmg){
   if(!adv.inDanger){
    adv.inDanger=true;
    const mem=getAdvMemory(adv.id);
-   adv.talkText=NPCTalk2D.pickLine('danger',mem.lineIdx++,mem.lastDeathDesc);
+   recordNpcSpeech(adv,NPCTalk2D.pickLine('danger',mem.lineIdx++,mem.lastDeathDesc),'danger',true);
    toast(`⚠️ ${adv.name}: "${adv.talkText}"`,'#ffd54a');
   }
  }
@@ -5173,7 +6407,7 @@ function hitAdventurerByPlayer(adv,dmg,isCrit){
   spawnDrop(adv.x,adv.y,genItem(ilv()+1,{minRar:1}),false);
   toast(`💀 ${adv.name} wurde von dir getötet! Er wird sich daran erinnern (${deathInfo}).`,'#ff4a4a');
  }else{
-  adv.talkText=NPCTalk2D.pickLine('negative',mem.lineIdx++,mem.lastDeathDesc||(lang==='de'?`Verrat auf Ebene ${S.floor}`:`betrayed on Floor ${S.floor}`));
+  recordNpcSpeech(adv,NPCTalk2D.pickLine('negative',mem.lineIdx++,mem.lastDeathDesc||(lang==='de'?`Verrat auf Ebene ${S.floor}`:`betrayed on Floor ${S.floor}`)),'negative',true);
  }
 }
 
@@ -5227,7 +6461,7 @@ function updateAdventurers(dt){
   adv.inDanger=!adv.hostileToPlayer&&(hpRatio<0.45||(nearbyThreatCount>=3&&hpRatio<0.72));
   if(adv.inDanger&&!wasDanger){
    const mem=getAdvMemory(adv.id);
-   adv.talkText=NPCTalk2D.pickLine('danger',mem.lineIdx++,mem.lastDeathDesc);
+   recordNpcSpeech(adv,NPCTalk2D.pickLine('danger',mem.lineIdx++,mem.lastDeathDesc),'danger',true);
   }else if(!adv.inDanger&&wasDanger){
    const dP=Math.hypot(P.x-adv.x,P.y-adv.y);
    if(dP<9){
@@ -5239,7 +6473,7 @@ function updateAdventurers(dt){
     mem.historyNodes=mem.historyNodes||[];
     mem.historyNodes.push({type:'DangerRescue',desc:`Aus Gefahr gerettet auf Ebene ${S.floor}`,floor:S.floor,time:new Date().toLocaleTimeString()});
     adv.stance='positive';
-    adv.talkText=NPCTalk2D.pickLine('positive',mem.lineIdx++,mem.lastDeathDesc);
+    recordNpcSpeech(adv,NPCTalk2D.pickLine('positive',mem.lineIdx++,mem.lastDeathDesc),'positive',true);
     verifyNpcRelationsData(S,npcMemStore);
     toast(`🤝 ${adv.name} dankt dir für die Rettung! (+15 Fraktions-Vertrauen)`,'#6dff9b');
    }
@@ -5326,7 +6560,7 @@ function updateAdventurers(dt){
      P.hp=Math.min(P.mh,P.hp+14*dt);
      if(!adv.campGreeted||tm-adv.campGreeted>24){
       adv.campGreeted=tm;
-      adv.talkText=T('camp_speech');
+      recordNpcSpeech(adv,T('camp_speech'),'camp',true);
       toast(T('camp_toast'),'#ffd54a');
       AUDIO.levelup();
       emit(P.x,P.y,1.1,'#ffd54a',20,3,.7,3);
@@ -5370,7 +6604,10 @@ function updateAdventurers(dt){
    adv.talkCd=7.5;
    const mem=getAdvMemory(adv.id);
    const cat=adv.inDanger?'danger':adv.hostileToPlayer?'negative':adv.stance==='positive'?'positive':'new';
-   adv.talkText=NPCTalk2D.pickLine(cat,mem.lineIdx++,mem.lastDeathDesc);
+   const nearPlayer=Math.hypot(adv.x-P.x,adv.y-P.y)<14;
+   const line=NPCTalk2D.pickLine(cat,mem.lineIdx++,mem.lastDeathDesc);
+   if(nearPlayer)recordNpcSpeech(adv,line,cat,true);
+   else adv.talkText=line;
   }
   adv.m.root.position.set(adv.x,0,adv.y);
   adv.m.body.rotation.y=-adv.ang;
@@ -5457,6 +6694,8 @@ function renderNpcRelationsModal(){
    const stanceLbl=mem.stance==='positive'?'💚 Freund / Friend':mem.stance==='negative'?'⚔️ Rivale / Vengeful':'🛡️ Neutral';
    const currentGoal=advInstance?advInstance.needs.goal:'Erkundet den Dungeon';
    const deathRow=mem.lastDeathDesc?`<div class="adv-rel-death">💀 Erinnerung: ${mem.lastDeathDesc}</div>`:'';
+   const lastSpoken=(Array.isArray(mem.recentLines)&&mem.recentLines.length)?mem.recentLines[0]:(advInstance&&advInstance.talkText?{text:advInstance.talkText,floor:(S&&S.floor)||1,time:''}:null);
+   const quoteRow=lastSpoken?`<div class="adv-rel-last-quote">💬 "${lastSpoken.text}" <small style="opacity:.75">${lastSpoken.floor?`(E${lastSpoken.floor}${lastSpoken.time?' · '+lastSpoken.time:''})`:''}</small></div>`:'';
    return `
    <div class="adv-rel-card">
     <div class="adv-rel-avatar" style="border-color:#${prof.col.toString(16)}">${prof.icon}</div>
@@ -5473,10 +6712,37 @@ function renderNpcRelationsModal(){
       <span class="mem-node conflict">💀 Konflikte: ${mem.killedByPlayer||0}×</span>
      </div>
      <div class="adv-rel-need">🧬 Bedürfnis / Ziel: <b>${currentGoal}</b></div>
+     ${quoteRow}
      ${deathRow}
     </div>
    </div>`;
   }).join('');
+ }
+ const speechCountEl=$('npcSpeechHistoryCount');
+ const speechTitleEl=$('npcSpeechHistoryTitle');
+ const speechListEl=$('npcSpeechHistoryList');
+ if(speechTitleEl){
+  speechTitleEl.textContent=lang==='de'?'💬 Letzte NPC-Interaktionen & Dialog-Verlauf':'💬 Recent NPC Interactions & Dialogue Log';
+ }
+ if(speechCountEl){
+  speechCountEl.textContent=lang==='de'?`${npcSpeechLog.length} Einträge`:`${npcSpeechLog.length} Entries`;
+ }
+ if(speechListEl){
+  if(!npcSpeechLog.length){
+   speechListEl.innerHTML=`<div style="opacity:.7;font-size:11px;padding:6px">${lang==='de'?'Noch keine NPC-Dialoge in diesem Durchlauf aufgezeichnet.':'No NPC dialogue lines recorded yet.'}</div>`;
+  }else{
+   speechListEl.innerHTML=npcSpeechLog.map(item=>{
+    const catCls=item.cat||'new';
+    const catBadge=catCls==='positive'?'💚 Freund':catCls==='danger'?'⚠️ Gefahr':catCls==='negative'?'⚔️ Konflikt':catCls==='camp'?'🔥 Lagerfeuer':'🛡️ Begegnung';
+    return `<div class="npc-speech-entry ${catCls}">
+     <div class="npc-speech-entry-top">
+      <span>${item.icon||'🗣️'} <b>${item.name}</b> <small style="opacity:.8">(${catBadge})</small></span>
+      <span>${lang==='de'?'Ebene':'Floor'} ${item.floor||1} · ${item.time||''}</span>
+     </div>
+     <div class="npc-speech-entry-msg">"${item.text}"</div>
+    </div>`;
+   }).join('');
+  }
  }
 }
 window.renderNpcRelationsModal=renderNpcRelationsModal;
@@ -5737,9 +7003,36 @@ function drawMM(){if(!mmx)return;const c=mmEl.getContext('2d');c.imageSmoothingE
  if(portal){c.fillStyle='#4fd1ff';c.fillRect(portal.x*2-2,portal.y*2-2,5,5)}c.fillStyle='#fff';c.fillRect(P.x*2-2,P.y*2-2,5,5)}
 function hud(){
  if(!P||!S||!M)return;
- $('hpf').style.width=cl(P.hp/P.mh,0,1)*100+'%';$('hpt').textContent=`Lv ${S.lvl} · ${Math.ceil(P.hp)} / ${P.mh}`;$('xpf').style.width=cl(S.xp/need(S.lvl),0,1)*100+'%';
+ const pTag=(S.paragonLvl||0)>0?` (P${S.paragonLvl})`:'';
+ $('hpf').style.width=cl(P.hp/P.mh,0,1)*100+'%';$('hpt').textContent=`Lv ${S.lvl}${pTag} · ${Math.ceil(P.hp)} / ${P.mh}`;$('xpf').style.width=cl(S.xp/need(S.lvl),0,1)*100+'%';
+ const rWrap=$('d3RiftBarWrap');
+ if(rWrap){
+  if(M.th&&M.th.isRift){
+   rWrap.style.display='block';
+   const rp=cl((S.riftProgress||0)/100,0,1);
+   if($('riftf'))$('riftf').style.width=(rp*100)+'%';
+   if($('riftt'))$('riftt').textContent=`Nephalemportal ${Math.floor(rp*100)}%`;
+  }else{
+   rWrap.style.display='none';
+  }
+ }
+ const mBadge=$('d3MassacreBadge'),gBadge=$('d3GloryBadge');
+ if(mBadge){
+  if((P.massacreCount||0)>=3&&(P.massacreTimer||0)>0){
+   mBadge.style.display='inline-flex';
+   mBadge.textContent=`🔥 Massaker ${P.massacreCount}×`;
+  }else mBadge.style.display='none';
+ }
+ if(gBadge){
+  if((P.nephalemGloryT||0)>0){
+   gBadge.style.display='inline-flex';
+   gBadge.textContent=`✨ Nephalemruhm ${Math.ceil(P.nephalemGloryT)}s`;
+  }else gBadge.style.display='none';
+ }
+ const d3d=getD3Diff();
+ const diffBadge=(S.d3Difficulty&&S.d3Difficulty!=='normal')?` · <span style="color:#ffb347">${lang==='de'?d3d.de:d3d.en}</span>`:'';
  const blessTxt=P.campBuff>0?(lang==='de'?`🔥 Abenteurer-Segen ${Math.ceil(P.campBuff)}s`:`🔥 Adventurer Blessing ${Math.ceil(P.campBuff)}s`):(P.buff>0?`Segen ${Math.ceil(P.buff)}s`:'');
- $('inf').innerHTML=`${T('floor')} ${S.floor} · ${M.th.n}<br>${T('enemies')} ${en.length} · ${T('kills')} ${S.kills} · 💰 ${S.gold||0}`+(blessTxt?` · <span style="color:${P.campBuff>0?'#ffb347':'#6dff9b'}">${blessTxt}</span>`:'');
+ $('inf').innerHTML=`${T('floor')} ${S.floor} · ${M.th.n}${diffBadge}<br>${T('enemies')} ${en.length} · ${T('kills')} ${S.kills} · 💰 ${S.gold||0}`+(blessTxt?` · <span style="color:${P.campBuff>0?'#ffb347':'#6dff9b'}">${blessTxt}</span>`:'');
  $('wv').innerHTML=`${T('void_pulse')} ${Math.max(0,Math.ceil(wt))}${T('sec')}`+(S.pts?`<br><span style="color:#ffd54a">${S.pts} ${T('attr_points')}</span>`:'');
  $('bNova').style.setProperty('--cd',cl(P.novaCd/8,0,1));$('bDash').style.setProperty('--cd',cl(P.dashCd/(2.4*ST.cdM),0,1));
  const bb=$('bossb');
@@ -5781,6 +7074,7 @@ function hud(){
   }
  }
  drawMM();
+ if(npcSpeechDrawerOpen)updateNpcSpeechElapsedLabels();
  $('invTitle').textContent = T('bag');
  const bSum=$('bSummon'),minHud=$('minionHud'),minb=$('minb'),minBadge=$('minionBadge'),tR=$('tR');
  if(S.playerClass==='necromancer'){

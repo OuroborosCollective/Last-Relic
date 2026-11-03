@@ -67,6 +67,12 @@ class ExampleRobolectricTest {
     assertTrue(html.contains("screen-flash-overlay"))
     assertTrue(html.contains("monitorDailyResetCycle"))
     assertTrue(html.contains("startDailyResetWatcher"))
+    assertTrue(html.contains("#npcLayer2D .npc-speech-feed-wrap"))
+    assertTrue(html.contains("npcSpeechFloat"))
+    assertTrue(html.contains("npcSpeechFeedList"))
+    assertTrue(html.contains("npcInteractionLogBox"))
+    assertTrue(html.contains("npcSpeechHistoryList"))
+    assertTrue(html.contains("recordNpcSpeech"))
   }
 
   @Test
