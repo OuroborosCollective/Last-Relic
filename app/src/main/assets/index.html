@@ -1617,7 +1617,7 @@ const TH=[
 
 /* ================= STATE ================= */
 let S={lvl:1,xp:0,pts:0,at:{str:0,dex:0,vit:0,arc:0},eq:{},inv:[],floor:1,kills:0,found:0,secrets:0,autoS:1,scrapFilter:[true,false,false],shakeMult:1,metaShards:0,gold:0,metaUpg:{dmg:0,hp:0,inv:0},playerClass:'warrior',achievements:[],npcFactionTrust:0,earnedQuestTrust:0,dailyQuests:[],dailyResetTime:0};
-let M,P,ST={},en=[],crates=[],chests=[],shrines=[],drops=[],secrets=[],portal=null,boss=null,pb=[],eb=[],flick=[],disp=[],ex,mmx,sel=null;
+let M,P,ST={},en=[],crates=[],chests=[],shrines=[],hazards=[],campfires=[],drops=[],secrets=[],portal=null,boss=null,pb=[],eb=[],flick=[],disp=[],ex,mmx,sel=null;
 let minions=[], villageNPCs=[], activeQuests=[], hiredHelpers=[], villageShop=[], adventurers=[], activeQuestTab='daily';
 let mode='menu',tm=0,wt=45,vig=0,vigHeavy=0,shake=0,uid=0,lastTh=-1,invOpen=false,inputM='touch',dtN=0,fullT=0,last=0,hudT=0,expT=0,flowKey=-1,camX=0,camZ=0,isPaused=false;
 let villageActive=false, villageFloor=-1, raidBossSpawned=false;
@@ -1993,7 +1993,9 @@ function genMap(seed,fl,th){
  const oth=rooms.filter(r=>r.type==='normal');
  if(oth.length && R()<0.25){const v=oth.splice(Math.floor(rg()*oth.length),1)[0];v.type='village';villageFloor=S.floor;}
  for(let k=0;k<2&&oth.length;k++){const r=oth.splice(Math.floor(rg()*oth.length),1)[0];r.type=k?'shrine':'treasure'}
- for(const r of rooms){if(r.w>=8&&r.h>=8&&r.type!=='start'){for(const[px,py]of[[r.x+2,r.y+2],[r.x+r.w-3,r.y+2],[r.x+2,r.y+r.h-3],[r.x+r.w-3,r.y+r.h-3]]){const i=py*W+px;if(g[i]===1&&rt[i]===r.idx)g[i]=3}}}
+ const campCount=Math.min(oth.length,rg()<.55?2:1);
+ for(let k=0;k<campCount&&oth.length;k++){const r=oth.splice(Math.floor(rg()*oth.length),1)[0];r.type='campfire'}
+ for(const r of rooms){if(r.w>=8&&r.h>=8&&r.type!=='start'&&r.type!=='campfire'){for(const[px,py]of[[r.x+2,r.y+2],[r.x+r.w-3,r.y+2],[r.x+2,r.y+r.h-3],[r.x+r.w-3,r.y+r.h-3]]){const i=py*W+px;if(g[i]===1&&rt[i]===r.idx)g[i]=3}}}
  const secs=[],ns=rI(3,5);
  for(let a=0;a<600&&secs.length<ns;a++){
   const r=rooms[rI(0,rooms.length-1)];if(r.type==='start')continue;
@@ -2015,7 +2017,7 @@ function genMap(seed,fl,th){
 function clearWorld(){
  for(const d of drops)if(d.lbl)d.lbl.material.map.dispose();
  while(world.children.length)world.remove(world.children[0]);
- disp.forEach(d=>d.dispose());disp=[];en=[];crates=[];chests=[];shrines=[],drops=[],secrets=[],portal=null;boss=null;pb.length=0;eb.length=0;flick=[];minions=[];villageNPCs=[];hiredHelpers=[];villageShop=[];adventurers=[];villageActive=false;
+ disp.forEach(d=>d.dispose());disp=[];en=[];crates=[];chests=[];shrines=[],hazards=[],campfires=[],drops=[],secrets=[],portal=null;boss=null;pb.length=0;eb.length=0;flick=[];minions=[];villageNPCs=[];hiredHelpers=[];villageShop=[];adventurers=[];villageActive=false;
  const nl=$('npcLayer2D');if(nl)nl.innerHTML='';}
 function paintFloor(th,rg){
  return cTex(W*TP,H*TP,x=>{
@@ -2028,6 +2030,7 @@ function paintFloor(th,rg){
    if(v===4){x.fillStyle='rgba(200,80,40,.5)';x.fillRect(px,py,TP,TP);}
    if(rm&&(rm.type==='boss'||rm.type==='raidboss'||rm.secret)){x.fillStyle=th.ac;x.globalAlpha=rm.secret?.12:.08;x.fillRect(px,py,TP,TP);x.globalAlpha=1}
    if(rm&&rm.type==='village'){x.fillStyle='#8a8a4a';x.globalAlpha=.15;x.fillRect(px,py,TP,TP);x.globalAlpha=1;}
+   if(rm&&rm.type==='campfire'){x.fillStyle='#ff8a2b';x.globalAlpha=.11;x.fillRect(px,py,TP,TP);x.globalAlpha=1;}
    for(let k=0;k<7;k++){x.fillStyle=rg()<.5?'rgba(0,0,0,.14)':'rgba(255,255,255,.05)';x.fillRect(px+((rg()*TP)|0),py+((rg()*TP)|0),1+((rg()*2)|0),1)}
    x.fillStyle='rgba(0,0,0,.35)';x.fillRect(px,py+TP-1,TP,1);x.fillRect(px+TP-1,py,1,TP);
    x.fillStyle='rgba(255,255,255,.04)';x.fillRect(px,py,TP,1);x.fillRect(px,py,1,TP);
@@ -2051,6 +2054,7 @@ function paintFloor(th,rg){
    else if(r.type==='start'){x.globalAlpha=.4;x.beginPath();x.arc(cx,cy,m*.3,0,7);x.stroke();x.beginPath();x.arc(cx,cy,m*.12,0,7);x.stroke()}
    else if(r.type==='arena'){x.globalAlpha=.4;x.strokeStyle='#ff4a4a';x.strokeRect(cx-m*.35,cy-m*.35,m*.7,m*.7);x.strokeRect(cx-m*.2,cy-m*.2,m*.4,m*.4)}
    else if(r.type==='village'){x.globalAlpha=.4;x.strokeStyle='#8a8a4a';x.strokeRect(cx-m*.3,cy-m*.3,m*.6,m*.6);x.strokeRect(cx-m*.15,cy-m*.15,m*.3,m*.3)}
+   else if(r.type==='campfire'){x.globalAlpha=.48;x.strokeStyle='#ff9a3d';x.beginPath();x.arc(cx,cy,m*.28,0,7);x.stroke();x.beginPath();x.arc(cx,cy,m*.14,0,7);x.stroke()}
    x.restore()}
  })}
 function wallTex(th,k,rg){
@@ -2088,13 +2092,24 @@ function buildFloor(){
 function brazier(x,y,th){const g=new Tt.Group();g.position.set(x,0,y);g.add(part(cylG,lam(0x3a3a42),0,.3,0,.14,.6,.14));g.add(part(coneG,lam(0x2a2a30),0,.7,0,.3,.28,.3));
  const f=part(coneG,bas(th.ac),0,.95,0,.14,.4,.14),gl=part(flatG,gm(th.ac,.46),0,.03,0,5.2,1,5.2);g.add(f,gl);world.add(g);flick.push({m:f,g:gl,ph:R()*6})}
 function populate(th){
+ const fl=Math.max(1,(S&&S.floor)||1);
  for(const r of M.rooms){
   if(r.secret){
    const c=r.c;if(r.type==='shrine')mkShrine(c[0]+.5,c[1]+.5,true);else mkChest(c[0]+.5,c[1]+.5,2);continue}
   const sp=[];for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++)if(M.g[y*W+x]===1&&M.rt[y*W+x]===r.idx&&(!isF(x,y-1)||!isF(x-1,y)||!isF(x+1,y)))sp.push([x+.5,y+.5]);
   for(let k=0;k<ri(1,3)&&sp.length;k++){const p=sp.splice(Math.floor(R()*sp.length),1)[0];brazier(p[0],p[1],th)}
   if(r.type==='start')continue;
+  if(r.type==='campfire'){
+   mkCampfire(r.c[0]+.5,r.c[1]+.5,r);
+   continue;
+  }
   for(let k=0,n=ri(2,4);k<n;k++){const p=rndIn(r);if(p)mkCrate(p[0],p[1])}
+  if(r.type!=='village'){
+   const barrelCnt=Math.min(4,ri(1,1+Math.floor(fl/2)));
+   for(let k=0;k<barrelCnt;k++){const p=rndIn(r);if(p&&Math.hypot(p[0]-(r.c[0]+.5),p[1]-(r.c[1]+.5))>1.5)mkBarrel(p[0],p[1],fl);}
+   const spikeCnt=Math.min(5,ri(1,1+Math.floor((fl+1)/2)));
+   for(let k=0;k<spikeCnt;k++){const p=rndIn(r);if(p&&Math.hypot(p[0]-(r.c[0]+.5),p[1]-(r.c[1]+.5))>1.5)mkSpikes(p[0],p[1],fl);}
+  }
   if(r.type==='boss'||r.type==='raidboss'){spawnBoss(r,r.type==='raidboss');continue}
   const n=ri(3,5)+Math.min(S.floor,5)+(r.type==='treasure'?2:0)+(r.type==='arena'?4:0);
   for(let k=0;k<n;k++){const p=rndIn(r);if(p)spawnE(pickT(),p[0],p[1],R()<.09+S.floor*.012)}
@@ -2103,6 +2118,92 @@ function populate(th){
   if(r.type==='arena'){r.spawned=false;r.arenaWave=0;}
   if(r.type==='village'){spawnVillageNPCs(r);ensureQuests();generateShop();}}
  spawnAdventurersForFloor();
+}
+function mkCampfire(x,y,room){
+ const g=new Tt.Group();g.position.set(x,0,y);
+ for(let i=0;i<8;i++){
+  const a=i*0.7854;
+  const st=part(sphG,lam(0x585e6a),Math.cos(a)*.52,.1,Math.sin(a)*.52,.16,.12,.16);
+  g.add(st);
+ }
+ for(let i=0;i<4;i++){
+  const lg=part(cylG,lam(0x5a3a22),0,.16,0,.08,.92,.08);
+  lg.rotation.z=Math.PI/2;
+  lg.rotation.y=i*0.7854;
+  g.add(lg);
+ }
+ const emberCore=part(sphG,bas(0xff6a00),0,.18,0,.26,.16,.26);
+ const fOuter=part(coneG,bm(0xff5a00,.88),0,.52,0,.28,.68,.28);
+ const fInner=part(coneG,bas(0xffd54a),0,.46,0,.16,.48,.16);
+ const gl1=part(flatG,gm(0xff7a1a,.68),0,.03,0,6.5,1,6.5);
+ const gl2=part(flatG,gm(0xffd54a,.42),0,.04,0,3.2,1,3.2);
+ const ring=part(torG,bm(0xff9a3d,.78),0,.08,0,1.25);ring.rotation.x=Math.PI/2;
+ const ptLight=new Tt.PointLight(0xff8a2b,1.65,12,1.4);ptLight.position.set(0,1.2,0);
+ g.add(emberCore,fOuter,fInner,gl1,gl2,ring,ptLight);
+ flick.push({m:fOuter,g:gl1,ph:R()*6});
+ world.add(g);
+ campfires.push({x,y,room,rested:false,g,fOuter,fInner,emberCore,gl1,gl2,ring,ptLight,emitT:0,ph:R()*6});
+}
+function mkBarrel(x,y,fl){
+ const g=new Tt.Group();g.position.set(x,0,y);
+ g.add(part(cylG,lam(0x9e241b,0x2a0502),0,.42,0,.34,.84,.34));
+ g.add(part(cylG,lam(0x303642),0,.68,0,.36,.08,.36));
+ g.add(part(cylG,lam(0x303642),0,.18,0,.36,.08,.36));
+ const hazRing=part(torG,bm(0xff6a00,.85),0,.42,0,.35);hazRing.rotation.x=Math.PI/2;
+ const fuse=part(sphG,bas(0xffb347),0,.88,0,.09);
+ const gl=part(flatG,gm(0xff4500,.45),0,.03,0,1.8,1,1.8);
+ g.add(hazRing,fuse,gl,part(flatG,shM,0,.02,0,1.0,1,1.0));
+ world.add(g);
+ hazards.push({type:'barrel',x,y,r:.38,hp:12+fl*4,maxHp:12+fl*4,dmg:Math.round((28+fl*9)*1.35),rad:3.6,g,fuse,hazRing,dead:false,ph:R()*6});
+}
+function mkSpikes(x,y,fl){
+ const g=new Tt.Group();g.position.set(x,0,y);
+ g.add(part(boxG,lam(0x2d3340),0,.03,0,.92,.06,.92));
+ const warnBorder=part(torG,bm(0xff4a4a,.55),0,.05,0,.48);warnBorder.rotation.x=Math.PI/2;g.add(warnBorder);
+ const spkGrp=new Tt.Group();spkGrp.position.y=-.28;
+ for(const ox of[-.26,0,.26])for(const oz of[-.26,0,.26]){
+  spkGrp.add(part(coneG,lam(0xcfd6e0,0x222630),ox,.24,oz,.075,.48,.075));
+ }
+ g.add(spkGrp);
+ world.add(g);
+ const cycle=Math.max(1.8,3.1-fl*0.08);
+ hazards.push({type:'spikes',x,y,r:.46,dmg:Math.round((14+fl*4.5)*1.35),g,spkGrp,warnBorder,t:R()*cycle,cycle,active:false,hitCd:0,dead:false});
+}
+function triggerBarrelExplosion(h){
+ if(!h||h.dead)return;
+ h.dead=true;
+ world.remove(h.g);
+ emit(h.x,h.y,.8,'#ff6a00',55,7.5,.85,5);
+ emit(h.x,h.y,.9,'#ffd54a',35,5.5,.65,4);
+ shake=Math.max(shake,.75);
+ sndNova();
+ const rad=h.rad||3.6;
+ if(P&&Math.hypot(P.x-h.x,P.y-h.y)<rad+P.r){
+  hurtP(Math.round(h.dmg*0.65));
+ }
+ for(const e of en){
+  if(e.dead)continue;
+  const d=Math.hypot(e.x-h.x,e.y-h.y);
+  if(d<rad+e.r){
+   hitE(e,h.dmg,true);
+   if(!e.boss&&d>.01)mv(e,(e.x-h.x)/d*1.6,(e.y-h.y)/d*1.6);
+  }
+ }
+ for(const c of crates){
+  if(!c.dead&&Math.hypot(c.x-h.x,c.y-h.y)<rad)hitC(c,99);
+ }
+ for(const o of hazards){
+  if(!o.dead&&o!==h&&o.type==='barrel'&&Math.hypot(o.x-h.x,o.y-h.y)<rad*0.9){
+   triggerBarrelExplosion(o);
+  }
+ }
+}
+function hitHazard(h,dmg){
+ if(!h||h.dead||h.type!=='barrel')return;
+ h.hp-=dmg;
+ h.g.scale.setScalar(1.16);
+ emit(h.x,h.y,.6,'#ff8a2b',5,2.5,.3,2);
+ if(h.hp<=0)triggerBarrelExplosion(h);
 }
 function mkCrate(x,y){const g=new Tt.Group();g.position.set(x,0,y);g.rotation.y=R()*3;
  if(R()<.5){g.add(part(boxG,lam(0x7a5a3a),0,.35,0,.7,.7,.7));g.add(part(boxG,lam(0x5a4028),0,.35,0,.74,.12,.74));g.add(part(boxG,bas(M.th.ac),0,.5,.36,.2,.1,.02))}
@@ -3433,6 +3534,14 @@ function shoot(){
     if(da<cleaveArc||dist<1.25)hitC(c,Math.max(10,Math.round(w.wd*mul)));
    }
   }
+  for(const h of hazards){
+   if(h.dead||h.type!=='barrel')continue;
+   const dx=h.x-P.x,dy=h.y-P.y,dist=Math.hypot(dx,dy);
+   if(dist<cleaveReach+0.4){
+    let da=Math.abs(Math.atan2(dy,dx)-P.aim);if(da>Math.PI)da=6.283-da;
+    if(da<cleaveArc||dist<1.25)hitHazard(h,Math.max(10,Math.round(w.wd*mul)));
+   }
+  }
   for(const s of secrets){
    if(s.done)continue;
    const dx=(s.gx+0.5)-P.x,dy=(s.gy+0.5)-P.y,dist=Math.hypot(dx,dy);
@@ -3552,6 +3661,7 @@ function nova(){if(P.novaCd>0||mode!=='play'||invOpen)return;P.novaCd=8;const ra
  for(const adv of adventurers){if(adv.dead||!adv.targetLocked)continue;const d=Math.hypot(adv.x-P.x,adv.y-P.y);if(d<rad+adv.r){hitAdventurerByPlayer(adv,Math.round(dmg),false);}}
  for(let i=eb.length-1;i>=0;i--)if(Math.hypot(eb[i].x-P.x,eb[i].y-P.y)<rad)eb.splice(i,1);
  for(const c of crates)if(!c.dead&&Math.hypot(c.x-P.x,c.y-P.y)<rad)hitC(c,99);
+ for(const h of hazards)if(!h.dead&&h.type==='barrel'&&Math.hypot(h.x-P.x,h.y-P.y)<rad)triggerBarrelExplosion(h);
  for(const s of secrets)if(!s.done&&Math.hypot(s.gx+.5-P.x,s.gy+.5-P.y)<5)revealSec(s);
  novaT=.42;novaM.visible=true;novaM.position.x=P.x;novaM.position.z=P.y;shake=Math.max(shake,.45);emit(P.x,P.y,.5,'#4fd1ff',55,rad*1.65,.65,2.2);sndNova()}
 function die(){mode='dead';emit(P.x,P.y,1,'#ff4040',55,6,1,4);P.m.root.visible=false;saveGame(true);
@@ -4205,7 +4315,7 @@ function explore(){const r=8,px=P.x|0,py=P.y|0;
 function update(dt){
  if(isPaused)return;
  const prevSummonCd=P.summonCd||0;
- tm+=dt;P.iT-=dt;P.fireT-=dt;P.dashCd-=dt;P.novaCd-=dt;P.summonCd=Math.max(0,(P.summonCd||0)-dt);P.buff-=dt;P.hp=Math.min(P.mh,P.hp+ST.rg*dt);
+ tm+=dt;P.iT-=dt;P.fireT-=dt;P.dashCd-=dt;P.novaCd-=dt;P.summonCd=Math.max(0,(P.summonCd||0)-dt);P.buff-=dt;P.campBuff=Math.max(0,(P.campBuff||0)-dt);P.hp=Math.min(P.mh,P.hp+ST.rg*dt);
  if(prevSummonCd>0&&P.summonCd<=0&&S.playerClass==='necromancer')hud();
  let mx=0,my=0;if(keys.KeyW||keys.ArrowUp)my--;if(keys.KeyS||keys.ArrowDown)my++;if(keys.KeyA||keys.ArrowLeft)mx--;if(keys.KeyD||keys.ArrowRight)mx++;
  if(tch.mv!=null){mx=tch.mvx;my=tch.mvy}
@@ -4291,12 +4401,68 @@ function update(dt){
   // Player bullets ONLY hit an Adventurer NPC if that NPC's Avatar was explicitly clicked/touched (targetLocked === true)
   if(!rm&&!b.fromNpc)for(const adv of adventurers){if(adv.dead||!adv.targetLocked||b.hit.includes(adv))continue;const dx=adv.x-b.x,dy=adv.y-b.y,rr=adv.r+b.r;if(dx*dx+dy*dy<rr*rr){hitAdventurerByPlayer(adv,b.d,b.c);b.hit.push(adv);if(b.pr--<=0){rm=true;break}}}
   if(!rm)for(const c of crates){if(c.dead)continue;const dx=c.x-b.x,dy=c.y-b.y;if(dx*dx+dy*dy<.35){hitC(c,b.d);rm=true;break}}
+  if(!rm)for(const h of hazards){if(h.dead||h.type!=='barrel')continue;const dx=h.x-b.x,dy=h.y-b.y;if(dx*dx+dy*dy<.38){hitHazard(h,b.d);rm=true;break}}
   if(rm)pb.splice(i,1)}
  for(let i=eb.length-1;i>=0;i--){const b=eb[i];b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;let rm=b.life<=0||tl(b.x|0,b.y|0)!==1;
   if(!rm){const dx=P.x-b.x,dy=P.y-b.y,rr=P.r+b.r;if(dx*dx+dy*dy<rr*rr){hurtP(b.dmg);if(P.iT>0)rm=true}}
   if(!rm&&!b.fromHostileNpc)for(const adv of adventurers){if(adv.dead)continue;const dx=adv.x-b.x,dy=adv.y-b.y,rr=adv.r+b.r;if(dx*dx+dy*dy<rr*rr){hurtAdventurer(adv,b.dmg*0.65);rm=true;break}}
   if(rm)eb.splice(i,1)}
  crates=crates.filter(c=>!c.dead);for(const c of crates){if(c.g.scale.x>1)c.g.scale.setScalar(Math.max(1,c.g.scale.x-dt*2))}
+ hazards=hazards.filter(h=>!h.dead);
+ for(const h of hazards){
+  if(h.type==='barrel'){
+   if(h.g.scale.x>1)h.g.scale.setScalar(Math.max(1,h.g.scale.x-dt*2.4));
+   if(h.fuse)h.fuse.scale.setScalar(0.08+Math.sin(tm*12+h.ph)*0.025);
+  }else if(h.type==='spikes'){
+   h.t=(h.t+dt)%h.cycle;
+   h.hitCd=Math.max(0,(h.hitCd||0)-dt);
+   const phase=h.t/h.cycle;
+   h.active=phase>0.64;
+   const targetY=h.active?0.0:(phase>0.46?-0.14:-0.28);
+   h.spkGrp.position.y+=(targetY-h.spkGrp.position.y)*Math.min(1,dt*18);
+   if(h.warnBorder)h.warnBorder.material.opacity=h.active?0.95:(phase>0.46?0.75:0.35);
+   if(h.active&&h.hitCd<=0){
+    if(Math.hypot(P.x-h.x,P.y-h.y)<h.r+P.r*0.7){
+     hurtP(h.dmg);
+     h.hitCd=0.65;
+    }
+    for(const e of en){
+     if(e.dead||e.boss)continue;
+     if(Math.hypot(e.x-h.x,e.y-h.y)<h.r+e.r*0.5){
+      hitE(e,Math.round(h.dmg*0.65),false);
+      h.hitCd=0.55;
+      break;
+     }
+    }
+   }
+  }
+ }
+ for(const cf of campfires){
+  cf.ring.rotation.z+=dt*1.2;
+  const fPulse=0.88+Math.sin(tm*11+cf.ph)*0.18+Math.cos(tm*7.3+cf.ph)*0.1;
+  cf.fInner.scale.set(.16*fPulse,.48*fPulse,.16*fPulse);
+  if(cf.ptLight){
+   cf.ptLight.intensity=(cf.rested?1.15:1.75)+Math.sin(tm*13+cf.ph)*0.28;
+  }
+  cf.emitT-=dt;
+  if(cf.emitT<=0){
+   cf.emitT=cf.rested?0.22:0.11;
+   emit(cf.x+rnd(-.22,.22),cf.y+rnd(-.22,.22),0.35,R()<.55?'#ff7a1a':'#ffd54a',2,1.1,0.85,2.6);
+  }
+  if(!cf.rested&&Math.hypot(P.x-cf.x,P.y-cf.y)<1.75){
+   cf.rested=true;
+   const healAmt=Math.max(1,Math.round(P.mh*0.20));
+   P.hp=Math.min(P.mh,P.hp+healAmt);
+   P.buff=Math.max(P.buff||0,30);
+   P.campBuff=Math.max(P.campBuff||0,30);
+   dmgTxt(P.x,P.y,`+${healAmt} HP (20%)`,'hl');
+   emit(cf.x,cf.y,0.5,'#ff8a2b',45,4.8,0.95,4.2);
+   emit(P.x,P.y,0.9,'#ffd54a',35,4.2,0.85,3.8);
+   toast(lang==='de'?'🔥 Lagerfeuer-Rast: +20% Leben & 30s Segen der Abenteurer!':'🔥 Campfire Rest: +20% HP & 30s Adventurer Blessing!','#ffd54a');
+   sndLevelUp();
+   cf.ring.material=bm(0xffd54a,0.45);
+  }
+ }
  updDrops(dt);
  for(const c of chests){if(c.open){c.t=Math.min(1,c.t+dt*3);c.lid.rotation.x=-1.25*c.t;continue}
   if(Math.hypot(c.x-P.x,c.y-P.y)<1.5){c.open=true;updateDailyProgress('daily_chests',1);const n=c.tier>1?ri(5,8):ri(3,5);for(let i=0;i<n;i++)spawnDrop(c.x,c.y,genItem(ilv()+c.tier,{bonus:c.tier>1?3:1.5,minRar:c.tier>1?2:1}));emit(c.x,c.y,.8,'#ffd54a',40,5,.9,5);toast(c.tier>1?T('secret_found'):'Schatztruhe geöffnet!','#ffd54a');sndChest();
@@ -5565,13 +5731,15 @@ function selectClass(ck){S.playerClass=ck;saveGame(false);startScreen();}
 const sl=$('sL'),sr=$('sR'),mmEl=$('mm');
 function drawMM(){if(!mmx)return;const c=mmEl.getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,128,128);c.drawImage(mmx.canvas,0,0,128,128);
  for(const ch of chests)if(!ch.open&&ex[(ch.y|0)*W+(ch.x|0)]){c.fillStyle='#ffd54a';c.fillRect(ch.x*2-1,ch.y*2-1,3,3)}
+ for(const cf of campfires)if(ex[(cf.y|0)*W+(cf.x|0)]){c.fillStyle=cf.rested?'#a87038':'#ff9a3d';c.fillRect(cf.x*2-1,cf.y*2-1,3,3)}
  const br=M.rooms.find(r=>r.type==='boss'||r.type==='raidboss');if(boss&&br){c.fillStyle=(tm*3|0)%2?'#c77dff':'#7a3fb0';c.fillRect(br.cx*2-2,br.cy*2-2,5,5)}
  c.fillStyle='#ff4a4a';for(const e of en)if(!e.dead&&Math.hypot(e.x-P.x,e.y-P.y)<14)c.fillRect(e.x*2-1,e.y*2-1,3,3);
  if(portal){c.fillStyle='#4fd1ff';c.fillRect(portal.x*2-2,portal.y*2-2,5,5)}c.fillStyle='#fff';c.fillRect(P.x*2-2,P.y*2-2,5,5)}
 function hud(){
  if(!P||!S||!M)return;
  $('hpf').style.width=cl(P.hp/P.mh,0,1)*100+'%';$('hpt').textContent=`Lv ${S.lvl} · ${Math.ceil(P.hp)} / ${P.mh}`;$('xpf').style.width=cl(S.xp/need(S.lvl),0,1)*100+'%';
- $('inf').innerHTML=`${T('floor')} ${S.floor} · ${M.th.n}<br>${T('enemies')} ${en.length} · ${T('kills')} ${S.kills} · 💰 ${S.gold||0}`+(P.buff>0?` · <span style="color:#6dff9b">Segen ${Math.ceil(P.buff)}s</span>`:'');
+ const blessTxt=P.campBuff>0?(lang==='de'?`🔥 Abenteurer-Segen ${Math.ceil(P.campBuff)}s`:`🔥 Adventurer Blessing ${Math.ceil(P.campBuff)}s`):(P.buff>0?`Segen ${Math.ceil(P.buff)}s`:'');
+ $('inf').innerHTML=`${T('floor')} ${S.floor} · ${M.th.n}<br>${T('enemies')} ${en.length} · ${T('kills')} ${S.kills} · 💰 ${S.gold||0}`+(blessTxt?` · <span style="color:${P.campBuff>0?'#ffb347':'#6dff9b'}">${blessTxt}</span>`:'');
  $('wv').innerHTML=`${T('void_pulse')} ${Math.max(0,Math.ceil(wt))}${T('sec')}`+(S.pts?`<br><span style="color:#ffd54a">${S.pts} ${T('attr_points')}</span>`:'');
  $('bNova').style.setProperty('--cd',cl(P.novaCd/8,0,1));$('bDash').style.setProperty('--cd',cl(P.dashCd/(2.4*ST.cdM),0,1));
  const bb=$('bossb');

@@ -17,8 +17,8 @@ android {
     applicationId = "com.aistudio.lastrelic.xkvpzr"
     minSdk = 24
     targetSdk = 36
-    versionCode = 4
-    versionName = "4.0"
+    versionCode = 5
+    versionName = "5.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -105,8 +105,15 @@ android {
 tasks.withType<Test> {
   failFast = true
   timeout.set(Duration.ofMinutes(2))
-  val localRoboDir = file("/home/appuser/robolectric-jars")
-  if (localRoboDir.exists() && localRoboDir.isDirectory) {
+  val localRoboDir =
+    listOf(
+        file("/home/appuser/robolectric-jars"),
+        file(
+          "/home/appuser/.m2/repository/org/robolectric/android-all-instrumented/16-robolectric-13921718-i7"
+        )
+      )
+      .firstOrNull { it.exists() && it.isDirectory }
+  if (localRoboDir != null) {
     systemProperty("robolectric.offline", "true")
     systemProperty("robolectric.dependency.dir", localRoboDir.absolutePath)
   }

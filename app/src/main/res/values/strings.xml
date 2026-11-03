@@ -3,4 +3,5 @@
     <string name="admob_app_id" translatable="false">ca-app-pub-2526614647374921~8134608409</string>
     <string name="admob_rewarded_ad_unit_id" translatable="false">ca-app-pub-2526614647374921/8246289044</string>
     <string name="admob_reward_name" translatable="false">Reward</string>
+    <string name="default_web_client_id" translatable="false">335782186267-ati7qb1mdv7eps38hrvjqp0kkr0imos9.apps.googleusercontent.com</string>
 </resources>
