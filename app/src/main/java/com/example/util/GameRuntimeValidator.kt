@@ -614,5 +614,83 @@ object GameRuntimeValidator {
       dataPractices.contains("AdMob_Rewarded") &&
       AdMobRewardedAdManager.verifyAdMobConfiguration()
   }
+
+  data class LootDropCurve(
+    val normal: Double,
+    val green: Double,
+    val rare: Double,
+    val epic: Double,
+    val legendary: Double,
+    val rarestCombined: Double,
+    val totalDropChance: Double,
+    val curveFactor: Double
+  )
+
+  /**
+   * Mathematical item drop rate & rarity curve:
+   * Base probabilities (Level 1, Monster Difficulty = 1.0, bonus = 0):
+   *  - Normal (Common, rar 0): 50.0%
+   *  - Common Green (Magic, rar 1): 5.5%
+   *  - Rare / Selten (rar 2): 1.5%
+   *  - Rarest (Epic 0.40% + Legendary 0.10%): 0.50% combined
+   * Scales along a smooth mathematical power/logarithmic curve by player level and monster difficulty factor.
+   */
+  fun calculateDropCurve(
+    playerLevel: Int = 1,
+    diffFactor: Double = 1.0,
+    magicFindBonus: Double = 0.0
+  ): LootDropCurve {
+    val safePLevel = playerLevel.coerceAtLeast(1)
+    val lvlFactor = 1.0 + 0.18 * (Math.log(1.0 + (safePLevel - 1) * 0.65) / Math.log(2.0)) + 0.025 * Math.pow((safePLevel - 1).toDouble(), 0.78)
+    val sevFactor = diffFactor.coerceAtLeast(0.8)
+    val mfFactor = 1.0 + (magicFindBonus / 100.0)
+    val k = lvlFactor * sevFactor * mfFactor
+    val r0 = minOf(72.0, 50.0 * Math.pow(k, 0.16))
+    val r1 = minOf(28.0, 5.5 * Math.pow(k, 0.52))
+    val r2 = minOf(16.0, 1.5 * Math.pow(k, 0.72))
+    val r3 = minOf(7.5, 0.40 * Math.pow(k, 0.88))
+    val r4 = minOf(2.5, 0.10 * Math.pow(k, 0.96))
+    return LootDropCurve(
+      normal = (Math.round(r0 * 1000.0) / 1000.0),
+      green = (Math.round(r1 * 1000.0) / 1000.0),
+      rare = (Math.round(r2 * 1000.0) / 1000.0),
+      epic = (Math.round(r3 * 1000.0) / 1000.0),
+      legendary = (Math.round(r4 * 1000.0) / 1000.0),
+      rarestCombined = (Math.round((r3 + r4) * 1000.0) / 1000.0),
+      totalDropChance = minOf(100.0, Math.round((r0 + r1 + r2 + r3 + r4) * 1000.0) / 1000.0),
+      curveFactor = (Math.round(k * 1000.0) / 1000.0)
+    )
+  }
+
+  fun rollMonsterLootRarity(
+    diffFactor: Double = 1.0,
+    playerLevel: Int = 1,
+    rollPct: Double = 0.0,
+    guaranteeDrop: Boolean = false
+  ): Int {
+    val curve = calculateDropCurve(playerLevel, diffFactor)
+    if (guaranteeDrop) {
+      val weights = doubleArrayOf(curve.normal, curve.green, curve.rare, curve.epic, curve.legendary)
+      val totalWeight = weights.sum()
+      var r = (rollPct / 100.0) * totalWeight
+      for (i in weights.indices.reversed()) {
+        r -= weights[i]
+        if (r <= 0.0) return i
+      }
+      return 0
+    }
+
+    var acc = curve.legendary
+    if (rollPct < acc) return 4
+    acc += curve.epic
+    if (rollPct < acc) return 3
+    acc += curve.rare
+    if (rollPct < acc) return 2
+    acc += curve.green
+    if (rollPct < acc) return 1
+    acc += curve.normal
+    if (rollPct < acc) return 0
+    return -1
+  }
 }
 

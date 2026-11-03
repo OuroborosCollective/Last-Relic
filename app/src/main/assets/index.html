@@ -1750,11 +1750,12 @@ const AF=[
  *  - Rarest (Epic rar 3 + Legendary rar 4): 0.5% (0.40% Epic + 0.10% Legendary)
  * Scales along a smooth mathematical power/logarithmic curve by Level (il) and Enemy Difficulty (diffFactor).
  */
-function calcDropCurve(il, diffFactor=1.0, bonus=0){
- const safeLvl=Math.max(1, il||(S?ilv():1));
- const lvlFactor=1 + 0.18*Math.log2(1 + (safeLvl-1)*0.65) + 0.025*Math.pow(safeLvl-1, 0.78);
- const sevFactor=Math.max(0.8, diffFactor||1.0);
- const mfFactor=1 + ((ST&&ST.mf)||0)/100 + Math.max(0, bonus||0)*0.25;
+function calcDropCurve(il, diffFactor=1.0, bonus=0, playerLevel=null){
+ const safePLevel=Math.max(1, (playerLevel!=null&&!isNaN(playerLevel))?Number(playerLevel):((typeof S!=='undefined'&&S&&typeof S.lvl==='number')?S.lvl:(il||1)));
+ const safeLvl=Math.max(1, il||(typeof S!=='undefined'&&S?ilv():1));
+ const lvlFactor=1 + 0.18*Math.log2(1 + (safePLevel-1)*0.65) + 0.025*Math.pow(safePLevel-1, 0.78);
+ const sevFactor=Math.max(0.8, (typeof diffFactor==='number'?diffFactor:1.0));
+ const mfFactor=1 + ((typeof ST!=='undefined'&&ST&&ST.mf)||0)/100 + Math.max(0, bonus||0)*0.25;
  const k=lvlFactor * sevFactor * mfFactor;
  const r0=Math.min(72.0, 50.0 * Math.pow(k, 0.16)); // Base: 50.0% Normal
  const r1=Math.min(28.0, 5.5  * Math.pow(k, 0.52)); // Base: 5.5% Common Green
@@ -1777,6 +1778,8 @@ window.calcDropCurve=calcDropCurve;
 
 function getEnemyDifficultyFactor(e){
  if(!e)return 1.0;
+ if(typeof e === 'number')return Math.max(0.1, e);
+ if(typeof e.diffFactor === 'number')return Math.max(0.1, e.diffFactor);
  if(e.t==='raidboss')return 6.5;
  if(e.t==='boss'||e.boss)return 4.5;
  const baseMap={husk:1.0,drone:1.05,archer:1.12,mage:1.18,bomber:1.20,teleporter:1.28,brute:1.40};
@@ -1786,28 +1789,54 @@ function getEnemyDifficultyFactor(e){
 window.getEnemyDifficultyFactor=getEnemyDifficultyFactor;
 
 function rollRar(b, il, diffFactor){
- const curve=calcDropCurve(il||(S?ilv():1), diffFactor||1.0, b||0);
+ const pLvl=(typeof S!=='undefined'&&S&&typeof S.lvl==='number')?S.lvl:(il||1);
+ const curve=calcDropCurve(il||(S?ilv():1), diffFactor||1.0, b||0, pLvl);
  const w=curve.weights;
  let r=R()*w.reduce((a,c)=>a+c,0);
  for(let i=0;i<5;i++){r-=w[i];if(r<=0)return i;}
  return 0;
 }
-function rollMonsterLootRarity(e){
- const diff=getEnemyDifficultyFactor(e);
- const curve=calcDropCurve(ilv(), diff, 0);
- const roll=R()*100;
- let acc=curve.legendary;
- if(roll<acc)return 4;
- acc+=curve.epic;
- if(roll<acc)return 3;
- acc+=curve.rare;
- if(roll<acc)return 2;
- acc+=curve.green;
- if(roll<acc)return 1;
- acc+=curve.normal;
- if(roll<acc)return 0;
- return -1; // No drop on this roll
+function rollMonsterLootRarity(e, playerLevel=null, guaranteeDrop=false){
+ let diff = 1.0;
+ let isGuaranteed = Boolean(guaranteeDrop);
+ if (typeof e === 'number') {
+  diff = Math.max(0.1, e);
+ } else if (e && typeof e === 'object') {
+  diff = typeof e.diffFactor === 'number' ? e.diffFactor : getEnemyDifficultyFactor(e);
+  if (e.guaranteedDrop || e.guaranteeDrop) isGuaranteed = true;
+ }
+ const pLvl = Math.max(1, (playerLevel != null && !isNaN(playerLevel)) ? Number(playerLevel) : ((typeof S !== 'undefined' && S && typeof S.lvl === 'number') ? S.lvl : 1));
+ const curve = calcDropCurve(typeof ilv === 'function' ? ilv() : pLvl, diff, 0, pLvl);
+
+ if (isGuaranteed) {
+  const weights = [curve.normal, curve.green, curve.rare, curve.epic, curve.legendary];
+  const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+  let r = R() * totalWeight;
+  for (let i = weights.length - 1; i >= 0; i--) {
+   r -= weights[i];
+   if (r <= 0) return i;
+  }
+  return 0;
+ }
+
+ const roll = R() * 100;
+ let acc = curve.legendary;
+ if (roll < acc) return 4;
+ acc += curve.epic;
+ if (roll < acc) return 3;
+ acc += curve.rare;
+ if (roll < acc) return 2;
+ acc += curve.green;
+ if (roll < acc) return 1;
+ acc += curve.normal;
+ if (roll < acc) return 0;
+ return -1;
 }
+rollMonsterLootRarity.getCurve = function(e, playerLevel){
+ const diff = (typeof e === 'number') ? e : (e ? (typeof e.diffFactor === 'number' ? e.diffFactor : getEnemyDifficultyFactor(e)) : 1.0);
+ const pLvl = playerLevel || ((typeof S !== 'undefined' && S && S.lvl) ? S.lvl : 1);
+ return calcDropCurve(typeof ilv === 'function' ? ilv() : pLvl, diff, 0, pLvl);
+};
 window.rollMonsterLootRarity=rollMonsterLootRarity;
 
 function genItem(il,o){o=o||{};
@@ -2946,11 +2975,13 @@ function mkEM(t,col,el,sc){
 function spawnE(t,x,y,el,chase){
  const d=ET[t],f=S.floor-1,sc=d.sc*(el?1.25:1),m=mkEM(t,d.col,el,sc);
  const diffMult=1.35;
- const e={t,x,y,hp:Math.round(d.hp*(1+.22*f)*(el?3.5:1)*diffMult),r:d.r*sc*(t==='boss'||t==='raidboss'?.6:1),dmg:Math.max(1,Math.round(d.dmg*(1+.13*f)*(el?1.4:1)*diffMult)),spd:d.spd*(el?1.1:1),el,name:el?'★ '+pick(EP)+' · '+d.n:d.n,st:chase?1:0,cd:rnd(.5,1.5),atk:0,fl:0,lunge:0,sc,ph:R()*6,sg:1,dead:false,xp:d.xp*(1+.1*f)*(el?3:1),d:99,ang:0,los:false,m,root:m.root,body:m.body,ring:m.ring,bar:m.bar,fill:m.fill,bw:m.bw,boss:(t==='boss'||t==='raidboss'),teleportT:0,raidT:0};
+ const diffFactor=getEnemyDifficultyFactor({t,el,boss:(t==='boss'||t==='raidboss')});
+ const e={t,x,y,diffFactor,hp:Math.round(d.hp*(1+.22*f)*(el?3.5:1)*diffMult),r:d.r*sc*(t==='boss'||t==='raidboss'?.6:1),dmg:Math.max(1,Math.round(d.dmg*(1+.13*f)*(el?1.4:1)*diffMult)),spd:d.spd*(el?1.1:1),el,name:el?'★ '+pick(EP)+' · '+d.n:d.n,st:chase?1:0,cd:rnd(.5,1.5),atk:0,fl:0,lunge:0,sc,ph:R()*6,sg:1,dead:false,xp:d.xp*(1+.1*f)*(el?3:1),d:99,ang:0,los:false,m,root:m.root,body:m.body,ring:m.ring,bar:m.bar,fill:m.fill,bw:m.bw,boss:(t==='boss'||t==='raidboss'),teleportT:0,raidT:0};
  e.mh=e.hp;e.cr=Math.min(e.r,.42);world.add(e.root);en.push(e);return e}
 function spawnBoss(r,raid=false){
  const t=raid?'raidboss':'boss';
  const e=spawnE(t,r.c[0]+.5,r.c[1]+.5,false,false);
+ e.diffFactor=getEnemyDifficultyFactor(e);
  if(raid){e.hp=e.mh=Math.round(2500*(1+.4*(S.floor/5))*1.35);e.name=ET.raidboss.n;toast(T('raid_boss'),'#ff4a4a');shake=1;}
  else{e.hp=e.mh=Math.round(900*(1+.35*(S.floor-1))*1.35);e.name=ET.boss.n;}
  e.sp=0;e.t1=1;e.t2=2;e.t3=6;e.phz=0;e.r=raid?1.3:1.0;e.cr=.42;boss=e;raidBossSpawned=raid;}
@@ -3001,10 +3032,11 @@ function bossAI(e,dt){
 function hitE(e,d,c){if(e.dead)return;if(e.eff&&e.eff.vulnerable)d*=1.4;e.hp-=d;e.fl=.07;if(e.st===0)e.st=1;dmgTxt(e.x,e.y,d,c?'c':'');emit(e.x,e.y,.9,c?'#ffd54a':'#ff8a6a',c?8:4,3.5,.38,3);if(e.hp<=0)killE(e)}
 function killE(e){e.dead=true;world.remove(e.root);S.kills++;emit(e.x,e.y,.8,e.el||e.boss?'#ffd54a':'#ff6a4a',e.boss?65:18,5.5,.75,4);addXp(e.xp);if(ST.lifeKill)P.hp=Math.min(P.mh,P.hp+ST.lifeKill);
  QUEST_MANAGER.recordEnemyKill(e);
- const diffFactor=getEnemyDifficultyFactor(e);
+ const diffFactor=e.diffFactor||getEnemyDifficultyFactor(e);
+ const pLvl=(typeof S!=='undefined'&&S&&typeof S.lvl==='number')?S.lvl:1;
  const rolls=e.t==='raidboss'?ri(5,7):e.boss?ri(3,5):e.el?ri(1,2):1;
  for(let i=0;i<rolls;i++){
-  const droppedRar=rollMonsterLootRarity(e);
+  const droppedRar=rollMonsterLootRarity(e, pLvl);
   if(droppedRar>=0){
    spawnDrop(e.x,e.y,genItem(ilv(),{rar:droppedRar,diffFactor}));
   }else if(e.boss&&i===0){
@@ -3275,8 +3307,9 @@ function search(){if(mode!=='play'||invOpen)return;let b=null,bd=3.6;for(const s
  if(b)revealSec(b);else toast(T('nothing_here'),'#9aa4b8')}
 function hitC(c,d){c.hp-=d;c.g.scale.setScalar(1.12);emit(c.x,c.y,.5,'#c9a24a',5,3,.4,2);if(c.hp<=0){c.dead=true;world.remove(c.g);emit(c.x,c.y,.5,'#c9a24a',16,4,.6,3);
  updateDailyProgress('daily_crates', 1);
- const droppedRar=rollMonsterLootRarity({t:'husk',el:false});
- if(droppedRar>=0)spawnDrop(c.x,c.y,genItem(ilv(),{rar:droppedRar}));
+ const pLvl=(typeof S!=='undefined'&&S&&typeof S.lvl==='number')?S.lvl:1;
+ const droppedRar=rollMonsterLootRarity({t:'husk',el:false,diffFactor:1.0}, pLvl);
+ if(droppedRar>=0)spawnDrop(c.x,c.y,genItem(ilv(),{rar:droppedRar,diffFactor:1.0}));
  if(R()<.28)spawnDrop(c.x,c.y,null,true)}}
 function dash(){
  if(P.dashCd>0||mode!=='play'||invOpen)return;

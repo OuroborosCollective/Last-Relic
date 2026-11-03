@@ -261,6 +261,8 @@ class ExampleUnitTest {
     assertTrue(content.contains("1.5  * Math.pow(k"))
     assertTrue(content.contains("0.40 * Math.pow(k"))
     assertTrue(content.contains("0.10 * Math.pow(k"))
+    assertTrue(content.contains("function rollMonsterLootRarity("))
+    assertTrue(content.contains("rollMonsterLootRarity(e, pLvl)"))
     // 5. Central QuestManager within GameMonitor decoupling quest tracking from UI rendering
     assertTrue(content.contains("class QuestManager"))
     assertTrue(content.contains("this.questManager=QUEST_MANAGER"))
@@ -670,6 +672,52 @@ class ExampleUnitTest {
     val baseBossHp = 900.0
     val scaledBossHp = Math.round(baseBossHp * GameRuntimeValidator.ENEMY_DIFFICULTY_MULTIPLIER)
     assertEquals(1215L, scaledBossHp)
+  }
+
+  @Test
+  fun `rollMonsterLootRarity weighted-probability curve conforms to 50 percent Common 5_5 percent Green 1_5 percent Rare 0_5 percent Rarest based on difficulty and player level`() {
+    // 1. Base level 1, diffFactor 1.0 (Normal enemy)
+    val baseCurve = GameRuntimeValidator.calculateDropCurve(playerLevel = 1, diffFactor = 1.0)
+    assertEquals(50.0, baseCurve.normal, 0.001)
+    assertEquals(5.5, baseCurve.green, 0.001)
+    assertEquals(1.5, baseCurve.rare, 0.001)
+    assertEquals(0.40, baseCurve.epic, 0.001)
+    assertEquals(0.10, baseCurve.legendary, 0.001)
+    assertEquals(0.50, baseCurve.rarestCombined, 0.001)
+    assertEquals(57.5, baseCurve.totalDropChance, 0.001)
+
+    // 2. High monster difficulty factor (e.g. boss 4.5) scales curve factor and boosts high rarities
+    val bossCurve = GameRuntimeValidator.calculateDropCurve(playerLevel = 1, diffFactor = 4.5)
+    assertTrue("Curve factor must scale with enemy difficulty", bossCurve.curveFactor >= 4.5)
+    assertTrue("Boss Common chance scales", bossCurve.normal > baseCurve.normal)
+    assertTrue("Boss Green chance scales", bossCurve.green > baseCurve.green)
+    assertTrue("Boss Rare chance scales", bossCurve.rare > baseCurve.rare)
+    assertTrue("Boss Epic chance scales", bossCurve.epic > baseCurve.epic)
+    assertTrue("Boss Legendary chance scales", bossCurve.legendary > baseCurve.legendary)
+    assertTrue("Boss Rarest combined chance scales", bossCurve.rarestCombined > baseCurve.rarestCombined)
+
+    // 3. Higher player level scales curve factor and drop rates
+    val highLvlCurve = GameRuntimeValidator.calculateDropCurve(playerLevel = 25, diffFactor = 1.0)
+    assertTrue("Level factor must increase curve factor", highLvlCurve.curveFactor > 1.0)
+    assertTrue("High level increases rare drop rate", highLvlCurve.rare > baseCurve.rare)
+    assertTrue("High level increases rarest drop rate", highLvlCurve.rarestCombined > baseCurve.rarestCombined)
+
+    // 4. rollMonsterLootRarity rolls
+    // Rarest (Legendary / Epic)
+    assertEquals(4, GameRuntimeValidator.rollMonsterLootRarity(diffFactor = 1.0, playerLevel = 1, rollPct = 0.05))
+    assertEquals(3, GameRuntimeValidator.rollMonsterLootRarity(diffFactor = 1.0, playerLevel = 1, rollPct = 0.35))
+    // Rare
+    assertEquals(2, GameRuntimeValidator.rollMonsterLootRarity(diffFactor = 1.0, playerLevel = 1, rollPct = 1.0))
+    // Green
+    assertEquals(1, GameRuntimeValidator.rollMonsterLootRarity(diffFactor = 1.0, playerLevel = 1, rollPct = 3.0))
+    // Common / Normal
+    assertEquals(0, GameRuntimeValidator.rollMonsterLootRarity(diffFactor = 1.0, playerLevel = 1, rollPct = 25.0))
+    // No drop (> 57.5% on level 1, diff 1.0)
+    assertEquals(-1, GameRuntimeValidator.rollMonsterLootRarity(diffFactor = 1.0, playerLevel = 1, rollPct = 80.0))
+
+    // Guaranteed drop selects proportionally among rarities
+    val guaranteedRar = GameRuntimeValidator.rollMonsterLootRarity(diffFactor = 1.0, playerLevel = 1, rollPct = 50.0, guaranteeDrop = true)
+    assertTrue("Guaranteed drop must return valid rarity 0..4", guaranteedRar in 0..4)
   }
 }
 
