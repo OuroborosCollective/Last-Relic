@@ -147,6 +147,20 @@ class AndroidWebBridge(
   }
 
   @JavascriptInterface
+  fun showGlobalLeaderboard() {
+    mainHandler.post {
+      viewModel.toggleCloudPanel(true)
+    }
+  }
+
+  @JavascriptInterface
+  fun showLeaderboard() {
+    mainHandler.post {
+      viewModel.toggleCloudPanel(true)
+    }
+  }
+
+  @JavascriptInterface
   fun onRunEnded(score: Long, floor: Long, level: Long) {
     mainHandler.post {
       viewModel.requestInterstitialAdOnRunEnd()
