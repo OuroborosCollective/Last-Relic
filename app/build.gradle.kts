@@ -105,8 +105,11 @@ android {
 tasks.withType<Test> {
   failFast = true
   timeout.set(Duration.ofMinutes(2))
-  systemProperty("robolectric.offline", "true")
-  systemProperty("robolectric.dependency.dir", "/home/appuser/robolectric-jars")
+  val localRoboDir = file("/home/appuser/robolectric-jars")
+  if (localRoboDir.exists() && localRoboDir.isDirectory) {
+    systemProperty("robolectric.offline", "true")
+    systemProperty("robolectric.dependency.dir", localRoboDir.absolutePath)
+  }
   testLogging {
     events("passed", "failed", "skipped")
   }

@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -125,11 +127,45 @@ jobs:
           status: completed
           inAppUpdatePriority: 2
 
-      - name: Create GitHub Release on Tag Push
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Determine Release Tag & Version Information
+        run: |
+          VERSION_NAME=$(grep -E '^\s*versionName\s*=\s*' app/build.gradle.kts | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
+          VERSION_CODE=$(grep -E '^\s*versionCode\s*=\s*' app/build.gradle.kts | head -n 1 | sed -E 's/.*=\s*([0-9]+).*/\1/')
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+
+          VERSION_NAME="${VERSION_NAME:-3.0}"
+          VERSION_CODE="${VERSION_CODE:-3}"
+
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG_NAME="${{ github.ref_name }}"
+            RELEASE_TITLE="Last Relic ${TAG_NAME}"
+          else
+            TAG_NAME="v${VERSION_NAME}-b${VERSION_CODE}-${SHORT_SHA}"
+            RELEASE_TITLE="Last Relic v${VERSION_NAME} (Build ${VERSION_CODE} · ${SHORT_SHA})"
+          fi
+
+          echo "RELEASE_TAG=${TAG_NAME}" >> $GITHUB_ENV
+          echo "RELEASE_TITLE=${RELEASE_TITLE}" >> $GITHUB_ENV
+          echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_ENV
+          echo "VERSION_CODE=${VERSION_CODE}" >> $GITHUB_ENV
+          echo "Release target: Tag=${TAG_NAME}, Title=${RELEASE_TITLE}"
+
+      - name: Publish GitHub Release with APK & AAB
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_TITLE }}
+          body: |
+            ### 🎮 Last Relic – Release Build
+            - **Version:** v${{ env.VERSION_NAME }} (Build ${{ env.VERSION_CODE }})
+            - **Commit:** `${{ github.sha }}`
+            - **Branch/Ref:** `${{ github.ref_name }}`
+
+            #### 📲 Direkt-Download:
+            - 🔹 **[LastRelic-release-signed.apk](https://github.com/${{ github.repository }}/releases/download/${{ env.RELEASE_TAG }}/LastRelic-release-signed.apk)** (Installierbare Android-APK)
+            - 🔹 **[LastRelic-release-signed.aab](https://github.com/${{ github.repository }}/releases/download/${{ env.RELEASE_TAG }}/LastRelic-release-signed.aab)** (Google Play Bundle)
           files: |
             LastRelic-release-signed.apk
             LastRelic-release-signed.aab
           generate_release_notes: true
+          make_latest: true
