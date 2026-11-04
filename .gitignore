@@ -16,4 +16,7 @@
 local.properties
 .env
 debug.keystore
+my-upload-key.jks
+LastRelic-release-signed.apk
+LastRelic-release-signed.aab
 *-debug.log

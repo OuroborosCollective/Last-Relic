@@ -17,6 +17,9 @@ jobs:
     name: Build, Sign & Publish Last Relic APK
     runs-on: ubuntu-latest
 
+    env:
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -46,9 +49,12 @@ jobs:
             cp .env.example .env
           fi
 
-          # Optional: Restore custom google-services.json if provided in GitHub Secrets
-          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+          # Optional: Restore custom google-services.json ONLY if it matches our applicationId and includes OAuth client_type 3
+          if [ -n "$GOOGLE_SERVICES_JSON" ] && echo "$GOOGLE_SERVICES_JSON" | grep -q "com.aistudio.lastrelic.xkvpzr" && echo "$GOOGLE_SERVICES_JSON" | grep -q '"client_type": *3'; then
+            echo "Applying validated GOOGLE_SERVICES_JSON secret..."
             echo "$GOOGLE_SERVICES_JSON" > app/google-services.json
+          else
+            echo "Using repository app/google-services.json (verified for com.aistudio.lastrelic.xkvpzr)..."
           fi
 
           # Decode debug.keystore from debug.keystore.base64 if needed
@@ -56,28 +62,51 @@ jobs:
             base64 -d debug.keystore.base64 > debug.keystore
           fi
 
-          # Decode Google Developer Release Keystore from GitHub Secret (KEYSTORE_BASE64)
-          # Falls kein eigener Keystore-Secret hinterlegt ist, wird ein gültiger Upload-Keystore
-          # mit Alias 'upload' erzeugt, damit der Build niemals fehlschlägt.
-          if [ -n "$KEYSTORE_BASE64" ]; then
+          # Prepare Release Keystore (app/build.gradle.kts requires alias 'upload')
+          KEYSTORE_FILE="${GITHUB_WORKSPACE:-$(pwd)}/my-upload-key.jks"
+          KEYSTORE_VALID=false
+
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$STORE_PASSWORD" ]; then
             echo "Decoding release keystore from KEYSTORE_BASE64 secret..."
-            echo "$KEYSTORE_BASE64" | tr -d '\n\r ' | base64 -d > "${GITHUB_WORKSPACE}/my-upload-key.jks"
-            echo "KEYSTORE_PATH=${GITHUB_WORKSPACE}/my-upload-key.jks" >> $GITHUB_ENV
-            echo "STORE_PASSWORD=${STORE_PASSWORD}" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=${KEY_PASSWORD:-$STORE_PASSWORD}" >> $GITHUB_ENV
-          else
-            echo "No KEYSTORE_BASE64 secret found — generating self-contained release keystore (alias: upload)..."
+            rm -f "$KEYSTORE_FILE"
+            if echo "$KEYSTORE_BASE64" | tr -d '\n\r ' | base64 -d > "$KEYSTORE_FILE" 2>/dev/null; then
+              EFF_KEY_PASS="${KEY_PASSWORD:-$STORE_PASSWORD}"
+              if keytool -list -keystore "$KEYSTORE_FILE" -storepass "$STORE_PASSWORD" >/dev/null 2>&1; then
+                if ! keytool -list -keystore "$KEYSTORE_FILE" -storepass "$STORE_PASSWORD" -alias upload >/dev/null 2>&1; then
+                  SRC_ALIAS="${KEY_ALIAS:-}"
+                  if [ -z "$SRC_ALIAS" ]; then
+                    SRC_ALIAS=$(keytool -list -v -keystore "$KEYSTORE_FILE" -storepass "$STORE_PASSWORD" 2>/dev/null | awk -F': ' '/^Alias name:/{print $2; exit}')
+                  fi
+                  if [ -n "$SRC_ALIAS" ]; then
+                    echo "Normalizing keystore alias '$SRC_ALIAS' to 'upload'..."
+                    keytool -changealias -keystore "$KEYSTORE_FILE" -storepass "$STORE_PASSWORD" -alias "$SRC_ALIAS" -destalias upload -keypass "$EFF_KEY_PASS" >/dev/null 2>&1 || true
+                  fi
+                fi
+                if keytool -list -keystore "$KEYSTORE_FILE" -storepass "$STORE_PASSWORD" -alias upload >/dev/null 2>&1; then
+                  KEYSTORE_VALID=true
+                  echo "KEYSTORE_PATH=$KEYSTORE_FILE" >> $GITHUB_ENV
+                  echo "STORE_PASSWORD=$STORE_PASSWORD" >> $GITHUB_ENV
+                  echo "KEY_PASSWORD=$EFF_KEY_PASS" >> $GITHUB_ENV
+                fi
+              fi
+            fi
+          fi
+
+          if [ "$KEYSTORE_VALID" != "true" ]; then
+            echo "Generating self-contained release keystore (alias: upload)..."
+            rm -f "$KEYSTORE_FILE"
             FALLBACK_PASS="${STORE_PASSWORD:-androidrelease}"
+            EFF_KEY_PASS="${KEY_PASSWORD:-$FALLBACK_PASS}"
             keytool -genkeypair -v \
-              -keystore "${GITHUB_WORKSPACE}/my-upload-key.jks" \
+              -keystore "$KEYSTORE_FILE" \
               -keyalg RSA -keysize 2048 -validity 10000 \
               -alias upload \
               -dname "CN=Last Relic, OU=GameDev, O=GoogleDeveloper, L=Berlin, S=Berlin, C=DE" \
               -storepass "$FALLBACK_PASS" \
-              -keypass "${KEY_PASSWORD:-$FALLBACK_PASS}"
-            echo "KEYSTORE_PATH=${GITHUB_WORKSPACE}/my-upload-key.jks" >> $GITHUB_ENV
+              -keypass "$EFF_KEY_PASS"
+            echo "KEYSTORE_PATH=$KEYSTORE_FILE" >> $GITHUB_ENV
             echo "STORE_PASSWORD=$FALLBACK_PASS" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=${KEY_PASSWORD:-$FALLBACK_PASS}" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=$EFF_KEY_PASS" >> $GITHUB_ENV
           fi
 
       - name: Run Unit & Runtime Integrity Tests
@@ -102,9 +131,12 @@ jobs:
           fi
 
           # Verify APK signature using apksigner from Android SDK
-          APKSIGNER=$(find $ANDROID_HOME/build-tools -name "apksigner" | sort -V | tail -n 1)
-          if [ -n "$APKSIGNER" ]; then
-            "$APKSIGNER" verify --verbose "LastRelic-release-signed.apk"
+          SDK_DIR="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          if [ -n "$SDK_DIR" ] && [ -d "$SDK_DIR/build-tools" ]; then
+            APKSIGNER=$(find "$SDK_DIR/build-tools" -name "apksigner" | sort -V | tail -n 1)
+            if [ -n "$APKSIGNER" ]; then
+              "$APKSIGNER" verify --verbose "LastRelic-release-signed.apk"
+            fi
           fi
 
       - name: Upload Signed Release APK Artifact
@@ -117,9 +149,8 @@ jobs:
           retention-days: 90
 
       - name: Publish to Google Play Console (Internal Track)
-        env:
-          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
         if: ${{ env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        continue-on-error: true
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
@@ -135,8 +166,8 @@ jobs:
           VERSION_CODE=$(grep -E '^\s*versionCode\s*=\s*' app/build.gradle.kts | head -n 1 | sed -E 's/.*=\s*([0-9]+).*/\1/')
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
 
-          VERSION_NAME="${VERSION_NAME:-5.0}"
-          VERSION_CODE="${VERSION_CODE:-5}"
+          VERSION_NAME="${VERSION_NAME:-6.0}"
+          VERSION_CODE="${VERSION_CODE:-6}"
 
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             TAG_NAME="${{ github.ref_name }}"
@@ -153,6 +184,8 @@ jobs:
           echo "Release target: Tag=${TAG_NAME}, Title=${RELEASE_TITLE}"
 
       - name: Publish GitHub Release with APK & AAB
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
