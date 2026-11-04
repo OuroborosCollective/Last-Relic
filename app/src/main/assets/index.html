@@ -237,6 +237,49 @@ table.lb .you{background:rgba(79,209,255,.14)}
 .shop-item button{background:rgba(109,255,155,.2);border:1px solid rgba(109,255,155,.4);color:#fff;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer}
 .shop-item button:disabled{opacity:.4;cursor:not-allowed}
 .village-close{width:100%;background:linear-gradient(#3b82f6,#1d4ed8);color:#fff;border:0;border-radius:10px;padding:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px}
+.village-npc{cursor:pointer;transition:background .15s,border-color .15s;border:1px solid rgba(255,255,255,.12)}
+.village-npc:hover{background:rgba(79,209,255,.12);border-color:rgba(79,209,255,.45)}
+
+/* Guild Shop UI Panel (#guildShopOvl) */
+#guildShopOvl{position:fixed;inset:0;z-index:48;display:none;align-items:center;justify-content:center;background:rgba(3,5,10,.95);backdrop-filter:blur(8px);padding:14px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.guild-shop-card{max-width:560px;width:100%;text-align:left;background:linear-gradient(165deg,rgba(12,17,30,.98),rgba(8,11,20,.99));border:1.5px solid #3c4d70;border-radius:16px;padding:18px;margin:auto;box-shadow:0 16px 42px rgba(0,0,0,.85);color:#e8ecf4}
+.guild-shop-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.guild-shop-head h2{margin:0;font-size:20px;color:#ffd54a;letter-spacing:.4px}
+.guild-npc-banner{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(22,31,50,.92);border:1px solid rgba(79,209,255,.38);border-radius:10px;margin-bottom:10px}
+.guild-npc-avatar{width:40px;height:40px;border-radius:50%;background:rgba(15,24,42,.95);border:2px solid #ffd54a;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.guild-npc-info{flex:1;min-width:0}
+.guild-npc-name{font-weight:800;font-size:13.5px;color:#fff}
+.guild-npc-role{font-size:11px;color:#9ec7ff;opacity:.92}
+.guild-currency-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.guild-curr-pill{background:rgba(14,20,34,.95);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 8px;text-align:center;font-size:11.5px}
+.guild-curr-pill b{display:block;font-size:13.5px;margin-top:2px}
+.guild-trust-box{background:rgba(16,24,40,.95);border:1.5px solid rgba(109,255,155,.42);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.guild-trust-top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;font-weight:800;margin-bottom:5px}
+.guild-trust-bar-bg{height:10px;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.2);border-radius:5px;overflow:hidden;margin-bottom:5px}
+.guild-trust-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,#4fd1ff,#6dff9b,#ffd54a);transition:width .35s ease}
+.guild-active-buffs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;min-height:24px;align-items:center}
+.guild-buff-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:10.5px;font-weight:800;background:rgba(109,255,155,.14);border:1px solid rgba(109,255,155,.55);color:#6dff9b}
+.guild-shop-tabs{display:flex;gap:6px;margin-bottom:10px}
+.guild-shop-tab{flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);color:#e8ecf4;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;text-align:center}
+.guild-shop-tab.active{background:linear-gradient(135deg,#2563eb,#1d4ed8);border-color:#60a5fa;color:#fff}
+.guild-offers-list{display:flex;flex-direction:column;gap:8px;max-height:310px;overflow-y:auto;padding-right:3px;margin-bottom:10px}
+.guild-offer-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;background:rgba(18,26,44,.92);border:1px solid rgba(79,209,255,.28);border-radius:10px;transition:border-color .15s}
+.guild-offer-item.buff-offer{border-color:rgba(199,125,255,.35)}
+.guild-offer-item.locked-tier{opacity:.62;border-color:rgba(255,255,255,.12);background:rgba(12,16,26,.85)}
+.guild-offer-left{flex:1;min-width:0}
+.guild-offer-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px}
+.guild-offer-title{font-weight:800;font-size:13px;color:#fff}
+.guild-offer-badge{font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:4px;background:rgba(79,209,255,.16);border:1px solid rgba(79,209,255,.45);color:#9ec7ff}
+.guild-offer-badge.buff{background:rgba(199,125,255,.18);border-color:rgba(199,125,255,.5);color:#e0b3ff}
+.guild-offer-tier{font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:4px;background:rgba(255,213,74,.15);border:1px solid rgba(255,213,74,.45);color:#ffd54a}
+.guild-offer-desc{font-size:11px;color:#b8c7e0;line-height:1.35}
+.guild-offer-costs{display:flex;gap:8px;margin-top:4px;font-size:11px;font-weight:800}
+.guild-cost-gold{color:#ffd54a}
+.guild-cost-shard{color:#c77dff}
+.guild-buy-btn{background:linear-gradient(135deg,#059669,#047857);border:1px solid #34d399;color:#fff;border-radius:8px;padding:8px 12px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.guild-buy-btn:disabled{background:rgba(55,65,85,.65);border-color:rgba(255,255,255,.18);color:#9aa4b8;cursor:not-allowed}
+.village-npc-card-2d{position: absolute;transform:translate(-50%,-100%);background:rgba(10,16,30,.92);border:1.5px solid #ffd54a;border-radius:10px;padding:5px 9px;color:#fff;font-size:10.5px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.78);pointer-events:auto;cursor:pointer;white-space:nowrap;z-index:8}
+.village-npc-card-2d:hover{background:rgba(24,36,64,.96);border-color:#6dff9b}
 
 /* Save badge */
 #saveBadge{position:fixed;left:8px;bottom:8px;z-index:50;font-size:11px;font-weight:700;background:rgba(6,12,20,.85);color:#6dff9b;padding:5px 10px;border-radius:6px;border:1px solid rgba(109,255,155,.4);display:none}
@@ -1458,6 +1501,45 @@ table.lb .you{background:rgba(79,209,255,.14)}
   <button class="village-close" id="villageClose">Πόλιν ἐκλείπειν (Verlassen)</button>
  </div>
 </div>
+<div id="guildShopOvl">
+ <div class="guild-shop-card">
+  <div class="guild-shop-head">
+   <h2 id="guildShopTitle">🏛️ Guild Shop · Συντεχνία τῶν Μυστῶν</h2>
+   <button class="t" id="btnCloseGuildShop" style="padding:6px 12px;font-size:12px">✕ Schließen</button>
+  </div>
+  <div class="guild-npc-banner" id="guildShopNpcBanner">
+   <div class="guild-npc-avatar" id="guildShopNpcIcon">🏛️</div>
+   <div class="guild-npc-info">
+    <div class="guild-npc-name" id="guildShopNpcName">Μύστης Δορυφόρος</div>
+    <div class="guild-npc-role" id="guildShopNpcRole">Gilden-Quartiermeister · Tausche Gold &amp; Meta-Splitter</div>
+   </div>
+   <div id="guildShopHireWrap"></div>
+  </div>
+  <div class="guild-currency-bar" id="guildShopCurrencies">
+   <div class="guild-curr-pill">💰 Χρυσός (Gold)<b style="color:#ffd54a" id="guildShopGold">0</b></div>
+   <div class="guild-curr-pill">💎 Meta-Splitter<b style="color:#c77dff" id="guildShopShards">0</b></div>
+   <div class="guild-curr-pill">🏷️ Gilden-Rabatt<b style="color:#6dff9b" id="guildShopDiscount">0%</b></div>
+  </div>
+  <div class="guild-trust-box" id="guildShopTrustBox">
+   <div class="guild-trust-top">
+    <span>🛡️ Fraktions-Vertrauen (Faction Trust): <b id="guildShopTrustVal">0</b></span>
+    <span class="faction-tier-badge" id="guildShopTierBadge">🛡️ Ἀμύητος</span>
+   </div>
+   <div class="guild-trust-bar-bg">
+    <div class="guild-trust-bar-fill" id="guildShopTrustFill"></div>
+   </div>
+   <div style="font-size:10.5px;color:#9ec7ff;opacity:.92" id="guildShopTrustHint">Steigere dein Vertrauen durch Rettung, Handel und Quests, um höhere Gilden-Stufen freizuschalten.</div>
+  </div>
+  <div class="guild-active-buffs" id="guildShopActiveBuffs"></div>
+  <div class="guild-shop-tabs" id="guildShopTabs">
+   <button class="guild-shop-tab active" id="gsTabAll">⚔️ Alle Angebote</button>
+   <button class="guild-shop-tab" id="gsTabGear">🛡️ Ausrüstung (Gear)</button>
+   <button class="guild-shop-tab" id="gsTabBuffs">⚡ Zeit-Segen (Buffs)</button>
+  </div>
+  <div class="guild-offers-list" id="guildShopList"></div>
+  <button class="village-close" id="btnCloseGuildShopBtm">🏛️ Gilden-Handelshaus schließen</button>
+ </div>
+</div>
 <div id="ovl"></div>
 <div id="saveBadge">☁️ Gespeichert ✓</div>
 
@@ -2384,6 +2466,14 @@ const dps=it=>Math.round(it.wd*it.wc*it.wr),scrapXp=it=>Math.round(it.il*3*(1+it
   if(hasActiveLegendaryPower('convention')){a.dmgP+=30;a.novaP+=25;}
   if(hasActiveLegendaryPower('unity')){a.armor+=20;a.lifeKill+=4;}
   if(hasActiveLegendaryPower('aquila')&&(!P||P.hp>=P.mh*0.75)){a.armor+=35;}
+  if(P&&P.guildBuffs){
+   const gb=P.guildBuffs;
+   if((gb.battleElixir||0)>0){a.dmgP+=25;a.rateP+=15;}
+   if((gb.aegisWard||0)>0){a.armor=Math.round((a.armor+15)*1.40);a.regen+=5;}
+   if((gb.hermesCrit||0)>0){a.crit+=15;a.critD+=40;a.speedP+=20;}
+   if((gb.plutosFortune||0)>0){a.mf+=50;a.xpP+=35;}
+   if((gb.olympianApotheosis||0)>0){a.dmgP+=40;a.rateP+=25;a.crit+=20;a.armor=Math.round((a.armor+25)*1.50);a.speedP+=15;}
+  }
   const t=S.at||{str:0,dex:0,vit:0,arc:0};ST=a;
   ST.armor+=Math.round((a.allRes||0)*0.5);
   const clsObj=CLASSES[S.playerClass||'warrior']||CLASSES.warrior;
@@ -2734,14 +2824,22 @@ function openPortal(x,y){if(!isF(x|0,y|0)){const r=M.rooms.find(r=>r.type==='bos
 /* ================= VILLAGE & SHOP & QUESTS ================= */
 function spawnVillageNPCs(room){
   const c=rndIn(room)||[room.cx+.5,room.cy+.5];
-  const greekMercs=['Μύστης Δορυφόρος (Mystes-Söldner)','Ὁπλίτης Σύμμαχος (Hoplit-Gefährte)'];
+  const guildNpcSpecs=[
+    {id:'vnpc_0',name:'Μύστης Δορυφόρος (Mystes-Söldner)',roleDe:'Gilden-Waffenmeister · Tausche Gold & Splitter für Ausrüstung',roleEn:'Guild Quartermaster · Trade Gold & Shards for Gear',icon:'🏛️',col:0xffd54a,companionId:'kaelen'},
+    {id:'vnpc_1',name:'Ὁπλίτης Σύμμαχος (Hoplit-Gefährte)',roleDe:'Gilden-Alchemist · Tausche Gold & Splitter für Zeit-Segen',roleEn:'Guild Alchemist · Trade Gold & Shards for Temp Buffs',icon:'⚗️',col:0x4fd1ff,companionId:'lyra'}
+  ];
   for(let k=0;k<2;k++){
+    const spec=guildNpcSpecs[k%guildNpcSpecs.length];
     const nx=c[0]+rnd(-2,2),ny=c[1]+rnd(-2,2);
     const g=new Tt.Group();g.position.set(nx,.3,ny);
     g.add(part(cylG,lam(0x8a6d3b),0,.4,0,.3,.8,.3));
     g.add(part(sphG,bas(0xe0c3a6),0,.8,0,.22));
+    const guildRing=part(torG,bm(spec.col,.85),0,-.24,0,.56);
+    guildRing.rotation.x=Math.PI/2;
+    g.add(guildRing);
     world.add(g);
-    villageNPCs.push({x:nx,y:ny,r:.32,cr:.28,g,type:'hire',cost:25+S.floor*10,name:greekMercs[k%greekMercs.length],hp:50+S.floor*10,dmg:8+S.floor*2});
+    const vnpc={id:spec.id,idx:k,x:nx,y:ny,r:.38,cr:.28,g,guildRing,type:'hire',cost:25+S.floor*10,name:spec.name,roleDe:spec.roleDe,roleEn:spec.roleEn,icon:spec.icon,col:spec.col,companionId:spec.companionId,hp:50+S.floor*10,dmg:8+S.floor*2,domEl:null};
+    villageNPCs.push(vnpc);
   }
 }
 /* ================= CENTRAL QUEST MANAGER (WITHIN GAMEMONITOR) ================= */
@@ -3223,9 +3321,26 @@ function renderVillageTab(tab){
   if($('vtCube'))$('vtCube').classList.toggle('active',tab==='vtCube');
   const c=$('vtContent');c.innerHTML='';
   if(tab==='vtNPCs'){
+    const hintEl=document.createElement('div');
+    hintEl.style.cssText='font-size:11.5px;color:#9ec7ff;margin-bottom:8px;padding:6px 10px;background:rgba(79,209,255,.08);border:1px solid rgba(79,209,255,.25);border-radius:8px;text-align:left';
+    hintEl.innerHTML=lang==='de'
+      ?'🏛️ <b>Tipp:</b> Klicke auf einen Dorf-Bewohner (hier oder direkt im 3D-Dorf), um den <b>Gilden-Handel (Guild Shop)</b> für Ausrüstung &amp; Segen gegen Gold &amp; Splitter zu öffnen!'
+      :'🏛️ <b>Tip:</b> Click any village NPC (here or directly in the 3D village) to open the <b>Guild Shop</b> and trade Gold &amp; Meta Shards for gear or buffs!';
+    c.appendChild(hintEl);
     villageNPCs.forEach((v,i)=>{
       const el=document.createElement('div');el.className='village-npc';
-      el.innerHTML=`<span>👤 ${v.name}</span><button onclick="hireNPC(${i})">${T('village_hire').replace('{0}',v.cost)}</button>`;
+      el.setAttribute('data-vnpc-id',v.id||('vnpc_'+i));
+      const roleTxt=lang==='de'?(v.roleDe||'Gilden-Händler'):(v.roleEn||'Guild Merchant');
+      el.onclick=()=>openGuildShop(v.id||i);
+      el.innerHTML=`<span style="font-size:20px">${v.icon||'🏛️'}</span>
+      <div style="text-align:left;flex:1">
+        <div style="font-weight:800;font-size:13px;color:#fff">${v.name}</div>
+        <div style="font-size:10.5px;color:#9ec7ff">${roleTxt} · Tippen für Guild Shop</div>
+      </div>
+      <div class="village-npc-actions">
+        <button class="guild-shop-open-btn" onclick="event.stopPropagation();openGuildShop('${v.id||i}')">🏛️ Guild Shop</button>
+        <button onclick="event.stopPropagation();hireNPC(${i})">${T('village_hire').replace('{0}',v.cost)}</button>
+      </div>`;
       c.appendChild(el);
     });
   }else if(tab==='vtShop'){
@@ -3368,6 +3483,540 @@ function buyShopItem(i){
   else toast('Nicht genug Gold!','#ff7a7a');
 }
 function leaveVillage(){villageActive=false;$('villageOvl').style.display='none';}
+
+/* ================= GUILD SHOP UI PANEL (NPC FACTION TRUST TRADING) ================= */
+let guildShopActive=false;
+let activeGuildShopNpcId='vnpc_0';
+let activeGuildShopTab='all';
+
+const GUILD_SHOP_CATALOG=[
+  {
+    id:'gs_gear_mystes_armory',
+    category:'gear',
+    tier:0,
+    minTrust:0,
+    icon:'⚔️',
+    nameDe:'Ὅπλον τῶν Μυστῶν (Gilden-Rüstkammer)',
+    nameEn:'Hoplon ton Myston (Initiate Armory Gear)',
+    descDe:'Schmiedet eine verzauberte Waffe oder Rüstung (Seltenheit ≥ Magisch, aktuelles Itemlevel).',
+    descEn:'Forges an enchanted weapon or armor piece (Rarity ≥ Magic, current item level).',
+    baseGold:35,
+    baseShards:1,
+    minRar:1,
+    ilvBonus:0,
+    bonusAffix:false
+  },
+  {
+    id:'gs_gear_epoptes_cache',
+    category:'gear',
+    tier:1,
+    minTrust:15,
+    icon:'🛡️',
+    nameDe:'Θησαυρός τῶν Ἐποπτῶν (Waffenkammer der Wächter)',
+    nameEn:'Thesauros ton Epopton (Watcher Gear Cache)',
+    descDe:'Garantiert ein Seltenes Ausrüstungsstück (Ilvl +1) mit erhöhter Affix-Qualität.',
+    descEn:'Guarantees a Rare gear piece (Ilvl +1) with enhanced affix rolls.',
+    baseGold:65,
+    baseShards:3,
+    minRar:2,
+    ilvBonus:1,
+    bonusAffix:true
+  },
+  {
+    id:'gs_gear_dadouchos_forge',
+    category:'gear',
+    tier:2,
+    minTrust:40,
+    icon:'⚒️',
+    nameDe:'Χαλκεῖον τοῦ Δᾳδούχου (Epische Gilden-Schmiede)',
+    nameEn:'Chalkeion tou Dadouchou (Epic Guild Forge)',
+    descDe:'Schmiedet ein Episches Meisterwerk (Ilvl +2) inklusive makellosem Edelstein-Sockel.',
+    descEn:'Forges an Epic masterwork item (Ilvl +2) with a socketed flawless gem.',
+    baseGold:110,
+    baseShards:6,
+    minRar:3,
+    ilvBonus:2,
+    socketGem:true
+  },
+  {
+    id:'gs_gear_titan_set',
+    category:'gear',
+    tier:3,
+    minTrust:70,
+    icon:'👑',
+    nameDe:'Πανοπλία τῶν Τιτάνων (Set-Reliquie der Champions)',
+    nameEn:'Panoplia ton Titanon (Champion Set Relic)',
+    descDe:'Gewährt ein mächtiges Set-Ausrüstungsstück (Ilvl +2, Episch/Legendär) für aktive Set-Boni.',
+    descEn:'Grants a powerful Set gear piece (Ilvl +2, Epic/Legendary) to activate Set bonuses.',
+    baseGold:165,
+    baseShards:10,
+    minRar:3,
+    ilvBonus:2,
+    forceSet:true
+  },
+  {
+    id:'gs_gear_olympian_relic',
+    category:'gear',
+    tier:4,
+    minTrust:100,
+    icon:'💠',
+    nameDe:'Κειμήλιον Ὀλύμπιον (Archaisches Bruderschafts-Relikt)',
+    nameEn:'Keimelion Olympion (Exalted Brotherhood Relic)',
+    descDe:'Legendäres Gilden-Relikt (Ilvl +3) mit +1 Projektil, +15% Lauftempo, +25% Beutefund & Legendärer Kraft.',
+    descEn:'Legendary Guild Relic (Ilvl +3) with +1 Projectile, +15% Move Speed, +25% Magic Find & Legendary Power.',
+    baseGold:240,
+    baseShards:16,
+    minRar:4,
+    ilvBonus:3,
+    brotherhoodRelic:true
+  },
+  {
+    id:'gs_buff_battle_elixir',
+    category:'buffs',
+    tier:0,
+    minTrust:0,
+    icon:'🧪',
+    buffKey:'battleElixir',
+    nameDe:'Φάρμακον τοῦ Ἄρεως (Kriegs-Elixier des Ares)',
+    nameEn:'Pharmakon tou Areos (Battle Elixir of Ares)',
+    descDe:'Temporärer Buff: +25% Waffenschaden, +15% Angriffstempo & sofort +50% Leben.',
+    descEn:'Temporary Buff: +25% Weapon Damage, +15% Attack Speed & instant +50% HP heal.',
+    baseGold:25,
+    baseShards:1,
+    baseDur:45
+  },
+  {
+    id:'gs_buff_aegis_ward',
+    category:'buffs',
+    tier:1,
+    minTrust:15,
+    icon:'🛡️',
+    buffKey:'aegisWard',
+    nameDe:'Αἰγὶς τῆς Ἀθηνᾶς (Ägis-Schutzschild der Athene)',
+    nameEn:'Aigis tes Athenas (Aegis Ward of Athena)',
+    descDe:'Temporärer Buff: +45 Rüstung, +35 Alle Widerstände, +4 LP/s Regeneration & +3 Schild-Blocks.',
+    descEn:'Temporary Buff: +45 Armor, +35 All Resist, +4 HP/s Regen & +3 Shield Blocks.',
+    baseGold:45,
+    baseShards:2,
+    baseDur:60
+  },
+  {
+    id:'gs_buff_hermes_haste',
+    category:'buffs',
+    tier:2,
+    minTrust:40,
+    icon:'⚡',
+    buffKey:'hermesCrit',
+    nameDe:'Πέδιλα τοῦ Ἑρμοῦ (Schwingen des Hermes)',
+    nameEn:'Pedila tou Hermou (Wings of Hermes)',
+    descDe:'Temporärer Buff: +15% Krit-Chance, +50% Krit-Schaden & +20% Lauftempo.',
+    descEn:'Temporary Buff: +15% Crit Chance, +50% Crit Damage & +20% Move Speed.',
+    baseGold:75,
+    baseShards:4,
+    baseDur:75
+  },
+  {
+    id:'gs_buff_plutos_fortune',
+    category:'buffs',
+    tier:3,
+    minTrust:70,
+    icon:'🍀',
+    buffKey:'plutosFortune',
+    nameDe:'Εὐλογία τοῦ Πλούτου (Segen des Plutos)',
+    nameEn:'Eulogia tou Ploutou (Fortune of Plutos)',
+    descDe:'Temporärer Buff: +60% Beutefund (Magic Find) & +45% Erfahrungsgewinn.',
+    descEn:'Temporary Buff: +60% Magic Find & +45% Experience Gain.',
+    baseGold:115,
+    baseShards:7,
+    baseDur:90
+  },
+  {
+    id:'gs_buff_olympian_apotheosis',
+    category:'buffs',
+    tier:4,
+    minTrust:100,
+    icon:'🌟',
+    buffKey:'olympianApotheosis',
+    nameDe:'Ἀποθέωσις τῶν Θεῶν (Olympische Apotheose)',
+    nameEn:'Apotheosis ton Theon (Olympian Apotheosis)',
+    descDe:'Ultimativer Gilden-Segen: +40% Schaden, +1 Projektil, +30% Nova-Schaden, +25% Tempo & Volle Heilung.',
+    descEn:'Ultimate Guild Blessing: +40% Damage, +1 Projectile, +30% Nova Damage, +25% Speed & Full Heal.',
+    baseGold:180,
+    baseShards:12,
+    baseDur:120
+  }
+];
+window.GUILD_SHOP_CATALOG=GUILD_SHOP_CATALOG;
+
+function computeFactionModifiers(trustVal,combatScoreVal){
+  const t=Math.max(0,Number(trustVal)||0);
+  const cs=Math.max(0,Number(combatScoreVal)||0);
+  const trustTierDiscount=t>=100?0.25:t>=70?0.20:t>=40?0.15:t>=15?0.10:(t<0?-0.15:0);
+  const combatSynergyDiscount=Math.min(0.05,Math.floor(cs/25)*0.01);
+  const shopPriceMultiplier=Number(cl(1.0-trustTierDiscount-combatSynergyDiscount,0.70,1.25).toFixed(2));
+  const shopDiscountPct=Math.max(0,Math.round((1.0-shopPriceMultiplier)*100));
+  const estSaves=Math.floor(cs/5);
+  const blessingDurationSec=t>=15?25+Math.min(15,estSaves*3):0;
+  const unlockedTierLevel=t>=100?4:t>=70?3:t>=40?2:t>=15?1:0;
+  return {
+    shopPriceMultiplier,
+    shopDiscountPct,
+    blessingDurationSec,
+    unlockedTierLevel
+  };
+}
+window.computeFactionModifiers=computeFactionModifiers;
+
+function getGuildShopCatalog(trustOverride,floorOverride){
+  const verification=(typeof verifyNpcRelationsData==='function'&&S)?verifyNpcRelationsData(S,npcMemStore):null;
+  const trust=typeof trustOverride==='number'?Math.max(0,trustOverride):(verification?verification.factionTrust:(S&&typeof S.npcFactionTrust==='number'?S.npcFactionTrust:0));
+  const fl=typeof floorOverride==='number'?Math.max(1,floorOverride):((S&&S.floor)||1);
+  const mods=(typeof trustOverride!=='number'&&verification&&verification.factionModifiers)?verification.factionModifiers:computeFactionModifiers(trust,verification?verification.totalCombatScore:0);
+  const priceMult=mods.shopPriceMultiplier||1.0;
+  const discountPct=mods.shopDiscountPct||Math.round((1-priceMult)*100);
+  const shardMult=cl(1-(discountPct*0.008),0.65,1.0);
+  const durBonusSec=Math.max(0,(mods.blessingDurationSec||25)-25);
+  return GUILD_SHOP_CATALOG.map(entry=>{
+    const unlocked=trust>=entry.minTrust;
+    const rawGold=entry.baseGold+Math.floor(fl*4*(1+entry.tier*0.25));
+    const goldCost=Math.max(5,Math.round(rawGold*priceMult));
+    const shardCost=Math.max(1,Math.round(entry.baseShards*shardMult));
+    const durationSec=entry.category==='buffs'?(entry.baseDur+durBonusSec):0;
+    const tierInfo=FACTION_TIERS[Math.min(FACTION_TIERS.length-1,entry.tier)]||FACTION_TIERS[0];
+    return {
+      ...entry,
+      unlocked,
+      goldCost,
+      shardCost,
+      discountPct,
+      durationSec,
+      tierName:lang==='de'?tierInfo.name:tierInfo.nameEn,
+      tierColor:tierInfo.color,
+      tierIcon:tierInfo.icon
+    };
+  });
+}
+window.getGuildShopCatalog=getGuildShopCatalog;
+
+function resolveGuildShopNpc(npcIdOrIdx){
+  if(typeof npcIdOrIdx==='number'&&villageNPCs[npcIdOrIdx]){
+    return villageNPCs[npcIdOrIdx];
+  }
+  if(typeof npcIdOrIdx==='string'){
+    const byId=villageNPCs.find(v=>v.id===npcIdOrIdx);
+    if(byId)return byId;
+    const byAdv=adventurers.find(a=>a.id===npcIdOrIdx&&!a.dead);
+    if(byAdv){
+      return {
+        id:byAdv.id,
+        name:byAdv.name,
+        roleDe:`${byAdv.trait} · Gilden-Gesandter`,
+        roleEn:`${byAdv.trait} · Guild Envoy`,
+        icon:byAdv.icon||'⚔️',
+        companionId:byAdv.id,
+        cost:0,
+        isAdventurer:true
+      };
+    }
+    const byRoster=ADV_ROSTER.find(r=>r.id===npcIdOrIdx);
+    if(byRoster){
+      return {
+        id:byRoster.id,
+        name:byRoster.name,
+        roleDe:`${byRoster.trait} · Gilden-Quartiermeister`,
+        roleEn:`${byRoster.trait} · Guild Quartermaster`,
+        icon:byRoster.icon||'🏛️',
+        companionId:byRoster.id,
+        cost:0,
+        isAdventurer:true
+      };
+    }
+  }
+  if(villageNPCs.length>0)return villageNPCs[0];
+  return {
+    id:'vnpc_0',
+    name:'Μέντωρ ὁ Κάπηλος (Mentor · Gilden-Quartiermeister)',
+    roleDe:'Gilden-Quartiermeister · Ausrüstung & Segen',
+    roleEn:'Guild Quartermaster · Gear & Buffs',
+    icon:'🏛️',
+    companionId:ADV_ROSTER[0].id,
+    cost:35
+  };
+}
+
+function openGuildShop(npcIdOrIdx,defaultTab){
+  if(!S)return false;
+  const npc=resolveGuildShopNpc(npcIdOrIdx);
+  activeGuildShopNpcId=npc.id||'vnpc_0';
+  if(defaultTab)activeGuildShopTab=defaultTab;
+  guildShopActive=true;
+  const ovl=$('guildShopOvl');
+  if(ovl)ovl.style.display='flex';
+  renderGuildShop();
+  return true;
+}
+window.openGuildShop=openGuildShop;
+
+function closeGuildShop(){
+  guildShopActive=false;
+  const ovl=$('guildShopOvl');
+  if(ovl)ovl.style.display='none';
+  if(villageActive&&$('villageOvl')&&$('villageOvl').style.display==='flex'){
+    renderVillageTab('vtNPCs');
+  }
+}
+window.closeGuildShop=closeGuildShop;
+
+function setGuildShopCategory(tab){
+  activeGuildShopTab=tab||'all';
+  renderGuildShop();
+}
+window.setGuildShopCategory=setGuildShopCategory;
+
+function hireNPCFromGuildShop(npcId){
+  const idx=villageNPCs.findIndex(v=>v.id===npcId);
+  if(idx>=0){
+    hireNPC(idx);
+    renderGuildShop();
+  }
+}
+window.hireNPCFromGuildShop=hireNPCFromGuildShop;
+
+function renderGuildShop(){
+  if(!S)return;
+  const verification=typeof verifyNpcRelationsData==='function'?verifyNpcRelationsData(S,npcMemStore):null;
+  const trust=verification?verification.factionTrust:(S.npcFactionTrust||0);
+  const mods=(verification&&verification.factionModifiers)?verification.factionModifiers:computeFactionModifiers(trust,0);
+  const tier=getFactionTier(trust);
+  const npc=resolveGuildShopNpc(activeGuildShopNpcId);
+  const catalog=getGuildShopCatalog(trust,S.floor||1);
+
+  if($('guildShopTitle')){
+    $('guildShopTitle').textContent=lang==='de'?'🏛️ Gilden-Handel (Guild Shop)':'🏛️ Guild Shop (Faction Trade)';
+  }
+  if($('guildShopGold')){
+    $('guildShopGold').innerHTML=`💰 Gold: <b>${S.gold||0}</b>`;
+  }
+  if($('guildShopShards')){
+    $('guildShopShards').innerHTML=`💎 ${lang==='de'?'Splitter':'Meta Shards'}: <b>${S.metaShards||0}</b>`;
+  }
+  if($('guildShopDiscount')){
+    $('guildShopDiscount').innerHTML=`🏷️ ${lang==='de'?'Vertrauens-Rabatt':'Trust Discount'}: <b>-${mods.shopDiscountPct||0}%</b>`;
+  }
+
+  const banner=$('guildShopNpcBanner');
+  if(banner){
+    const roleTxt=lang==='de'?(npc.roleDe||'Gilden-Händler'):(npc.roleEn||'Guild Merchant');
+    const canHire=!npc.isAdventurer&&villageNPCs.some(v=>v.id===npc.id);
+    const hireBtnHtml=canHire
+      ?`<button class="guild-buy-btn" style="padding:6px 10px;font-size:11px" onclick="hireNPCFromGuildShop('${npc.id}')">🤝 ${T('village_hire').replace('{0}',npc.cost||35)}</button>`
+      :'';
+    const quoteDe=`"Willkommen im Θίασος τῶν Μυστῶν! Dein Rang (${tier.name}) gewährt dir Zugang zu Gilden-Artefakten und olympischen Segen."`;
+    const quoteEn=`"Welcome to the Guild! Your rank (${tier.nameEn}) grants access to faction gear and Olympian blessings."`;
+    banner.innerHTML=`
+      <div class="guild-npc-avatar">${npc.icon||'🏛️'}</div>
+      <div class="guild-npc-info">
+        <div class="guild-npc-name">${npc.name}</div>
+        <div class="guild-npc-role">${roleTxt}</div>
+        <div class="guild-npc-quote">${lang==='de'?quoteDe:quoteEn}</div>
+      </div>
+      ${hireBtnHtml}`;
+  }
+
+  if($('guildShopTrustVal'))$('guildShopTrustVal').textContent=trust;
+  if($('guildShopTierBadge')){
+    $('guildShopTierBadge').textContent=`${tier.icon} Tier ${mods.unlockedTierLevel||0}: ${lang==='de'?tier.name:tier.nameEn}`;
+    $('guildShopTierBadge').style.color=tier.color;
+  }
+  if($('guildShopTrustFill')){
+    $('guildShopTrustFill').style.width=cl(trust,0,100)+'%';
+  }
+  if($('guildShopTrustHint')){
+    const nextTier=FACTION_TIERS.find(t=>t.min>trust);
+    const nextHint=nextTier
+      ?(lang==='de'?`Nächste Freischaltung bei <b>${nextTier.min} Vertrauen</b> (${nextTier.icon} ${nextTier.name}) · Jedes Geschäft bringt <b>+5 Gilden-Vertrauen</b>!`
+                   :`Next unlock at <b>${nextTier.min} Trust</b> (${nextTier.icon} ${nextTier.nameEn}) · Every trade grants <b>+5 Faction Trust</b>!`)
+      :(lang==='de'?`👑 Maximale Vertrauensstufe erreicht! Alle 10 Gilden-Angebote & maximaler Rabatt (-${mods.shopDiscountPct}%) aktiv.`
+                   :`👑 Maximum Faction Trust reached! All 10 Guild offerings & maximum discount (-${mods.shopDiscountPct}%) active.`);
+    $('guildShopTrustHint').innerHTML=nextHint;
+  }
+
+  const activeBuffsEl=$('guildShopActiveBuffs');
+  if(activeBuffsEl){
+    const gb=(P&&P.guildBuffs)?P.guildBuffs:{};
+    const activeEntries=GUILD_SHOP_CATALOG.filter(c=>c.category==='buffs'&&gb[c.buffKey]>0);
+    if(activeEntries.length>0){
+      activeBuffsEl.style.display='flex';
+      activeBuffsEl.innerHTML=activeEntries.map(b=>`<span class="guild-buff-pill">${b.icon} ${lang==='de'?b.nameDe.split(' (')[0]:b.nameEn.split(' (')[0]} (${Math.ceil(gb[b.buffKey])}s)</span>`).join('');
+    }else{
+      activeBuffsEl.style.display='none';
+      activeBuffsEl.innerHTML='';
+    }
+  }
+
+  ['gsTabAll','gsTabGear','gsTabBuffs'].forEach(id=>{
+    const el=$(id);
+    if(!el)return;
+    const tKey=id==='gsTabAll'?'all':id==='gsTabGear'?'gear':'buffs';
+    el.classList.toggle('active',activeGuildShopTab===tKey);
+  });
+
+  const listEl=$('guildShopList');
+  if(!listEl)return;
+  const filtered=catalog.filter(it=>activeGuildShopTab==='all'||it.category===activeGuildShopTab);
+  listEl.innerHTML=filtered.map(it=>{
+    const canAfford=(S.gold||0)>=it.goldCost&&(S.metaShards||0)>=it.shardCost;
+    const isUnlocked=it.unlocked;
+    const title=lang==='de'?it.nameDe:it.nameEn;
+    const desc=lang==='de'?it.descDe:it.descEn;
+    const durTag=it.category==='buffs'?`<span class="guild-tier-tag" style="color:#6dff9b;border-color:rgba(109,255,155,.4)">⏱️ ${it.durationSec}s</span>`:'';
+    const lockBanner=!isUnlocked
+      ?`<div style="font-size:10.5px;color:#ff9e9e;margin-top:3px">🔒 ${lang==='de'?`Erfordert ${it.minTrust} Gilden-Vertrauen (${it.tierIcon} ${it.tierName})`:`Requires ${it.minTrust} Faction Trust (${it.tierIcon} ${it.tierName})`}</div>`
+      :'';
+    const btnLabel=!isUnlocked
+      ?(lang==='de'?`🔒 Ab ${it.minTrust} Vertr.`:`🔒 Req ${it.minTrust} Trust`)
+      :(canAfford?(lang==='de'?'⚖️ Handeln':'⚖️ Trade'):(lang==='de'?'Zu wenig Ressourcen':'Insufficient Funds'));
+    return `<div class="guild-offer-item ${isUnlocked?'':'locked'}" data-offer-id="${it.id}" data-offer-tier="${it.tier}" data-offer-cat="${it.category}">
+      <div class="guild-offer-icon">${it.icon}</div>
+      <div class="guild-offer-body">
+        <div class="guild-offer-title">
+          <span>${title}</span>
+          <span class="guild-tier-tag" style="color:${it.tierColor};border-color:${it.tierColor}55">${it.tierIcon} Tier ${it.tier} (${it.minTrust}+)</span>
+          ${durTag}
+        </div>
+        <div class="guild-offer-desc">${desc}</div>
+        <div class="guild-offer-costs">
+          <span class="cost-gold">💰 ${it.goldCost} Gold</span>
+          <span class="cost-shards">💎 ${it.shardCost} ${lang==='de'?'Splitter':'Shards'}</span>
+          <span style="color:#6dff9b;font-size:10.5px">+5 🛡️ Vertrauen</span>
+        </div>
+        ${lockBanner}
+      </div>
+      <div class="guild-offer-action">
+        <button class="guild-buy-btn" data-buy-offer="${it.id}" ${(!isUnlocked||!canAfford)?'disabled':''} onclick="buyGuildShopItem('${it.id}')">${btnLabel}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+window.renderGuildShop=renderGuildShop;
+
+function buyGuildShopItem(offerId){
+  if(!S)return false;
+  const verification=typeof verifyNpcRelationsData==='function'?verifyNpcRelationsData(S,npcMemStore):null;
+  const trust=verification?verification.factionTrust:(S.npcFactionTrust||0);
+  const catalog=getGuildShopCatalog(trust,S.floor||1);
+  const offer=catalog.find(o=>o.id===offerId);
+  if(!offer)return false;
+
+  if(!offer.unlocked){
+    toast(lang==='de'?`🔒 Erfordert ${offer.minTrust} Gilden-Vertrauen!`:`🔒 Requires ${offer.minTrust} Faction Trust!`,'#ff7a7a');
+    return false;
+  }
+  if((S.gold||0)<offer.goldCost||(S.metaShards||0)<offer.shardCost){
+    toast(lang==='de'
+      ?`Benötigt ${offer.goldCost} Gold & ${offer.shardCost} Splitter!`
+      :`Requires ${offer.goldCost} Gold & ${offer.shardCost} Meta Shards!`,'#ff7a7a');
+    return false;
+  }
+
+  S.gold-=offer.goldCost;
+  S.metaShards-=offer.shardCost;
+
+  let rewardSummary='';
+  if(offer.category==='gear'){
+    let gearItem;
+    if(offer.brotherhoodRelic){
+      gearItem=genItem(ilv()+offer.ilvBonus,{slot:'relic',rar:4});
+      gearItem.n=lang==='de'?'Κειμήλιον Ὀλύμπιον (Relikt der Bruderschaft)':'Keimelion Olympion (Relic of the Brotherhood)';
+      gearItem.affs.push({k:'proj',v:1,t:' Βέλος (Projektil)',n:'Ἑταιρείας'});
+      gearItem.affs.push({k:'speedP',v:15,t:'% Ταχύτης (Lauftempo)',n:'Ταχύτητος'});
+      gearItem.affs.push({k:'mf',v:25,t:'% Τύχη (Beutefund)',n:'Τύχης'});
+      if(!gearItem.legPower&&typeof D3_LEGENDARY_POWERS!=='undefined'&&D3_LEGENDARY_POWERS.length){
+        gearItem.legPower=pick(D3_LEGENDARY_POWERS);
+      }
+    }else{
+      const slot=pick(['weapon','helm','chest','boots','relic']);
+      const rar=Math.max(offer.minRar||1,rollRar(1.2+offer.tier*0.6));
+      gearItem=genItem(ilv()+(offer.ilvBonus||0),{slot,rar,minRar:offer.minRar||1});
+      if(offer.bonusAffix){
+        gearItem.affs.push({k:'dmgP',v:10+offer.tier*4,t:T('affix_dmgP'),n:'Συνόδου (Gilde)'});
+      }
+      if(offer.socketGem&&typeof D3_GEMS!=='undefined'&&D3_GEMS.length){
+        gearItem.gem=pick(D3_GEMS);
+      }
+      if(offer.forceSet){
+        gearItem.set=pick(['aurion','runic','iron','bone']);
+      }
+    }
+
+    if(S.inv.length<CAP){
+      S.inv.push(gearItem);
+      S.found=(S.found||0)+1;
+      if(!S.eq[gearItem.slot])equip(S.inv.length-1);
+    }else if(P){
+      spawnDrop(P.x,P.y,gearItem,false);
+    }
+    rewardSummary=gearItem.n;
+    toast(`🏛️ Guild Shop: ${gearItem.n} erworben! (+5 Vertrauen)`,RC[gearItem.rar]||'#ffd54a');
+  }else if(offer.category==='buffs'){
+    if(!P)P={x:0,y:0,r:.36,cr:.3,hp:100,mh:100,aim:0,iT:0,fireT:0,dashCd:0,novaCd:0,dashT:0,buff:0,walk:0,ldx:1,ldy:0,ddx:1,ddy:0,potions:0,guildBuffs:{}};
+    if(!P.guildBuffs)P.guildBuffs={};
+    const bKey=offer.buffKey;
+    const dur=offer.durationSec||offer.baseDur||60;
+    P.guildBuffs[bKey]=Math.max(P.guildBuffs[bKey]||0,dur);
+    P.buff=Math.max(P.buff||0,dur);
+    if(bKey==='battleElixir'){
+      recalc();
+      P.hp=Math.min(P.mh,P.hp+Math.round(P.mh*0.5));
+    }else if(bKey==='aegisWard'){
+      P.shieldHits=Math.max(P.shieldHits||0,3);
+      recalc();
+    }else if(bKey==='olympianApotheosis'){
+      recalc();
+      P.hp=P.mh;
+    }else{
+      recalc();
+    }
+    if(P.x&&P.y)emit(P.x,P.y,1.0,'#6dff9b',32,4.5,0.8,3.5);
+    rewardSummary=lang==='de'?`${offer.nameDe} (${dur}s)`:`${offer.nameEn} (${dur}s)`;
+    toast(`✨ Guild Buff aktiv: ${rewardSummary} (+5 Vertrauen)`,'#6dff9b');
+  }
+
+  const npc=resolveGuildShopNpc(activeGuildShopNpcId);
+  const compId=npc.companionId||ADV_ROSTER[0].id;
+  const mem=getAdvMemory(compId);
+  mem.historyNodes=mem.historyNodes||[];
+  mem.historyNodes.push({
+    type:'Traded',
+    desc:`Guild Shop (${npc.name}): ${rewardSummary}`,
+    offerId:offer.id,
+    tier:offer.tier,
+    goldSpent:offer.goldCost,
+    shardsSpent:offer.shardCost,
+    floor:S.floor||1,
+    time:new Date().toLocaleTimeString()
+  });
+  if(typeof verifyNpcRelationsData==='function')verifyNpcRelationsData(S,npcMemStore);
+  if(typeof saveNpcMemoryStore==='function')saveNpcMemoryStore(npcMemStore);
+  if(typeof recordNpcSpeech==='function'){
+    recordNpcSpeech({id:compId,name:npc.name,icon:npc.icon||'🏛️'},`${lang==='de'?'Gilden-Handel besiegelt':'Guild trade sealed'}: ${rewardSummary}`,'positive',false);
+  }
+  recalc();
+  sndBuy();
+  saveGame(true);
+  renderGuildShop();
+  if(villageActive&&$('villageOvl')&&$('villageOvl').style.display==='flex'){
+    const newTrust=S.npcFactionTrust||0;
+    const newTier=getFactionTier(newTrust);
+    const newMods=S.factionModifiers||{shopDiscountPct:0};
+    const discTxt=newMods.shopDiscountPct>0?` · 🏷️ -${newMods.shopDiscountPct}% Gilden-Rabatt`:'';
+    if($('villageGold')){
+      $('villageGold').innerHTML=`<div>💰 Gold: <b>${S.gold}</b> · 💎 Splitter: <b>${S.metaShards||0}</b>${discTxt}</div>`;
+    }
+  }
+  return true;
+}
+window.buyGuildShopItem=buyGuildShopItem;
 
 /* ================= PLAYER & INDIVIDUAL 3D WEAPON / GEAR MODELS ================= */
 const pm={};
@@ -4934,9 +5583,10 @@ function requestBonusAd(){
 }
 
 /* ================= INPUT ================= */
-const isUI=t=>t&&t.closest&&t.closest('.ui,#inv,#ovl,#pauseOvl,#perfLogsOvl,#leaderboardOvl,#villageOvl,#npcLayer2D');
+const isUI=t=>t&&t.closest&&t.closest('.ui,#inv,#ovl,#pauseOvl,#perfLogsOvl,#leaderboardOvl,#villageOvl,#guildShopOvl,#npcRelationsOvl,#skillTreeOvl,#npcLayer2D');
 const gpl=new Tt.Plane(new Tt.Vector3(0,1,0),-.9),rc=new Tt.Raycaster(),nd=new Tt.Vector2(),vv=new Tt.Vector3();
 addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','Tab','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(e.repeat)return;
+ if(e.code==='Escape'&&guildShopActive){closeGuildShop();return;}
  if(e.code==='Space')dash();if(e.code==='KeyQ')nova();if(e.code==='KeyE')search();
  if(e.code==='KeyI'||e.code==='Tab')toggleInv();if(e.code==='Escape'&&invOpen)toggleInv(false);
  if(e.code==='KeyP')togglePause();if(e.code==='KeyR')summonMinion();});
@@ -4963,6 +5613,7 @@ addEventListener('mousedown',e=>{
  AUDIO.init();AUDIO.startMusic();
  if(e.button===2){nova();return;}
  if(e.button===0){
+  if(tryClickVillageNpc3D(e.clientX,e.clientY))return;
   if(e.clientX<innerWidth*0.5){
    inputM='touch';
    mouse.mvActive=true;mouse.ox=e.clientX;mouse.oy=e.clientY;
@@ -4993,7 +5644,7 @@ addEventListener('contextmenu',e=>e.preventDefault());
 function stk(el,x,y){el.style.left=x+'px';el.style.top=y+'px';el.style.display='block';el.firstElementChild.style.transform='translate(0,0)'}
 function knob(el,dx,dy){el.firstElementChild.style.transform=`translate(${dx}px,${dy}px)`}
 addEventListener('touchstart',e=>{if(isUI(e.target)||invOpen||mode!=='play')return;lastTouchTime=performance.now();inputM='touch';AUDIO.init();AUDIO.startMusic();
- for(const t of e.changedTouches){if(t.clientX<innerWidth/2&&tch.mv==null){tch.mv=t.identifier;tch.ox=t.clientX;tch.oy=t.clientY;tch.mvx=0;tch.mvy=0;stk(sl,t.clientX,t.clientY)}
+ for(const t of e.changedTouches){if(tryClickVillageNpc3D(t.clientX,t.clientY))continue;if(t.clientX<innerWidth/2&&tch.mv==null){tch.mv=t.identifier;tch.ox=t.clientX;tch.oy=t.clientY;tch.mvx=0;tch.mvy=0;stk(sl,t.clientX,t.clientY)}
   else if(tch.aim==null){if(tryClickAdventurerAvatar3D(t.clientX,t.clientY))continue;tch.aim=t.identifier;tch.px=t.clientX;tch.py=t.clientY;tch.ax=0;tch.ay=0;stk(sr,t.clientX,t.clientY)}}e.preventDefault()},{passive:false});
 addEventListener('touchmove',e=>{if(invOpen||(isUI(e.target)&&tch.mv==null&&tch.aim==null))return;lastTouchTime=performance.now();const m=55;
  for(const t of e.changedTouches){if(t.identifier===tch.mv){let dx=t.clientX-tch.ox,dy=t.clientY-tch.oy;const l=Math.hypot(dx,dy);if(l>m){dx*=m/l;dy*=m/l}tch.mvx=dx/m;tch.mvy=dy/m;knob(sl,dx,dy)}
@@ -5074,9 +5725,19 @@ function explore(){const r=8,px=P.x|0,py=P.y|0;
 
 /* ================= UPDATE ================= */
 function update(dt){
- if(isPaused)return;
+ if(isPaused||guildShopActive)return;
  const prevSummonCd=P.summonCd||0;
  tm+=dt;P.iT-=dt;P.fireT-=dt;P.dashCd-=dt;P.novaCd-=dt;P.summonCd=Math.max(0,(P.summonCd||0)-dt);P.buff-=dt;P.campBuff=Math.max(0,(P.campBuff||0)-dt);
+ if(P.guildBuffs){
+  let expiredAny=false;
+  for(const bk in P.guildBuffs){
+   if(P.guildBuffs[bk]>0){
+    P.guildBuffs[bk]=Math.max(0,P.guildBuffs[bk]-dt);
+    if(P.guildBuffs[bk]<=0)expiredAny=true;
+   }
+  }
+  if(expiredAny)recalc();
+ }
  P.nephalemGloryT=Math.max(0,(P.nephalemGloryT||0)-dt);
  if((P.massacreTimer||0)>0){P.massacreTimer-=dt;if(P.massacreTimer<=0)P.massacreCount=0;}
  P.hp=Math.min(P.mh,P.hp+ST.rg*dt);
@@ -6108,6 +6769,9 @@ function mkAdventurerMesh(col){
 function spawnAdventurersForFloor(){
  adventurers=[];
  resetNpcLayer2D();
+ if(Array.isArray(villageNPCs)){
+  villageNPCs.forEach(vnpc=>createVillageNpcDomCard(vnpc));
+ }
  if(!M||!M.rooms)return;
  const candRooms=M.rooms.filter(r=>r.type!=='start'&&r.type!=='boss'&&r.type!=='raidboss'&&!r.secret);
  if(!candRooms.length)return;
@@ -6187,6 +6851,7 @@ function createAdventurerDomCard(adv){
   <div class="npc-act-row">
    <button class="npc-act-btn help" data-npc-help="${adv.id}">💚 Help</button>
    <button class="npc-act-btn trade" data-npc-trade="${adv.id}">⚖️ Trade</button>
+   <button class="npc-act-btn trade" data-npc-guild="${adv.id}">🏛️ Guild</button>
    <button class="npc-act-btn party" data-npc-party="${adv.id}">🤝 Party</button>
   </div>`;
  card.addEventListener('pointerdown',e=>{
@@ -6195,6 +6860,8 @@ function createAdventurerDomCard(adv){
   if(lockBtn){toggleNpcTargetLock(adv.id);return;}
   const helpBtn=e.target.closest('[data-npc-help]');
   if(helpBtn){npcHelpDanger(adv.id);return;}
+  const guildBtn=e.target.closest('[data-npc-guild]');
+  if(guildBtn){openGuildShop(adv.id);return;}
   const tradeBtn=e.target.closest('[data-npc-trade]');
   if(tradeBtn){npcTradeWithPlayer(adv.id);return;}
   const partyBtn=e.target.closest('[data-npc-party]');
@@ -6203,6 +6870,71 @@ function createAdventurerDomCard(adv){
  nl.appendChild(card);
  adv.domEl=card;
 }
+
+function createVillageNpcDomCard(vnpc){
+ const nl=$('npcLayer2D');if(!nl||!vnpc)return;
+ const card=document.createElement('div');
+ card.className='village-npc-card-2d';
+ card.id='village-npc-card-'+vnpc.id;
+ card.setAttribute('data-vnpc-card',vnpc.id);
+ const roleTxt=lang==='de'?(vnpc.roleDe||'Gilden-Quartiermeister'):(vnpc.roleEn||'Guild Quartermaster');
+ card.innerHTML=`
+  <div class="vnpc-head">
+   <span style="font-size:15px">${vnpc.icon||'🏛️'}</span>
+   <span>${vnpc.name}</span>
+  </div>
+  <div class="vnpc-sub">🏛️ ${roleTxt} · Tippen für Guild Shop</div>`;
+ card.addEventListener('pointerdown',e=>{
+  e.stopPropagation();
+  openGuildShop(vnpc.id);
+ });
+ nl.appendChild(card);
+ vnpc.domEl=card;
+}
+
+function updateVillageNpcDomCards(){
+ if(!Array.isArray(villageNPCs))return;
+ for(const vnpc of villageNPCs){
+  if(vnpc.guildRing)vnpc.guildRing.rotation.z+=0.03;
+  const el=vnpc.domEl;
+  if(!el)continue;
+  if(mode!=='play'||invOpen||isPaused||villageActive||guildShopActive){
+   el.style.display='none';
+   continue;
+  }
+  const dPlayer=Math.hypot(vnpc.x-P.x,vnpc.y-P.y);
+  if(dPlayer>14){
+   el.style.display='none';
+   continue;
+  }
+  const v=new Tt.Vector3(vnpc.x,1.75,vnpc.y).project(cam);
+  if(v.z>1){
+   el.style.display='none';
+   continue;
+  }
+  el.style.display='block';
+  const sx=cl((v.x*0.5+0.5)*innerWidth,85,innerWidth-85);
+  const sy=cl((-v.y*0.5+0.5)*innerHeight,60,innerHeight-105);
+  el.style.left=sx+'px';
+  el.style.top=sy+'px';
+ }
+}
+
+function tryClickVillageNpc3D(clientX,clientY){
+ if(!Array.isArray(villageNPCs)||!villageNPCs.length||mode!=='play')return false;
+ for(const vnpc of villageNPCs){
+  const v=new Tt.Vector3(vnpc.x,1.0,vnpc.y).project(cam);
+  if(v.z>1)continue;
+  const sx=(v.x*0.5+0.5)*innerWidth;
+  const sy=(-v.y*0.5+0.5)*innerHeight;
+  if(Math.hypot(clientX-sx,clientY-sy)<42){
+   openGuildShop(vnpc.id);
+   return true;
+  }
+ }
+ return false;
+}
+window.tryClickVillageNpc3D=tryClickVillageNpc3D;
 
 function tryClickAdventurerAvatar3D(clientX,clientY){
  if(!adventurers.length||mode!=='play')return false;
@@ -6413,7 +7145,7 @@ function hitAdventurerByPlayer(adv,dmg,isCrit){
 
 function updateAdventurerDomCard(adv){
  const el=adv.domEl;if(!el)return;
- if(adv.dead||mode!=='play'||invOpen||isPaused||villageActive){el.style.display='none';return;}
+ if(adv.dead||mode!=='play'||invOpen||isPaused||villageActive||guildShopActive){el.style.display='none';return;}
  const dPlayer=Math.hypot(adv.x-P.x,adv.y-P.y);
  if(dPlayer>15){el.style.display='none';return;}
  const v=new Tt.Vector3(adv.x,1.95,adv.y).project(cam);
@@ -6613,6 +7345,7 @@ function updateAdventurers(dt){
   adv.m.body.rotation.y=-adv.ang;
   updateAdventurerDomCard(adv);
  }
+ updateVillageNpcDomCards();
 }
 
 function renderNpcRelationsModal(){
@@ -6972,8 +7705,8 @@ function frame(t){requestAnimationFrame(frame);const dt=Math.min(.05,(t-last)/10
      tickPauseDailyTimer();
    }
  }
- if(mode==='play'&&!invOpen&&!isPaused&&!villageActive)update(dt);else if(mode==='dead'){updP(dt);drawB(PB,pb);drawB(EB,eb)}
- if(mode==='play'&&!invOpen&&!isPaused&&!villageActive)updP(dt);
+ if(mode==='play'&&!invOpen&&!isPaused&&!villageActive&&!guildShopActive)update(dt);else if(mode==='dead'){updP(dt);drawB(PB,pb);drawB(EB,eb)}
+ if(mode==='play'&&!invOpen&&!isPaused&&!villageActive&&!guildShopActive)updP(dt);
  ren.render(scene,cam)}
 requestAnimationFrame(frame);
 
@@ -7031,8 +7764,11 @@ function hud(){
  }
  const d3d=getD3Diff();
  const diffBadge=(S.d3Difficulty&&S.d3Difficulty!=='normal')?` · <span style="color:#ffb347">${lang==='de'?d3d.de:d3d.en}</span>`:'';
+ const gb=P.guildBuffs||{};
+ const activeGbCount=Object.keys(gb).filter(k=>gb[k]>0).length;
+ const gbTxt=activeGbCount>0?` · <span style="color:#ffd54a">🏛️ ${activeGbCount} Gilden-Buff${activeGbCount>1?'s':''}</span>`:'';
  const blessTxt=P.campBuff>0?(lang==='de'?`🔥 Abenteurer-Segen ${Math.ceil(P.campBuff)}s`:`🔥 Adventurer Blessing ${Math.ceil(P.campBuff)}s`):(P.buff>0?`Segen ${Math.ceil(P.buff)}s`:'');
- $('inf').innerHTML=`${T('floor')} ${S.floor} · ${M.th.n}${diffBadge}<br>${T('enemies')} ${en.length} · ${T('kills')} ${S.kills} · 💰 ${S.gold||0}`+(blessTxt?` · <span style="color:${P.campBuff>0?'#ffb347':'#6dff9b'}">${blessTxt}</span>`:'');
+ $('inf').innerHTML=`${T('floor')} ${S.floor} · ${M.th.n}${diffBadge}<br>${T('enemies')} ${en.length} · ${T('kills')} ${S.kills} · 💰 ${S.gold||0} · 💎 ${S.metaShards||0}`+(blessTxt?` · <span style="color:${P.campBuff>0?'#ffb347':'#6dff9b'}">${blessTxt}</span>`:'')+gbTxt;
  $('wv').innerHTML=`${T('void_pulse')} ${Math.max(0,Math.ceil(wt))}${T('sec')}`+(S.pts?`<br><span style="color:#ffd54a">${S.pts} ${T('attr_points')}</span>`:'');
  $('bNova').style.setProperty('--cd',cl(P.novaCd/8,0,1));$('bDash').style.setProperty('--cd',cl(P.dashCd/(2.4*ST.cdM),0,1));
  const bb=$('bossb');

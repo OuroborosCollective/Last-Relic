@@ -803,6 +803,66 @@ class ExampleUnitTest {
     assertTrue(content.contains("function formatNpcSpeechTimeElapsed("))
     assertTrue(content.contains("function updateNpcSpeechElapsedLabels("))
     assertTrue(content.contains("class=\"npc-speech-elapsed\""))
+
+    // 9. Guild Shop UI panel (#guildShopOvl) opening on village NPCs for Gold & Meta Shard trading gated by Faction Trust
+    assertTrue(content.contains("id=\"guildShopOvl\""))
+    assertTrue(content.contains("id=\"guildShopNpcBanner\""))
+    assertTrue(content.contains("id=\"guildShopTrustBox\""))
+    assertTrue(content.contains("id=\"guildShopList\""))
+    assertTrue(content.contains("const GUILD_SHOP_CATALOG=["))
+    assertTrue(content.contains("function openGuildShop("))
+    assertTrue(content.contains("function buyGuildShopItem("))
+    assertTrue(content.contains("function tryClickVillageNpc3D("))
+    assertTrue(content.contains("function createVillageNpcDomCard("))
+  }
+
+  @Test
+  fun `Guild Shop catalog and trade evaluation scale with Faction Trust and deduct Gold and Meta Shards`() {
+    // 1. At Trust 0 (Tier 0), only Tier 0 gear & buffs (minTrust = 0) are unlocked
+    val tier0Catalog = GameRuntimeValidator.getGuildShopCatalog(factionTrust = 0, floor = 1)
+    assertEquals(10, tier0Catalog.size)
+    val unlockedAt0 = tier0Catalog.filter { it.unlocked }
+    assertEquals(2, unlockedAt0.size)
+    assertTrue(unlockedAt0.any { it.id == "gs_gear_mystes_armory" && it.category == "gear" })
+    assertTrue(unlockedAt0.any { it.id == "gs_buff_battle_elixir" && it.category == "buffs" })
+
+    // 2. Locked high-tier offer (e.g. Tier 2 requiring 40 trust) cannot be purchased at Trust 0
+    val lockedAttempt = GameRuntimeValidator.evaluateGuildShopTrade(
+      offerId = "gs_gear_dadouchos_forge",
+      currentGold = 500L,
+      currentMetaShards = 50L,
+      factionTrust = 0,
+      floor = 1
+    )
+    assertFalse(lockedAttempt.success)
+    assertEquals(500L, lockedAttempt.remainingGold)
+    assertEquals(50L, lockedAttempt.remainingMetaShards)
+
+    // 3. Purchasing an unlocked Tier 0 Buff deducts Gold & Meta Shards and awards +5 Faction Trust
+    val buffTrade = GameRuntimeValidator.evaluateGuildShopTrade(
+      offerId = "gs_buff_battle_elixir",
+      currentGold = 100L,
+      currentMetaShards = 5L,
+      factionTrust = 12,
+      floor = 1
+    )
+    assertTrue(buffTrade.success)
+    assertEquals("buffs", buffTrade.category)
+    assertTrue(buffTrade.goldSpent > 0)
+    assertTrue(buffTrade.shardsSpent > 0)
+    assertEquals(100L - buffTrade.goldSpent, buffTrade.remainingGold)
+    assertEquals(5L - buffTrade.shardsSpent, buffTrade.remainingMetaShards)
+    assertEquals(17, buffTrade.updatedFactionTrust) // 12 + 5 -> crosses 15 into Tier 1!
+    assertEquals(45, buffTrade.durationSec)
+
+    // 4. At Trust 100 (Tier 4 Exalted), all 10 offers are unlocked with 25%+ discount and extended buff durations
+    val tier4Catalog = GameRuntimeValidator.getGuildShopCatalog(factionTrust = 100, floor = 1, combatScore = 150)
+    assertTrue(tier4Catalog.all { it.unlocked })
+    val tier0Armory = tier0Catalog.first { it.id == "gs_gear_mystes_armory" }
+    val tier4Armory = tier4Catalog.first { it.id == "gs_gear_mystes_armory" }
+    assertTrue("Exalted trust must discount Gold cost", tier4Armory.goldCost < tier0Armory.goldCost)
+    val tier4Apotheosis = tier4Catalog.first { it.id == "gs_buff_olympian_apotheosis" }
+    assertTrue("Exalted trust must extend buff duration beyond base 120s", tier4Apotheosis.durationSec > 120)
   }
 }
 

@@ -73,6 +73,11 @@ class ExampleRobolectricTest {
     assertTrue(html.contains("npcInteractionLogBox"))
     assertTrue(html.contains("npcSpeechHistoryList"))
     assertTrue(html.contains("recordNpcSpeech"))
+    assertTrue(html.contains("guildShopOvl"))
+    assertTrue(html.contains("GUILD_SHOP_CATALOG"))
+    assertTrue(html.contains("openGuildShop"))
+    assertTrue(html.contains("buyGuildShopItem"))
+    assertTrue(html.contains("tryClickVillageNpc3D"))
   }
 
   @Test

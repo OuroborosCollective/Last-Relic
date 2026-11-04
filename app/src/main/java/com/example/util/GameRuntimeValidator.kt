@@ -560,6 +560,223 @@ object GameRuntimeValidator {
     return activeMinions >= safeMax
   }
 
+  data class GuildShopOffer(
+    val id: String,
+    val category: String,
+    val tier: Int,
+    val minTrust: Int,
+    val baseGold: Int,
+    val baseShards: Int,
+    val goldCost: Int,
+    val shardCost: Int,
+    val discountPct: Int,
+    val durationSec: Int,
+    val unlocked: Boolean
+  )
+
+  data class GuildShopTradeResult(
+    val success: Boolean,
+    val offerId: String,
+    val category: String,
+    val remainingGold: Long,
+    val remainingMetaShards: Long,
+    val updatedFactionTrust: Int,
+    val goldSpent: Int,
+    val shardsSpent: Int,
+    val durationSec: Int,
+    val errorReason: String? = null
+  )
+
+  fun computeFactionModifiers(
+    factionTrust: Int,
+    combatScore: Int = 0,
+    totalTimesSavedPlayer: Int = (combatScore / 5).coerceAtLeast(0),
+    totalEnemiesDefeated: Int = (combatScore / 2).coerceAtLeast(0),
+    verifiedWhetstoneCount: Int = 0
+  ): FactionRewardModifiers {
+    val trustTierDiscount = when {
+      factionTrust >= 100 -> 0.25
+      factionTrust >= 70 -> 0.20
+      factionTrust >= 40 -> 0.15
+      factionTrust >= 15 -> 0.10
+      factionTrust < 0 -> -0.15
+      else -> 0.0
+    }
+    val combatSynergyDiscount = ((combatScore / 25) * 0.01).coerceAtMost(0.05)
+    val shopPriceMultiplier = kotlin.math.round(
+      (1.0 - trustTierDiscount - combatSynergyDiscount).coerceIn(0.70, 1.25) * 100.0
+    ) / 100.0
+    val shopDiscountPct = kotlin.math.round((1.0 - shopPriceMultiplier) * 100.0).toInt().coerceAtLeast(0)
+    val npcTradeGoldCost = (
+      25 - (factionTrust.coerceAtLeast(0) / 10) - (totalTimesSavedPlayer / 2)
+      ).coerceIn(10, 35)
+    val tradeBonusLootRoll = kotlin.math.round(
+      (factionTrust.coerceAtLeast(0) * 0.015 + totalEnemiesDefeated * 0.01 + totalTimesSavedPlayer * 0.05) * 100.0
+    ) / 100.0
+    val potionHealRatio = kotlin.math.round(
+      (0.25 + (if (factionTrust >= 15) 0.40 else 0.0) + (totalTimesSavedPlayer * 0.03).coerceAtMost(0.15))
+        .coerceIn(0.25, 0.80) * 100.0
+    ) / 100.0
+    val blessingDurationSec = if (factionTrust >= 15) {
+      25 + (totalTimesSavedPlayer * 3).coerceAtMost(15)
+    } else {
+      0
+    }
+    val unlockedTierLevel = when {
+      factionTrust >= 100 -> 4
+      factionTrust >= 70 -> 3
+      factionTrust >= 40 -> 2
+      factionTrust >= 15 -> 1
+      else -> 0
+    }
+    return FactionRewardModifiers(
+      shopPriceMultiplier = shopPriceMultiplier,
+      shopDiscountPct = shopDiscountPct,
+      npcTradeGoldCost = npcTradeGoldCost,
+      tradeBonusLootRoll = tradeBonusLootRoll,
+      potionHealRatio = potionHealRatio,
+      blessingDurationSec = blessingDurationSec,
+      whetstoneDmgBonusPct = verifiedWhetstoneCount * 12,
+      unlockedTierLevel = unlockedTierLevel,
+      unlockedPotion = unlockedTierLevel >= 1,
+      unlockedRation = unlockedTierLevel >= 2,
+      unlockedWhetstone = unlockedTierLevel >= 3,
+      unlockedBrotherhoodRelic = unlockedTierLevel >= 4
+    )
+  }
+
+  /**
+   * Returns the Guild Shop catalog scaled by player's Faction Trust level, dungeon floor, and companion combat score.
+   */
+  fun getGuildShopCatalog(
+    factionTrust: Int,
+    floor: Int = 1,
+    combatScore: Int = 0
+  ): List<GuildShopOffer> {
+    val safeTrust = factionTrust.coerceAtLeast(0)
+    val safeFloor = floor.coerceAtLeast(1)
+    val mods = computeFactionModifiers(safeTrust, combatScore)
+    val priceMult = mods.shopPriceMultiplier
+    val discountPct = mods.shopDiscountPct
+    val shardMult = (1.0 - discountPct * 0.008).coerceIn(0.65, 1.0)
+    val durBonusSec = (mods.blessingDurationSec - 25).coerceAtLeast(0)
+
+    data class RawEntry(
+      val id: String,
+      val category: String,
+      val tier: Int,
+      val minTrust: Int,
+      val baseGold: Int,
+      val baseShards: Int,
+      val baseDur: Int
+    )
+
+    val rawCatalog = listOf(
+      RawEntry("gs_gear_mystes_armory", "gear", 0, 0, 35, 1, 0),
+      RawEntry("gs_gear_epoptes_cache", "gear", 1, 15, 65, 3, 0),
+      RawEntry("gs_gear_dadouchos_forge", "gear", 2, 40, 110, 6, 0),
+      RawEntry("gs_gear_titan_set", "gear", 3, 70, 165, 10, 0),
+      RawEntry("gs_gear_olympian_relic", "gear", 4, 100, 240, 16, 0),
+      RawEntry("gs_buff_battle_elixir", "buffs", 0, 0, 25, 1, 45),
+      RawEntry("gs_buff_aegis_ward", "buffs", 1, 15, 45, 2, 60),
+      RawEntry("gs_buff_hermes_haste", "buffs", 2, 40, 75, 4, 75),
+      RawEntry("gs_buff_plutos_fortune", "buffs", 3, 70, 115, 7, 90),
+      RawEntry("gs_buff_olympian_apotheosis", "buffs", 4, 100, 180, 12, 120)
+    )
+
+    return rawCatalog.map { entry ->
+      val rawGold = entry.baseGold + kotlin.math.floor(safeFloor * 4.0 * (1.0 + entry.tier * 0.25)).toInt()
+      val goldCost = kotlin.math.round(rawGold * priceMult).toInt().coerceAtLeast(5)
+      val shardCost = kotlin.math.round(entry.baseShards * shardMult).toInt().coerceAtLeast(1)
+      val durationSec = if (entry.category == "buffs") entry.baseDur + durBonusSec else 0
+      GuildShopOffer(
+        id = entry.id,
+        category = entry.category,
+        tier = entry.tier,
+        minTrust = entry.minTrust,
+        baseGold = entry.baseGold,
+        baseShards = entry.baseShards,
+        goldCost = goldCost,
+        shardCost = shardCost,
+        discountPct = discountPct,
+        durationSec = durationSec,
+        unlocked = safeTrust >= entry.minTrust
+      )
+    }
+  }
+
+  /**
+   * Evaluates a Guild Shop purchase of Gear or Temporary Buffs using Gold and Meta Shards,
+   * enforcing Faction Trust gating and awarding +5 Faction Trust on completion.
+   */
+  fun evaluateGuildShopTrade(
+    offerId: String,
+    currentGold: Long,
+    currentMetaShards: Long,
+    factionTrust: Int,
+    floor: Int = 1,
+    combatScore: Int = 0
+  ): GuildShopTradeResult {
+    val catalog = getGuildShopCatalog(factionTrust, floor, combatScore)
+    val offer = catalog.find { it.id == offerId }
+      ?: return GuildShopTradeResult(
+        success = false,
+        offerId = offerId,
+        category = "unknown",
+        remainingGold = currentGold,
+        remainingMetaShards = currentMetaShards,
+        updatedFactionTrust = factionTrust.coerceIn(0, 250),
+        goldSpent = 0,
+        shardsSpent = 0,
+        durationSec = 0,
+        errorReason = "Offer not found"
+      )
+
+    if (!offer.unlocked) {
+      return GuildShopTradeResult(
+        success = false,
+        offerId = offer.id,
+        category = offer.category,
+        remainingGold = currentGold,
+        remainingMetaShards = currentMetaShards,
+        updatedFactionTrust = factionTrust.coerceIn(0, 250),
+        goldSpent = 0,
+        shardsSpent = 0,
+        durationSec = 0,
+        errorReason = "Requires Faction Trust >= ${offer.minTrust}"
+      )
+    }
+
+    if (currentGold < offer.goldCost || currentMetaShards < offer.shardCost) {
+      return GuildShopTradeResult(
+        success = false,
+        offerId = offer.id,
+        category = offer.category,
+        remainingGold = currentGold,
+        remainingMetaShards = currentMetaShards,
+        updatedFactionTrust = factionTrust.coerceIn(0, 250),
+        goldSpent = 0,
+        shardsSpent = 0,
+        durationSec = 0,
+        errorReason = "Insufficient Gold or Meta Shards"
+      )
+    }
+
+    val updatedTrust = (factionTrust.coerceAtLeast(0) + 5).coerceIn(0, 250)
+    return GuildShopTradeResult(
+      success = true,
+      offerId = offer.id,
+      category = offer.category,
+      remainingGold = currentGold - offer.goldCost,
+      remainingMetaShards = currentMetaShards - offer.shardCost,
+      updatedFactionTrust = updatedTrust,
+      goldSpent = offer.goldCost,
+      shardsSpent = offer.shardCost,
+      durationSec = offer.durationSec,
+      errorReason = null
+    )
+  }
+
   /**
    * Verifies that bundled WebGL game assets exist and contain required HUD/runtime structures.
    */
@@ -583,6 +800,9 @@ object GameRuntimeValidator {
         "npcRelationsOvl",
         "getFactionTier",
         "verifyNpcRelationsData",
+        "guildShopOvl",
+        "openGuildShop",
+        "buyGuildShopItem",
         "isWarriorMeleeAttack",
         "getAutoAttackMaxRange",
         "qtabDaily",
