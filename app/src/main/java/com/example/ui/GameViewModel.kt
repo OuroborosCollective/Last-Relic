@@ -202,6 +202,10 @@ class GameViewModel(
   }
 
   fun openIapDialog() {
+    if (!IS_PLAY_BILLING_INTEGRATED) {
+      _showIapDialog.value = false
+      return
+    }
     _showIapDialog.value = true
   }
 
@@ -243,6 +247,10 @@ class GameViewModel(
   }
 
   fun completeRemoveAdsPurchase(onComplete: () -> Unit = {}) {
+    if (!IS_PLAY_BILLING_INTEGRATED) {
+      _showIapDialog.value = false
+      return
+    }
     viewModelScope.launch {
       _adsRemoved.value = true
       _showIapDialog.value = false
@@ -277,6 +285,10 @@ class GameViewModel(
   }
 
   fun restorePurchases() {
+    if (!IS_PLAY_BILLING_INTEGRATED) {
+      _showIapDialog.value = false
+      return
+    }
     if (!isCloudAuthenticated) {
       showStatus("Melde dich mit Google an, um Cloud-Käufe wiederherzustellen.")
       return
@@ -301,7 +313,8 @@ class GameViewModel(
     _statusBanner.value = null
   }
 
-  private companion object {
+  companion object {
     const val TAG = "GameViewModel"
+    const val IS_PLAY_BILLING_INTEGRATED = false
   }
 }

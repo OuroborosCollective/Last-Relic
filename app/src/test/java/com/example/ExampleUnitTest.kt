@@ -814,6 +814,138 @@ class ExampleUnitTest {
     assertTrue(content.contains("function buyGuildShopItem("))
     assertTrue(content.contains("function tryClickVillageNpc3D("))
     assertTrue(content.contains("function createVillageNpcDomCard("))
+
+    // 10. #npcLayer2D .npc-speech-drawer NPC Grouping, Live Filter (Name, Trait, Speech Text), Quest/Faction Pulsing Glow & 'Mark as Read' Feature
+    assertTrue(content.contains("function resolveNpcTrait("))
+    assertTrue(content.contains("function getActiveQuestAndFactionKeywords("))
+    assertTrue(content.contains("function evaluateNpcSpeechQuestFactionGlow("))
+    assertTrue(content.contains("function groupNpcSpeechByNpc("))
+    assertTrue(content.contains("function markNpcSpeechAsRead("))
+    assertTrue(content.contains("function markNpcGroupAsRead("))
+    assertTrue(content.contains("function markAllNpcSpeechAsRead("))
+    assertTrue(content.contains("function toggleHideReadNpcSpeech("))
+    assertTrue(content.contains("@keyframes npcSpeechQuestFactionPulseGlow"))
+    assertTrue(content.contains("#npcLayer2D .npc-speech-entry.quest-faction-glow"))
+    assertTrue(content.contains("data-quest-faction-glow="))
+    assertTrue(content.contains("class=\"npc-speech-quest-glow-badge\""))
+    assertTrue(content.contains("data-live-filter=\"name,trait,text\""))
+    assertTrue(content.contains("id=\"npcSpeechFilterMeta\""))
+    assertTrue(content.contains("class=\"npc-speech-trait-badge\""))
+    assertTrue(content.contains("class=\"npc-speech-group"))
+    assertTrue(content.contains("class=\"npc-speech-group-head\""))
+    assertTrue(content.contains("class=\"npc-speech-group-body\""))
+    assertTrue(content.contains("class=\"npc-speech-mark-read-btn"))
+    assertTrue(content.contains("Mark as Read"))
+    assertTrue(content.contains("Mark All as Read"))
+    assertTrue(content.contains("id=\"btnHeaderMarkAllSpeechRead\""))
+    assertTrue(content.contains("class=\"npc-speech-header-mark-all-btn\""))
+    assertTrue(content.contains("id=\"btnToggleHideReadSpeech\""))
+    assertTrue(content.contains("id=\"btnMarkAllSpeechRead\""))
+  }
+
+  @Test
+  fun `NPC speech history groups entries by NPC and Mark as Read cleans up scrollable view`() {
+    val rawEntries = listOf(
+      GameRuntimeValidator.NpcSpeechLogEntry(
+        id = "sp_1",
+        npcId = "kaelen",
+        name = "Καλλίας (Kaelen)",
+        icon = "⚔️",
+        trait = "Στρατηγός (Strategos)",
+        text = "Mutiger Schlag im Schatten von Ἔρεβος!",
+        cat = "positive",
+        floor = 2,
+        timestampMs = 1_700_000_030_000L,
+        read = false
+      ),
+      GameRuntimeValidator.NpcSpeechLogEntry(
+        id = "sp_2",
+        npcId = "lyra",
+        name = "Λύρα (Lyra)",
+        icon = "🏹",
+        trait = "Πρόσκοπος (Proskopos)",
+        text = "Späher-Bericht: Der Wächter naht! Rette mich für Vertrauen in der NPC-Fraktion!",
+        cat = "danger",
+        floor = 2,
+        timestampMs = 1_700_000_020_000L,
+        read = false
+      ),
+      GameRuntimeValidator.NpcSpeechLogEntry(
+        id = "sp_3",
+        npcId = "kaelen",
+        name = "Καλλίας (Kaelen)",
+        icon = "⚔️",
+        trait = "Στρατηγός (Strategos)",
+        text = "Lass uns am Feuer rasten.",
+        cat = "camp",
+        floor = 1,
+        timestampMs = 1_700_000_010_000L,
+        read = false
+      )
+    )
+
+    // 0. Live filtering by NPC name, NPC trait, or speech text keywords
+    val byName = GameRuntimeValidator.filterNpcSpeechLog(rawEntries, "Lyra")
+    assertEquals(1, byName.size)
+    assertEquals("sp_2", byName.first().id)
+
+    val byTrait = GameRuntimeValidator.filterNpcSpeechLog(rawEntries, "Strategos")
+    assertEquals(2, byTrait.size)
+    assertTrue(byTrait.all { it.npcId == "kaelen" })
+
+    val byKeyword = GameRuntimeValidator.filterNpcSpeechLog(rawEntries, "Feuer rasten")
+    assertEquals(1, byKeyword.size)
+    assertEquals("sp_3", byKeyword.first().id)
+
+    // 0b. Quest & Faction Goal keyword glow evaluation on .npc-speech-entry
+    val glowSp1 = GameRuntimeValidator.evaluateNpcSpeechQuestFactionGlow(rawEntries[0])
+    assertFalse(glowSp1.hasGlow)
+    assertEquals("none", glowSp1.glowType)
+
+    val glowSp2 = GameRuntimeValidator.evaluateNpcSpeechQuestFactionGlow(rawEntries[1])
+    assertTrue(glowSp2.hasGlow)
+    assertTrue(glowSp2.isQuestMatch)
+    assertTrue(glowSp2.isFactionMatch)
+    assertEquals("both", glowSp2.glowType)
+    assertTrue(glowSp2.matchedQuestKeywords.contains("wächter"))
+    assertTrue(glowSp2.matchedFactionKeywords.contains("vertrauen"))
+
+    // 1. Grouping by NPC produces 2 groups (kaelen with 2 entries, lyra with 1 entry)
+    val initialGroups = GameRuntimeValidator.groupNpcSpeechByNpc(rawEntries, hideRead = false)
+    assertEquals(2, initialGroups.size)
+    assertEquals("kaelen", initialGroups[0].npcKey)
+    assertEquals("Στρατηγός (Strategos)", initialGroups[0].trait)
+    assertEquals(2, initialGroups[0].totalCount)
+    assertEquals(2, initialGroups[0].unreadCount)
+    assertEquals("lyra", initialGroups[1].npcKey)
+    assertEquals("Πρόσκοπος (Proskopos)", initialGroups[1].trait)
+    assertEquals(1, initialGroups[1].totalCount)
+    assertEquals(1, initialGroups[1].unreadCount)
+
+    // 2. Marking entry 'sp_1' as read decrements unreadCount for Kaelen and hides it when hideRead = true
+    val afterMarkOne = GameRuntimeValidator.markNpcSpeechAsRead(rawEntries, entryId = "sp_1")
+    val groupsShowAll = GameRuntimeValidator.groupNpcSpeechByNpc(afterMarkOne, hideRead = false)
+    assertEquals(1, groupsShowAll[0].unreadCount)
+    assertEquals(2, groupsShowAll[0].visibleEntries.size)
+
+    val groupsHideRead = GameRuntimeValidator.groupNpcSpeechByNpc(afterMarkOne, hideRead = true)
+    assertEquals(2, groupsHideRead.size)
+    assertEquals(1, groupsHideRead[0].visibleEntries.size)
+    assertEquals("sp_3", groupsHideRead[0].visibleEntries.first().id)
+
+    // 3. Marking all entries for Kaelen's NPC group as read removes the entire group when hideRead = true
+    val afterMarkGroup = GameRuntimeValidator.markNpcSpeechAsRead(afterMarkOne, npcKey = "kaelen")
+    val groupsAfterGroupRead = GameRuntimeValidator.groupNpcSpeechByNpc(afterMarkGroup, hideRead = true)
+    assertEquals(1, groupsAfterGroupRead.size)
+    assertEquals("lyra", groupsAfterGroupRead.first().npcKey)
+
+    // 4. 'Mark All as Read' clears the unread status of all current NPC speech history entries at once
+    val afterMarkAll = GameRuntimeValidator.markAllNpcSpeechAsRead(rawEntries)
+    assertTrue(afterMarkAll.all { it.read })
+    val groupsAfterMarkAllShown = GameRuntimeValidator.groupNpcSpeechByNpc(afterMarkAll, hideRead = false)
+    assertTrue(groupsAfterMarkAllShown.all { it.unreadCount == 0 })
+    val groupsAfterMarkAllHidden = GameRuntimeValidator.groupNpcSpeechByNpc(afterMarkAll, hideRead = true)
+    assertTrue(groupsAfterMarkAllHidden.isEmpty())
   }
 
   @Test
@@ -864,7 +996,61 @@ class ExampleUnitTest {
     val tier4Apotheosis = tier4Catalog.first { it.id == "gs_buff_olympian_apotheosis" }
     assertTrue("Exalted trust must extend buff duration beyond base 120s", tier4Apotheosis.durationSec > 120)
   }
+
+  @Test
+  fun `Ad removal IAP dialog is hidden and direct unlock is disabled until Google Play Billing is integrated`() {
+    assertFalse(
+      "Ad-removal dialog and direct unlock must remain disabled until Google Play Billing is integrated",
+      com.example.ui.GameViewModel.IS_PLAY_BILLING_INTEGRATED
+    )
+
+    val gameScreenFile = java.io.File("src/main/java/com/example/ui/GameScreen.kt").let {
+      if (it.exists()) it else java.io.File("app/src/main/java/com/example/ui/GameScreen.kt")
+    }
+    assertTrue("GameScreen.kt must exist", gameScreenFile.exists())
+    val screenSource = gameScreenFile.readText()
+    assertTrue(screenSource.contains("if (GameViewModel.IS_PLAY_BILLING_INTEGRATED && showIapDialog)"))
+
+    val viewModelFile = java.io.File("src/main/java/com/example/ui/GameViewModel.kt").let {
+      if (it.exists()) it else java.io.File("app/src/main/java/com/example/ui/GameViewModel.kt")
+    }
+    assertTrue("GameViewModel.kt must exist", viewModelFile.exists())
+    val vmSource = viewModelFile.readText()
+    assertTrue(vmSource.contains("const val IS_PLAY_BILLING_INTEGRATED = false"))
+  }
+
+  @Test
+  fun `Merchant NPC speech entries render Quick Trade button and npc-card-2d implements pop-in and exit CSS animations`() {
+    assertTrue(GameRuntimeValidator.isMerchantNpcTrait("Μύστης · Ἔμπορος (Mystes · Merchant)"))
+    assertTrue(GameRuntimeValidator.isMerchantNpcTrait("Κάπηλος · Gilden-Händler"))
+    assertTrue(GameRuntimeValidator.isMerchantNpcTrait("Gilden-Quartiermeister · Ausrüstung"))
+    assertTrue(GameRuntimeValidator.isMerchantNpcTrait(trait = null, npcId = "vnpc_0"))
+    assertFalse(GameRuntimeValidator.isMerchantNpcTrait("Στρατηγός (Strategos)", npcId = "kaelen"))
+    assertFalse(GameRuntimeValidator.isMerchantNpcTrait("Πρόσκοπος (Proskopos)", npcId = "lyra"))
+
+    val htmlFile = java.io.File("src/main/assets/index.html").let {
+      if (it.exists()) it else java.io.File("app/src/main/assets/index.html")
+    }
+    assertTrue("index.html must exist", htmlFile.exists())
+    val content = htmlFile.readText()
+
+    // 1. Quick Trade button in #npcLayer2D .npc-speech-entry for merchant traits
+    assertTrue(content.contains("function isMerchantNpcTrait("))
+    assertTrue(content.contains("function triggerNpcQuickTrade("))
+    assertTrue(content.contains("#npcLayer2D .npc-speech-entry .npc-speech-quick-trade-btn"))
+    assertTrue(content.contains("class=\"npc-speech-quick-trade-btn\""))
+    assertTrue(content.contains("data-quick-trade-npc"))
+    assertTrue(content.contains("⚖️ Quick Trade"))
+
+    // 2. Pop-in and exit CSS animations for #npcLayer2D .npc-card-2d
+    assertTrue(content.contains("@keyframes npcCardPopIn"))
+    assertTrue(content.contains("@keyframes npcCardExit"))
+    assertTrue(content.contains("@keyframes npcCardDefeatedExit"))
+    assertTrue(content.contains("#npcLayer2D .npc-card-2d.pop-in"))
+    assertTrue(content.contains("#npcLayer2D .npc-card-2d.is-exiting"))
+    assertTrue(content.contains("#npcLayer2D .npc-card-2d.defeated-exit"))
+    assertTrue(content.contains("function triggerNpcCardPopIn("))
+    assertTrue(content.contains("function triggerNpcCardExit("))
+  }
 }
-
-
 

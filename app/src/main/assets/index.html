@@ -409,6 +409,57 @@ table.lb .you{background:rgba(79,209,255,.14)}
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.75);
   pointer-events: none;
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  will-change: transform, opacity;
+}
+@keyframes npcCardPopIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -92%) scale(0.84);
+  }
+  65% {
+    opacity: 1;
+    transform: translate(-50%, -102%) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+  }
+}
+@keyframes npcCardExit {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -90%) scale(0.82);
+  }
+}
+@keyframes npcCardDefeatedExit {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+    filter: brightness(1.35) saturate(1.4);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -86%) scale(0.74);
+    filter: brightness(0.5) grayscale(0.8);
+  }
+}
+#npcLayer2D .npc-card-2d.pop-in,
+.npc-card-2d.pop-in {
+  animation: npcCardPopIn 0.28s cubic-bezier(0.22, 1.28, 0.36, 1) forwards;
+}
+#npcLayer2D .npc-card-2d.is-exiting,
+.npc-card-2d.is-exiting {
+  animation: npcCardExit 0.22s ease-in forwards;
+  pointer-events: none;
+}
+#npcLayer2D .npc-card-2d.defeated-exit,
+.npc-card-2d.defeated-exit {
+  animation: npcCardDefeatedExit 0.28s ease-in forwards;
+  pointer-events: none;
 }
 .npc-card-2d.positive { border-color: rgba(109, 255, 155, 0.85); }
 .npc-card-2d.negative { border-color: rgba(255, 74, 74, 0.92); box-shadow: 0 0 12px rgba(255, 60, 60, 0.45); }
@@ -620,12 +671,48 @@ table.lb .you{background:rgba(79,209,255,.14)}
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
   font-size: 10.5px;
   font-weight: 800;
   color: #9ec7ff;
   margin-bottom: 5px;
   padding-bottom: 4px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+#npcLayer2D .npc-speech-drawer-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+#npcLayer2D .npc-speech-header-mark-all-btn {
+  background: linear-gradient(90deg, rgba(109, 255, 155, 0.2), rgba(79, 209, 255, 0.2));
+  border: 1px solid rgba(109, 255, 155, 0.6);
+  color: #6dff9b;
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+#npcLayer2D .npc-speech-header-mark-all-btn:hover {
+  background: rgba(109, 255, 155, 0.32);
+  border-color: #6dff9b;
+  color: #ffffff;
+}
+#npcLayer2D .npc-speech-header-mark-all-btn.all-read {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #9aa4b8;
+  opacity: 0.78;
+}
+#npcLayer2D .npc-speech-header-unread-pill {
+  font-size: 8.5px;
+  font-weight: 800;
+  margin-left: 2px;
 }
 #npcLayer2D .npc-greek-decoder-box {
   background: rgba(18, 26, 44, 0.9);
@@ -729,14 +816,143 @@ table.lb .you{background:rgba(79,209,255,.14)}
   color: #ffffff;
 }
 #npcLayer2D .npc-speech-feed-list {
-  max-height: 185px;
+  max-height: 195px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   padding-right: 2px;
+}
+#npcLayer2D .npc-speech-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 5px;
+}
+#npcLayer2D .npc-speech-tool-btn {
+  flex: 1 1 auto;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(79, 209, 255, 0.35);
+  color: #9ec7ff;
+  border-radius: 5px;
+  padding: 2.5px 6px;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+#npcLayer2D .npc-speech-tool-btn:hover {
+  background: rgba(79, 209, 255, 0.18);
+  border-color: #4fd1ff;
+  color: #ffffff;
+}
+#npcLayer2D .npc-speech-tool-btn.active {
+  background: rgba(109, 255, 155, 0.18);
+  border-color: rgba(109, 255, 155, 0.65);
+  color: #6dff9b;
+}
+.npc-speech-group {
+  background: rgba(14, 21, 36, 0.88);
+  border: 1px solid rgba(79, 209, 255, 0.28);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.npc-speech-group.all-read {
+  opacity: 0.72;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.npc-speech-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background: rgba(25, 36, 58, 0.92);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #e8ecf4;
+  cursor: pointer;
+}
+.npc-speech-group.collapsed .npc-speech-group-head {
+  border-bottom: none;
+}
+.npc-speech-group.collapsed .npc-speech-group-body {
+  display: none;
+}
+.npc-speech-group-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.npc-speech-group-count {
+  font-size: 8.5px;
+  color: #9ec7ff;
+  opacity: 0.85;
+}
+.npc-speech-trait-badge {
+  display: inline-block;
+  background: rgba(199, 125, 255, 0.16);
+  border: 1px solid rgba(199, 125, 255, 0.45);
+  color: #e2b8ff;
+  border-radius: 4px;
+  padding: 0.5px 4px;
+  font-size: 8px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+#npcLayer2D .npc-speech-filter-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 8.5px;
+  color: #9ec7ff;
+  opacity: 0.88;
+  margin: -3px 0 5px 0;
+  padding: 0 2px;
+}
+.npc-speech-unread-badge {
+  background: rgba(109, 255, 155, 0.18);
+  border: 1px solid rgba(109, 255, 155, 0.55);
+  color: #6dff9b;
+  border-radius: 999px;
+  padding: 0.5px 5px;
+  font-size: 8px;
+  font-weight: 800;
+}
+.npc-speech-allread-badge {
+  color: #6dff9b;
+  font-size: 8.5px;
+  opacity: 0.85;
+}
+.npc-group-mark-read-btn {
+  background: rgba(109, 255, 155, 0.14);
+  border: 1px solid rgba(109, 255, 155, 0.45);
+  color: #6dff9b;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 8px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.npc-group-mark-read-btn:hover {
+  background: rgba(109, 255, 155, 0.28);
+  color: #ffffff;
+}
+.npc-speech-group-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px 5px;
 }
 .npc-speech-entry {
   background: rgba(255, 255, 255, 0.04);
@@ -748,11 +964,62 @@ table.lb .you{background:rgba(79,209,255,.14)}
   text-align: left;
   color: #e8ecf4;
   cursor: pointer;
+  transition: opacity 0.18s ease, background 0.18s ease, box-shadow 0.25s ease;
 }
 .npc-speech-entry.positive { border-left-color: #6dff9b; background: rgba(109, 255, 155, 0.06); }
 .npc-speech-entry.danger { border-left-color: #ffd54a; background: rgba(255, 213, 74, 0.08); }
 .npc-speech-entry.negative { border-left-color: #ff4a4a; background: rgba(255, 74, 74, 0.08); }
 .npc-speech-entry.camp { border-left-color: #ff9a3d; background: rgba(255, 154, 61, 0.08); }
+@keyframes npcSpeechQuestFactionPulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(255, 213, 74, 0.22), inset 0 0 6px rgba(79, 209, 255, 0.10);
+    border-color: rgba(255, 213, 74, 0.50);
+  }
+  50% {
+    box-shadow: 0 0 13px rgba(255, 213, 74, 0.52), 0 0 6px rgba(109, 255, 155, 0.30), inset 0 0 10px rgba(255, 213, 74, 0.18);
+    border-color: rgba(255, 213, 74, 0.90);
+  }
+}
+#npcLayer2D .npc-speech-entry.quest-faction-glow,
+.npc-speech-entry.quest-faction-glow {
+  position: relative;
+  border: 1px solid rgba(255, 213, 74, 0.52);
+  border-left-width: 3px;
+  background: linear-gradient(90deg, rgba(255, 213, 74, 0.11), rgba(79, 209, 255, 0.06));
+  animation: npcSpeechQuestFactionPulseGlow 2.4s ease-in-out infinite;
+}
+#npcLayer2D .npc-speech-entry.quest-faction-glow.quest-glow {
+  border-left-color: #ffd54a;
+}
+#npcLayer2D .npc-speech-entry.quest-faction-glow.faction-glow {
+  border-left-color: #6dff9b;
+}
+#npcLayer2D .npc-speech-entry.quest-faction-glow.is-read,
+.npc-speech-entry.quest-faction-glow.is-read {
+  animation-duration: 3.6s;
+  opacity: 0.72;
+}
+.npc-speech-quest-glow-badge {
+  display: inline-block;
+  background: rgba(255, 213, 74, 0.16);
+  border: 1px solid rgba(255, 213, 74, 0.48);
+  color: #ffd54a;
+  border-radius: 4px;
+  padding: 0.5px 4px;
+  font-size: 8px;
+  font-weight: 800;
+  margin-left: 3px;
+  white-space: nowrap;
+}
+.npc-speech-entry.is-read {
+  opacity: 0.56;
+  border-left-color: rgba(158, 199, 255, 0.35);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 3px 6px;
+}
+.npc-speech-entry.is-read .npc-speech-entry-msg {
+  color: #9aa4b8;
+}
 .npc-speech-entry-top {
   display: flex;
   justify-content: space-between;
@@ -762,6 +1029,58 @@ table.lb .you{background:rgba(79,209,255,.14)}
   font-weight: 800;
   color: #9ec7ff;
   margin-bottom: 1px;
+}
+.npc-speech-mark-read-btn {
+  background: rgba(79, 209, 255, 0.16);
+  border: 1px solid rgba(79, 209, 255, 0.5);
+  color: #6dff9b;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 8px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.npc-speech-mark-read-btn:hover {
+  background: rgba(109, 255, 155, 0.28);
+  border-color: #6dff9b;
+  color: #ffffff;
+}
+.npc-speech-mark-read-btn.read {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #9aa4b8;
+}
+#npcLayer2D .npc-speech-entry .npc-speech-quick-trade-btn,
+.npc-speech-quick-trade-btn {
+  background: linear-gradient(90deg, rgba(255, 213, 74, 0.24), rgba(255, 154, 61, 0.28));
+  border: 1px solid rgba(255, 213, 74, 0.78);
+  color: #ffd54a;
+  border-radius: 4px;
+  padding: 1.5px 6px;
+  font-size: 8.5px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  pointer-events: auto;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+  transition: background 0.15s ease, transform 0.12s ease, border-color 0.15s ease;
+}
+#npcLayer2D .npc-speech-entry .npc-speech-quick-trade-btn:hover,
+.npc-speech-quick-trade-btn:hover {
+  background: linear-gradient(90deg, rgba(255, 213, 74, 0.38), rgba(255, 154, 61, 0.42));
+  border-color: #ffd54a;
+}
+#npcLayer2D .npc-speech-entry .npc-speech-quick-trade-btn:active,
+.npc-speech-quick-trade-btn:active {
+  transform: scale(0.95);
+}
+.npc-speech-entry-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 .npc-speech-elapsed {
   display: inline-block;
@@ -3120,6 +3439,9 @@ class QuestManager {
           S.dailyResetTime || 0,
           S.floor || 1
         );
+      }
+      if(typeof renderNpcSpeechFeedInLayer === 'function' && typeof npcSpeechDrawerOpen !== 'undefined' && npcSpeechDrawerOpen){
+        renderNpcSpeechFeedInLayer();
       }
     }catch(_){}
   }
@@ -6046,7 +6368,7 @@ window.NPCTalk2D=NPCTalk2D;
 const ADV_ROSTER=[
  {id:'kaelen',name:'Καλλίας (Kallias · Kaelen)',icon:'⚔️',col:0x4fd1ff,trait:'Στρατηγός (Strategos)'},
  {id:'lyra',name:'Λύρα τῆς Ἀρτέμιδος (Lyra)',icon:'🏹',col:0x6dff9b,trait:'Πρόσκοπος (Proskopos)'},
- {id:'vex',name:'Φοῖβος ὁ Θεουργός (Phoibos · Vex)',icon:'🔮',col:0xc77dff,trait:'Μύστης (Mystes)'},
+ {id:'vex',name:'Φοῖβος ὁ Θεουργός (Phoibos · Vex)',icon:'🔮',col:0xc77dff,trait:'Μύστης · Ἔμπορος (Mystes · Merchant)'},
  {id:'thora',name:'Θεοδώρα ἡ Αἰγιόχος (Theodora · Thora)',icon:'🛡️',col:0xffb347,trait:'Φύλαξ (Phylax)'},
  {id:'draven',name:'Δράκων ὁ Θηρευτής (Drakon · Draven)',icon:'🗡️',col:0xff6a88,trait:'Κυνηγός (Kynegos)'}
 ];
@@ -6083,7 +6405,13 @@ function loadNpcSpeechLog(){
   const raw=localStorage.getItem('lr_npc_speech_log');
   if(raw){
    const parsed=JSON.parse(raw);
-   if(Array.isArray(parsed))return parsed;
+   if(Array.isArray(parsed)){
+    return parsed.map((it,idx)=>({
+     ...it,
+     id:it&&it.id?String(it.id):`sp_${(it&&it.ts)||Date.now()}_${idx}`,
+     read:Boolean(it&&it.read)
+    }));
+   }
   }
  }catch(_){}
  return [];
@@ -6094,6 +6422,8 @@ function saveNpcSpeechLog(list){
 let npcSpeechLog=loadNpcSpeechLog();
 let npcSpeechFloatTimer=null;
 let npcSpeechDrawerOpen=false;
+let npcSpeechHideRead=(()=>{try{return localStorage.getItem('lr_npc_hide_read')==='1';}catch(_){return false;}})();
+let npcSpeechCollapsedGroups={};
 
 /* ================= OLD GREEK TO NORMAL ABC PART-BY-PART WORD NORMALIZATION ================= */
 const GREEK_WORD_PARTS_LEXICON=[
@@ -6192,6 +6522,7 @@ function unlockRandomGreekWordPart(reason='history'){
  const candidates=GREEK_WORD_PARTS_LEXICON.filter(e=>(npcGreekWordPartsState[e.id]||0)<e.greekParts.length);
  if(!candidates.length){
   const stats=getGreekNormalizationStats();
+  renderNpcSpeechFeedInLayer();
   return {allUnlocked:true,...stats};
  }
  const chosen=candidates[Math.floor(Math.random()*candidates.length)];
@@ -6261,6 +6592,56 @@ function updateNpcSpeechElapsedLabels(nowMs=Date.now()){
 }
 window.updateNpcSpeechElapsedLabels=updateNpcSpeechElapsedLabels;
 
+function resolveNpcTrait(item){
+ if(!item)return '';
+ if(item.trait&&String(item.trait).trim())return String(item.trait).trim();
+ const idKey=String(item.npcId||item.id||'').trim();
+ const nameKey=String(item.name||'').trim();
+ if(typeof ADV_ROSTER!=='undefined'&&Array.isArray(ADV_ROSTER)){
+  const found=ADV_ROSTER.find(r=>(idKey&&r.id===idKey)||(nameKey&&r.name===nameKey));
+  if(found&&found.trait)return found.trait;
+ }
+ if(typeof GUILD_NPCS!=='undefined'&&Array.isArray(GUILD_NPCS)){
+  const gFound=GUILD_NPCS.find(g=>(idKey&&(g.id===idKey||g.compId===idKey))||(nameKey&&(g.nameDe===nameKey||g.nameEn===nameKey)));
+  if(gFound)return gFound.roleDe||gFound.roleEn||'';
+ }
+ if(idKey.startsWith('vnpc_'))return lang==='de'?'Κάπηλος · Gilden-Händler':'Κάπηλος · Guild Merchant';
+ return '';
+}
+window.resolveNpcTrait=resolveNpcTrait;
+
+const MERCHANT_TRAIT_KEYWORDS=[
+ 'merchant','händler','haendler','κάπηλος','kapelos','ἔμπορος','emporos',
+ 'quartiermeister','quartermaster','waffenmeister','alchemist','trader',
+ 'shop','shopkeeper','krämer','gilden-händler','guild merchant'
+];
+
+function isMerchantNpcTrait(itemOrTrait){
+ if(!itemOrTrait)return false;
+ if(typeof itemOrTrait==='string'){
+  const norm=itemOrTrait.trim().toLowerCase();
+  if(!norm)return false;
+  return MERCHANT_TRAIT_KEYWORDS.some(kw=>norm.includes(kw));
+ }
+ if(typeof itemOrTrait==='object'){
+  const idKey=String(itemOrTrait.npcId||itemOrTrait.id||itemOrTrait.npcKey||'').trim().toLowerCase();
+  if(idKey.startsWith('vnpc_'))return true;
+  const resolved=resolveNpcTrait(itemOrTrait);
+  const rawTrait=String(itemOrTrait.trait||itemOrTrait.roleDe||itemOrTrait.roleEn||resolved||'').toLowerCase();
+  const normTrait=String(normalizeGreekTextPartByPart(rawTrait)).toLowerCase();
+  const combined=`${rawTrait} ${normTrait}`;
+  return MERCHANT_TRAIT_KEYWORDS.some(kw=>combined.includes(kw));
+ }
+ return false;
+}
+window.isMerchantNpcTrait=isMerchantNpcTrait;
+
+function triggerNpcQuickTrade(npcId){
+ const targetId=String(npcId||'vnpc_0').trim()||'vnpc_0';
+ return openGuildShop(targetId);
+}
+window.triggerNpcQuickTrade=triggerNpcQuickTrade;
+
 function filterNpcSpeechLog(list=npcSpeechLog, query=npcSpeechSearchQuery){
  if(!Array.isArray(list))return [];
  const q=String(query||'').trim().toLowerCase();
@@ -6268,17 +6649,259 @@ function filterNpcSpeechLog(list=npcSpeechLog, query=npcSpeechSearchQuery){
  const tokens=q.split(/\s+/).filter(Boolean);
  return list.filter(item=>{
   if(!item)return false;
+  const traitStr=resolveNpcTrait(item);
   const rawName=String(item.name||'').toLowerCase();
   const normName=String(normalizeGreekTextPartByPart(item.name||'')).toLowerCase();
   const rawText=String(item.text||'').toLowerCase();
   const normText=String(normalizeGreekTextPartByPart(item.text||'')).toLowerCase();
-  const rawTrait=String(item.trait||'').toLowerCase();
-  const normTrait=String(normalizeGreekTextPartByPart(item.trait||'')).toLowerCase();
-  const haystack=`${rawName} ${normName} ${rawText} ${normText} ${rawTrait} ${normTrait}`;
+  const rawTrait=String(traitStr).toLowerCase();
+  const normTrait=String(normalizeGreekTextPartByPart(traitStr)).toLowerCase();
+  let lexMeanings='';
+  for(const entry of GREEK_WORD_PARTS_LEXICON){
+   if(rawName.includes(entry.greek.toLowerCase())||rawTrait.includes(entry.greek.toLowerCase())||rawText.includes(entry.greek.toLowerCase())||rawTrait.includes(entry.abcFull.toLowerCase())){
+    lexMeanings+=` ${entry.abcFull.toLowerCase()} ${entry.meaningDe.toLowerCase()} ${entry.meaningEn.toLowerCase()}`;
+   }
+  }
+  const haystack=`${rawName} ${normName} ${rawTrait} ${normTrait} ${rawText} ${normText} ${lexMeanings}`;
   return tokens.every(tok=>haystack.includes(tok));
  });
 }
 window.filterNpcSpeechLog=filterNpcSpeechLog;
+
+const QUEST_TARGET_KEYWORDS={
+ husk:['husk','eidolon','εἴδωλον','ghul','schreckling','untote','undead'],
+ drone:['drone','drohne','ker','κὴρ','ψυχοπόμπος','schnitter'],
+ mage:['mage','magier','telchin','τελχίνων','kultist','cultist','runen'],
+ archer:['archer','bogenschütze','skeletos','σκελετὸς','τοξότης'],
+ brute:['brute','gigas','γίγας','golem','hammerfürst']
+};
+
+const DAILY_QUEST_KEYWORDS={
+ daily_kill_all:['feinde','enemies','säuberung','purge','kampf','fight','brut','brood','monster','jagen','hunt'],
+ daily_boss:['boss','wächter','guardian','phylax','φύλαξ','thanatos','θάνατος','relikt','relic'],
+ daily_chests:['truhe','truhen','chest','chests','schatz','treasure','beute','loot'],
+ daily_crates:['kiste','kisten','crate','crates','vorratskisten','beute','loot'],
+ daily_skill:['nova','ausweichen','dash','arkane','arcane','kraft'],
+ daily_secrets:['geheimgang','geheimgänge','geheimnis','secret','secrets','ruinen','ruins']
+};
+
+function getActiveQuestAndFactionKeywords(){
+ const questSet=new Set(['quest','auftrag','aufträge','ἄθλος','ἄθλοι','bounty','relikt','relic','jagen','hunt','brut','brood','monster']);
+ if(typeof activeQuests!=='undefined'&&Array.isArray(activeQuests)){
+  activeQuests.forEach(q=>{
+   if(q&&!q.done){
+    const tKey=String(q.target||'').toLowerCase();
+    if(tKey)questSet.add(tKey);
+    const tWords=QUEST_TARGET_KEYWORDS[tKey];
+    if(Array.isArray(tWords))tWords.forEach(w=>questSet.add(w.toLowerCase()));
+   }
+  });
+ }
+ if(typeof S!=='undefined'&&S&&Array.isArray(S.dailyQuests)){
+  S.dailyQuests.forEach(dq=>{
+   if(dq&&!dq.done){
+    const dType=String(dq.type||'').toLowerCase();
+    const dWords=DAILY_QUEST_KEYWORDS[dType];
+    if(Array.isArray(dWords))dWords.forEach(w=>questSet.add(w.toLowerCase()));
+   }
+  });
+ }
+ const factionSet=new Set([
+  'vertrauen','trust','fraktion','faction','fraktions-vertrauen','faction trust',
+  'gilde','guild','θίασος','thiasos','σύνοδος','synodos','ἑταιρείας','hetaireias',
+  'handel','handeln','trade','gruppe','party','team','verbündeter','ally',
+  'rette','retten','save','rescue','hilf','help','lagerfeuer','campfire','segen','blessing',
+  'μύστης','mystes','ἐπόπτης','epoptes','δᾳδοῦχος','dadouchos','ἱεροφάντης','hierophantes',
+  'φάρμακον','pharmakon','ἀμβροσία','ambrosia','ἀκόνη','akone','κειμήλιον','keimelion'
+ ]);
+ if(typeof FACTION_TIERS!=='undefined'&&Array.isArray(FACTION_TIERS)){
+  const curTrust=(typeof S!=='undefined'&&S&&Number.isFinite(S.npcFactionTrust))?S.npcFactionTrust:0;
+  const nextTier=FACTION_TIERS.find(t=>t.min>curTrust)||FACTION_TIERS[FACTION_TIERS.length-1];
+  if(nextTier&&nextTier.id)factionSet.add(String(nextTier.id).toLowerCase());
+ }
+ if(typeof adventurers!=='undefined'&&Array.isArray(adventurers)){
+  adventurers.forEach(adv=>{
+   if(adv&&!adv.dead&&adv.needs&&adv.needs.goal){
+    const gStr=String(adv.needs.goal).toLowerCase();
+    if(gStr.includes('camp')||gStr.includes('lagerfeuer'))factionSet.add('lagerfeuer');
+    if(gStr.includes('greed')||gStr.includes('beute'))questSet.add('beute');
+   }
+  });
+ }
+ const questKeywords=Array.from(questSet);
+ const factionKeywords=Array.from(factionSet);
+ return {
+  questKeywords,
+  factionKeywords,
+  allKeywords:Array.from(new Set([...questKeywords,...factionKeywords]))
+ };
+}
+window.getActiveQuestAndFactionKeywords=getActiveQuestAndFactionKeywords;
+
+function evaluateNpcSpeechQuestFactionGlow(item, customKeywords){
+ if(!item||!item.text){
+  return {hasGlow:false,isQuestMatch:false,isFactionMatch:false,glowType:'none',matchedQuestKeywords:[],matchedFactionKeywords:[],matchedKeywords:[]};
+ }
+ const kwSource=customKeywords||getActiveQuestAndFactionKeywords();
+ const questKws=Array.isArray(kwSource.questKeywords)?kwSource.questKeywords:[];
+ const factionKws=Array.isArray(kwSource.factionKeywords)?kwSource.factionKeywords:[];
+ const rawText=String(item.text||'').toLowerCase();
+ const normText=String(normalizeGreekTextPartByPart(item.text||'')).toLowerCase();
+ const combined=`${rawText} ${normText}`;
+ const matchedQuest=questKws.filter(kw=>kw&&combined.includes(String(kw).toLowerCase()));
+ const matchedFaction=factionKws.filter(kw=>kw&&combined.includes(String(kw).toLowerCase()));
+ const isQuestMatch=matchedQuest.length>0;
+ const isFactionMatch=matchedFaction.length>0;
+ const hasGlow=isQuestMatch||isFactionMatch;
+ const glowType=(isQuestMatch&&isFactionMatch)?'both':isQuestMatch?'quest':isFactionMatch?'faction':'none';
+ const matchedKeywords=Array.from(new Set([...matchedQuest,...matchedFaction]));
+ return {
+  hasGlow,
+  isQuestMatch,
+  isFactionMatch,
+  glowType,
+  matchedQuestKeywords:matchedQuest,
+  matchedFactionKeywords:matchedFaction,
+  matchedKeywords
+ };
+}
+window.evaluateNpcSpeechQuestFactionGlow=evaluateNpcSpeechQuestFactionGlow;
+
+function groupNpcSpeechByNpc(list=npcSpeechLog, hideRead=npcSpeechHideRead){
+ if(!Array.isArray(list))return [];
+ const groupMap=new Map();
+ list.forEach((item,idx)=>{
+  if(!item)return;
+  const npcKey=String(item.npcId||item.name||'unknown');
+  const entryId=item.id?String(item.id):`sp_${item.ts||0}_${idx}`;
+  if(!item.id)item.id=entryId;
+  const resolvedTrait=resolveNpcTrait(item);
+  if(!item.trait&&resolvedTrait)item.trait=resolvedTrait;
+  const isRead=Boolean(item.read);
+  let grp=groupMap.get(npcKey);
+  if(!grp){
+   grp={
+    npcKey,
+    npcId:item.npcId||npcKey,
+    name:item.name||npcKey,
+    icon:item.icon||'🗣️',
+    trait:resolvedTrait,
+    entries:[],
+    visibleEntries:[],
+    unreadCount:0,
+    totalCount:0,
+    latestTs:Number(item.ts)||0
+   };
+   groupMap.set(npcKey,grp);
+  }else if(!grp.trait&&resolvedTrait){
+   grp.trait=resolvedTrait;
+  }
+  grp.totalCount++;
+  if(!isRead)grp.unreadCount++;
+  if((Number(item.ts)||0)>grp.latestTs)grp.latestTs=Number(item.ts)||0;
+  const wrapped={item,logIdx:idx,entryId,isRead};
+  grp.entries.push(wrapped);
+  if(!hideRead||!isRead){
+   grp.visibleEntries.push(wrapped);
+  }
+ });
+ const result=[];
+ groupMap.forEach(grp=>{
+  if(grp.visibleEntries.length>0){
+   result.push(grp);
+  }
+ });
+ return result;
+}
+window.groupNpcSpeechByNpc=groupNpcSpeechByNpc;
+
+function markNpcSpeechAsRead(targetIdOrIdx, readState){
+ let target=null;
+ if(typeof targetIdOrIdx==='string'&&targetIdOrIdx.trim()){
+  target=npcSpeechLog.find(it=>it&&String(it.id)===targetIdOrIdx.trim());
+ }
+ if(!target&&Number.isFinite(Number(targetIdOrIdx))){
+  const idx=Number(targetIdOrIdx);
+  if(idx>=0&&idx<npcSpeechLog.length)target=npcSpeechLog[idx];
+ }
+ if(!target)return false;
+ const nextRead=typeof readState==='boolean'?readState:!Boolean(target.read);
+ const changed=Boolean(target.read)!==nextRead;
+ target.read=nextRead;
+ saveNpcSpeechLog(npcSpeechLog);
+ if(changed&&nextRead){
+  unlockRandomGreekWordPart('mark-read');
+ }else{
+  renderNpcSpeechFeedInLayer();
+ }
+ const relOvl=$('npcRelationsOvl');
+ if(relOvl&&relOvl.style.display==='flex'&&typeof renderNpcRelationsModal==='function'){
+  renderNpcRelationsModal();
+ }
+ return target.read;
+}
+window.markNpcSpeechAsRead=markNpcSpeechAsRead;
+
+function markNpcGroupAsRead(npcKey){
+ if(!npcKey)return 0;
+ const keyStr=String(npcKey);
+ let count=0;
+ npcSpeechLog.forEach(it=>{
+  if(!it)return;
+  const k=String(it.npcId||it.name||'unknown');
+  if(k===keyStr&&!it.read){
+   it.read=true;
+   count++;
+  }
+ });
+ if(count>0){
+  saveNpcSpeechLog(npcSpeechLog);
+  unlockRandomGreekWordPart('mark-group-read');
+ }else{
+  renderNpcSpeechFeedInLayer();
+ }
+ return count;
+}
+window.markNpcGroupAsRead=markNpcGroupAsRead;
+
+function markAllNpcSpeechAsRead(){
+ let count=0;
+ npcSpeechLog.forEach(it=>{
+  if(it&&!it.read){
+   it.read=true;
+   count++;
+  }
+ });
+ if(count>0){
+  saveNpcSpeechLog(npcSpeechLog);
+  unlockRandomGreekWordPart('mark-all-read');
+ }else{
+  renderNpcSpeechFeedInLayer();
+ }
+ const relOvl=$('npcRelationsOvl');
+ if(relOvl&&relOvl.style.display==='flex'&&typeof renderNpcRelationsModal==='function'){
+  renderNpcRelationsModal();
+ }
+ return count;
+}
+window.markAllNpcSpeechAsRead=markAllNpcSpeechAsRead;
+
+function toggleHideReadNpcSpeech(forceState){
+ npcSpeechHideRead=typeof forceState==='boolean'?forceState:!npcSpeechHideRead;
+ try{localStorage.setItem('lr_npc_hide_read',npcSpeechHideRead?'1':'0');}catch(_){}
+ renderNpcSpeechFeedInLayer();
+ return npcSpeechHideRead;
+}
+window.toggleHideReadNpcSpeech=toggleHideReadNpcSpeech;
+
+function toggleNpcSpeechGroupCollapse(npcKey){
+ if(!npcKey)return false;
+ const k=String(npcKey);
+ npcSpeechCollapsedGroups[k]=!npcSpeechCollapsedGroups[k];
+ renderNpcSpeechFeedInLayer();
+ return Boolean(npcSpeechCollapsedGroups[k]);
+}
+window.toggleNpcSpeechGroupCollapse=toggleNpcSpeechGroupCollapse;
 
 function toggleNpcSpeechDrawer(forceState){
  ensureNpcSpeechFeedDOM();
@@ -6313,11 +6936,19 @@ function ensureNpcSpeechFeedDOM(){
    <div id="npcSpeechDrawer" class="npc-speech-drawer${npcSpeechDrawerOpen?' open':''}">
     <div class="npc-speech-drawer-head">
      <span id="npcSpeechDrawerTitle">📜 Vollständiger NPC-Verlauf</span>
-     <button class="npc-act-btn party" id="btnOpenNpcRelFromFeed" style="flex:0 0 auto;padding:2px 7px">👥 Beziehungen</button>
+     <div class="npc-speech-drawer-head-actions">
+      <button type="button" id="btnHeaderMarkAllSpeechRead" class="npc-speech-header-mark-all-btn" data-action="mark-all-read" title="Clear unread status of all NPC speech history entries">✓ Mark All as Read <span id="npcSpeechHeaderUnreadCount" class="npc-speech-header-unread-pill">(0)</span></button>
+      <button type="button" class="npc-act-btn party" id="btnOpenNpcRelFromFeed" style="flex:0 0 auto;padding:2px 7px">👥 Beziehungen</button>
+     </div>
     </div>
     <div class="npc-speech-search-wrap">
-     <input type="search" id="npcSpeechSearchInput" class="npc-speech-search-input" placeholder="🔍 NPC-Name oder Stichwort filtern..." autocomplete="off" spellcheck="false" />
+     <input type="text" id="npcSpeechSearchInput" class="npc-speech-search-input" data-live-filter="name,trait,text" placeholder="🔍 Live-Filter: Name, Trait oder Stichwort..." aria-label="Live filter speech log by NPC name, trait, or speech keyword" autocomplete="off" spellcheck="false" />
      <button type="button" id="npcSpeechSearchClear" class="npc-speech-search-clear" title="Filter zurücksetzen">✕</button>
+    </div>
+    <div id="npcSpeechFilterMeta" class="npc-speech-filter-meta"></div>
+    <div class="npc-speech-toolbar" id="npcSpeechToolbar">
+     <button type="button" id="btnToggleHideReadSpeech" class="npc-speech-tool-btn">👁️ Gelesene ausblenden</button>
+     <button type="button" id="btnMarkAllSpeechRead" class="npc-speech-tool-btn">✓ Mark All as Read</button>
     </div>
     <div id="npcGreekDecoderBox" class="npc-greek-decoder-box">
      <div class="npc-greek-decoder-top">
@@ -6350,6 +6981,14 @@ function ensureNpcSpeechFeedDOM(){
       searchInp.value='';
       renderNpcSpeechFeedInLayer();
       searchInp.blur();
+      return;
+     }
+     if(ev==='keyup'){
+      const nextVal=searchInp.value||'';
+      if(nextVal!==npcSpeechSearchQuery){
+       npcSpeechSearchQuery=nextVal;
+       renderNpcSpeechFeedInLayer();
+      }
      }
     });
    });
@@ -6369,6 +7008,39 @@ function ensureNpcSpeechFeedDOM(){
   wrap.addEventListener('pointerdown',e=>{
    e.stopPropagation();
    if(e.target.closest('#npcSpeechSearchInput')||e.target.closest('#npcSpeechSearchClear')){
+    return;
+   }
+   const quickTradeBtn=e.target.closest('.npc-speech-quick-trade-btn');
+   if(quickTradeBtn){
+    const tradeNpcId=quickTradeBtn.getAttribute('data-quick-trade-npc')||'vnpc_0';
+    triggerNpcQuickTrade(tradeNpcId);
+    return;
+   }
+   const markReadBtn=e.target.closest('.npc-speech-mark-read-btn');
+   if(markReadBtn){
+    const entryId=markReadBtn.getAttribute('data-mark-read-id');
+    const logIdx=markReadBtn.getAttribute('data-mark-read-idx');
+    markNpcSpeechAsRead(entryId||logIdx);
+    return;
+   }
+   const markGroupBtn=e.target.closest('.npc-group-mark-read-btn');
+   if(markGroupBtn){
+    const npcKey=markGroupBtn.getAttribute('data-mark-group-read');
+    markNpcGroupAsRead(npcKey);
+    return;
+   }
+   const groupHead=e.target.closest('.npc-speech-group-head');
+   if(groupHead){
+    const npcKey=groupHead.getAttribute('data-npc-group-toggle');
+    toggleNpcSpeechGroupCollapse(npcKey);
+    return;
+   }
+   if(e.target.closest('#btnToggleHideReadSpeech')){
+    toggleHideReadNpcSpeech();
+    return;
+   }
+   if(e.target.closest('#btnHeaderMarkAllSpeechRead')||e.target.closest('#btnMarkAllSpeechRead')){
+    markAllNpcSpeechAsRead();
     return;
    }
    if(e.target.closest('#npcSpeechLogExpand')||e.target.closest('#npcSpeechLogToggle')){
@@ -6411,27 +7083,59 @@ function ensureNpcSpeechFeedDOM(){
 }
 
 function renderNpcSpeechFeedInLayer(){
+ const unreadTotal=npcSpeechLog.reduce((acc,it)=>acc+(it&&!it.read?1:0),0);
  const pillTxt=$('npcSpeechLogPillTxt');
  if(pillTxt){
-  pillTxt.textContent=(lang==='de'?`NPC-Log (${npcSpeechLog.length})`:`NPC Log (${npcSpeechLog.length})`);
+  const badgeStr=unreadTotal>0?`${unreadTotal}/${npcSpeechLog.length}`:`${npcSpeechLog.length}`;
+  pillTxt.textContent=(lang==='de'?`NPC-Log (${badgeStr})`:`NPC Log (${badgeStr})`);
  }
  const expBtn=$('npcSpeechLogExpand');
  if(expBtn){
   expBtn.textContent='Expand';
   expBtn.setAttribute('aria-expanded',npcSpeechDrawerOpen?'true':'false');
  }
+ const hideBtn=$('btnToggleHideReadSpeech');
+ if(hideBtn){
+  hideBtn.classList.toggle('active',npcSpeechHideRead);
+  hideBtn.textContent=npcSpeechHideRead
+   ?(lang==='de'?'👁️ Alle zeigen':'👁️ Show All')
+   :(lang==='de'?'👁️ Gelesene ausblenden':'👁️ Hide Read');
+ }
+ const headerMarkAllBtn=$('btnHeaderMarkAllSpeechRead');
+ if(headerMarkAllBtn){
+  headerMarkAllBtn.classList.toggle('all-read',unreadTotal===0);
+  headerMarkAllBtn.innerHTML=`✓ Mark All as Read <span id="npcSpeechHeaderUnreadCount" class="npc-speech-header-unread-pill">(${unreadTotal})</span>`;
+ }
+ const markAllBtn=$('btnMarkAllSpeechRead');
+ if(markAllBtn){
+  markAllBtn.textContent=lang==='de'
+   ?`✓ Alle gelesen (${unreadTotal})`
+   :`✓ Mark All as Read (${unreadTotal})`;
+ }
  const searchInp=$('npcSpeechSearchInput');
  if(searchInp){
-  searchInp.placeholder=lang==='de'?'🔍 NPC-Name oder Stichwort filtern...':'🔍 Filter by NPC name or keyword...';
+  searchInp.placeholder=lang==='de'
+   ?'🔍 Live-Filter: Name, Trait oder Stichwort...'
+   :'🔍 Live filter: NPC name, trait, or speech keyword...';
   if(document.activeElement!==searchInp&&searchInp.value!==npcSpeechSearchQuery){
    searchInp.value=npcSpeechSearchQuery;
   }
  }
  const filteredLog=filterNpcSpeechLog(npcSpeechLog,npcSpeechSearchQuery);
+ const groupedNpcLog=groupNpcSpeechByNpc(filteredLog,npcSpeechHideRead);
+ const filterMetaEl=$('npcSpeechFilterMeta');
+ if(filterMetaEl){
+  const qTrim=npcSpeechSearchQuery.trim();
+  if(qTrim){
+   filterMetaEl.innerHTML=`<span>🔎 Filter: <b style="color:#6dff9b">"${qTrim}"</b></span><span>${filteredLog.length}/${npcSpeechLog.length} ${lang==='de'?'Treffer':'matches'} (${groupedNpcLog.length} NPCs)</span>`;
+  }else{
+   filterMetaEl.innerHTML=`<span>${lang==='de'?'Filtert live nach: Name · Trait · Dialogtext':'Live filters by: Name · Trait · Speech text'}</span><span>${npcSpeechLog.length} ${lang==='de'?'Einträge':'entries'}</span>`;
+  }
+ }
  const drTitle=$('npcSpeechDrawerTitle');
  if(drTitle){
   const countStr=npcSpeechSearchQuery.trim()?`${filteredLog.length}/${npcSpeechLog.length}`:`${npcSpeechLog.length}`;
-  drTitle.textContent=(lang==='de'?`📜 NPC-Verlauf (${countStr})`:`📜 Full NPC History (${countStr})`);
+  drTitle.textContent=(lang==='de'?`📜 NPC-Verlauf (${countStr} · ${groupedNpcLog.length} NPCs)`:`📜 Full NPC History (${countStr} · ${groupedNpcLog.length} NPCs)`);
  }
  const statsEl=$('npcGreekDecoderStats');
  const activeEl=$('npcGreekDecoderActive');
@@ -6464,25 +7168,68 @@ function renderNpcSpeechFeedInLayer(){
   return;
  }
  if(!filteredLog.length){
-  listEl.innerHTML=`<div style="opacity:.75;font-size:10px;padding:4px">${lang==='de'?'Keine Einträge für diesen Suchbegriff gefunden.':'No speech entries match this search filter.'}</div>`;
+  listEl.innerHTML=`<div style="opacity:.75;font-size:10px;padding:4px">${lang==='de'?'Keine Einträge für Name, Trait oder Stichwort gefunden.':'No speech entries match this NPC name, trait, or keyword filter.'}</div>`;
+  return;
+ }
+ if(!groupedNpcLog.length){
+  listEl.innerHTML=`<div style="opacity:.78;font-size:10px;padding:4px">${lang==='de'?'Alle Einträge wurden als gelesen markiert. Tippe auf „Alle zeigen“, um gelesene Dialoge einzublenden.':'All entries are marked as read. Tap "Show All" to view read dialogue.'}</div>`;
   return;
  }
  const nowMs=Date.now();
- listEl.innerHTML=filteredLog.map((item,idx)=>{
-  const catCls=item.cat||'new';
-  const lexEntry=GREEK_WORD_PARTS_LEXICON[idx%GREEK_WORD_PARTS_LEXICON.length];
-  const u=cl(Math.floor(Number(npcGreekWordPartsState[lexEntry.id])||0),0,lexEntry.greekParts.length);
-  const normName=normalizeGreekTextPartByPart(item.name||'');
-  const normText=normalizeGreekTextPartByPart(item.text||'');
-  const wordPartHtml=formatGreekWordPartByPartHtml(lexEntry,u);
-  const elapsedStr=formatNpcSpeechTimeElapsed(item.ts,nowMs);
-  return `<div class="npc-speech-entry ${catCls}" data-log-idx="${idx}">
-   <div class="npc-speech-entry-top">
-    <span>${item.icon||'🗣️'} ${normName}</span>
-    <span>E${item.floor||1} · ${item.time||''}<span class="npc-speech-elapsed" data-ts="${item.ts||''}">⏱️ ${elapsedStr}</span></span>
+ listEl.innerHTML=groupedNpcLog.map(group=>{
+  const normNpcName=normalizeGreekTextPartByPart(group.name||'');
+  const normNpcTrait=normalizeGreekTextPartByPart(group.trait||resolveNpcTrait(group));
+  const traitBadgeHtml=normNpcTrait?`<span class="npc-speech-trait-badge">${normNpcTrait}</span>`:'';
+  const isCollapsed=Boolean(npcSpeechCollapsedGroups[group.npcKey]);
+  const allRead=group.unreadCount===0;
+  const unreadBadge=group.unreadCount>0
+   ?`<span class="npc-speech-unread-badge">${group.unreadCount} ${lang==='de'?'neu':'unread'}</span>`
+   :`<span class="npc-speech-allread-badge">✓ ${lang==='de'?'gelesen':'read'}</span>`;
+  const groupMarkBtn=group.unreadCount>0
+   ?`<button type="button" class="npc-group-mark-read-btn" data-mark-group-read="${group.npcKey}">✓ ${lang==='de'?'Alle':'Read All'}</button>`
+   :'';
+  const entriesHtml=group.visibleEntries.map(({item,logIdx,entryId,isRead})=>{
+   const catCls=item.cat||'new';
+   const lexEntry=GREEK_WORD_PARTS_LEXICON[logIdx%GREEK_WORD_PARTS_LEXICON.length];
+   const u=cl(Math.floor(Number(npcGreekWordPartsState[lexEntry.id])||0),0,lexEntry.greekParts.length);
+   const normText=normalizeGreekTextPartByPart(item.text||'');
+   const entryTrait=normalizeGreekTextPartByPart(resolveNpcTrait(item));
+   const entryTraitHtml=entryTrait?`<span class="npc-speech-trait-badge">${entryTrait}</span>`:'';
+   const glowInfo=evaluateNpcSpeechQuestFactionGlow(item);
+   const glowClasses=glowInfo.hasGlow
+    ?` quest-faction-glow${glowInfo.isQuestMatch?' quest-glow':''}${glowInfo.isFactionMatch?' faction-glow':''}`
+    :'';
+   const glowBadgeLbl=glowInfo.glowType==='both'
+    ?(lang==='de'?'✨ Quest & Fraktion':'✨ Quest & Faction')
+    :glowInfo.isQuestMatch
+     ?(lang==='de'?'✨ Quest-Ziel':'✨ Quest Goal')
+     :(lang==='de'?'✨ Fraktions-Ziel':'✨ Faction Goal');
+   const glowBadgeHtml=glowInfo.hasGlow
+    ?`<span class="npc-speech-quest-glow-badge" title="${glowInfo.matchedKeywords.join(', ')}">${glowBadgeLbl}</span>`
+    :'';
+   const wordPartHtml=formatGreekWordPartByPartHtml(lexEntry,u);
+   const elapsedStr=formatNpcSpeechTimeElapsed(item.ts,nowMs);
+   const markBtnLabel=isRead?(lang==='de'?'✓ Gelesen':'✓ Read'):'Mark as Read';
+   const isMerchant=isMerchantNpcTrait(item)||isMerchantNpcTrait(group);
+   const tradeNpcId=item.npcId||group.npcId||'vnpc_0';
+   const quickTradeBtnHtml=isMerchant
+    ?`<button type="button" class="npc-speech-quick-trade-btn" data-quick-trade-npc="${tradeNpcId}" title="${lang==='de'?'Händler-Shop sofort öffnen':'Immediate access to merchant shop'}">⚖️ Quick Trade</button>`
+    :'';
+   return `<div class="npc-speech-entry ${catCls}${isRead?' is-read':' is-unread'}${glowClasses}${isMerchant?' merchant-speech':''}" data-log-idx="${logIdx}" data-entry-id="${entryId}" data-npc-trait="${entryTrait}" data-is-merchant="${isMerchant?'true':'false'}" data-quest-faction-glow="${glowInfo.hasGlow?'true':'false'}" data-glow-type="${glowInfo.glowType}" data-matched-keywords="${glowInfo.matchedKeywords.join(',')}">
+    <div class="npc-speech-entry-top">
+     <span>E${item.floor||1} · ${item.time||''} ${entryTraitHtml}${glowBadgeHtml}<span class="npc-speech-elapsed" data-ts="${item.ts||''}">⏱️ ${elapsedStr}</span></span>
+     <span class="npc-speech-entry-actions">${quickTradeBtnHtml}<button type="button" class="npc-speech-mark-read-btn${isRead?' read':''}" data-mark-read-id="${entryId}" data-mark-read-idx="${logIdx}">${markBtnLabel}</button></span>
+    </div>
+    <div class="npc-speech-entry-msg">"${normText}"</div>
+    <div style="font-size:8.5px;margin-top:2px;opacity:.88">🔤 ${wordPartHtml} <span style="opacity:.7">(${u}/${lexEntry.greekParts.length} ABC)</span></div>
+   </div>`;
+  }).join('');
+  return `<div class="npc-speech-group${allRead?' all-read':''}${isCollapsed?' collapsed':''}" data-npc-group="${group.npcKey}" data-npc-trait="${normNpcTrait}">
+   <div class="npc-speech-group-head" data-npc-group-toggle="${group.npcKey}">
+    <span class="npc-speech-group-title">${group.icon||'🗣️'} <b>${normNpcName}</b> ${traitBadgeHtml} <span class="npc-speech-group-count">(${group.visibleEntries.length})</span> ${unreadBadge}</span>
+    <span style="display:inline-flex;align-items:center;gap:4px">${groupMarkBtn}<span>${isCollapsed?'▸':'▾'}</span></span>
    </div>
-   <div class="npc-speech-entry-msg">"${normText}"</div>
-   <div style="font-size:8.5px;margin-top:2px;opacity:.88">🔤 ${wordPartHtml} <span style="opacity:.7">(${u}/${lexEntry.greekParts.length} ABC)</span></div>
+   <div class="npc-speech-group-body">${entriesHtml}</div>
   </div>`;
  }).join('');
 }
@@ -6496,22 +7243,26 @@ function recordNpcSpeech(adv, text, cat='new', showFloating=true){
  const timeStr=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
  const lastEntry=npcSpeechLog[0];
  if(!lastEntry||lastEntry.npcId!==adv.id||lastEntry.text!==text){
+  const nowTs=Date.now();
+  const resolvedTrait=resolveNpcTrait(adv);
   const entry={
+   id:`sp_${nowTs}_${Math.random().toString(36).slice(2,7)}`,
    npcId:adv.id,
    name:adv.name,
    icon:adv.icon||'🗣️',
-   trait:adv.trait||'',
+   trait:resolvedTrait,
    text,
    cat:cat||'new',
    floor:floorNum,
    time:timeStr,
-   ts:Date.now()
+   ts:nowTs,
+   read:false
   };
   npcSpeechLog.unshift(entry);
   if(npcSpeechLog.length>120)npcSpeechLog.length=120;
   saveNpcSpeechLog(npcSpeechLog);
 
-  mem.recentLines.unshift({text,cat:cat||'new',floor:floorNum,time:timeStr,ts:entry.ts});
+  mem.recentLines.unshift({text,cat:cat||'new',floor:floorNum,time:timeStr,ts:entry.ts,trait:resolvedTrait});
   if(mem.recentLines.length>20)mem.recentLines.length=20;
   saveNpcMemoryStore(npcMemStore);
   unlockRandomGreekWordPart('speech');
@@ -6831,11 +7582,60 @@ function spawnAdventurersForFloor(){
  saveNpcMemoryStore(npcMemStore);
 }
 
+function triggerNpcCardPopIn(adv){
+ if(!adv||!adv.domEl)return;
+ const el=adv.domEl;
+ if(adv.cardExitTimer){clearTimeout(adv.cardExitTimer);adv.cardExitTimer=null;}
+ if(adv.cardPopTimer){clearTimeout(adv.cardPopTimer);adv.cardPopTimer=null;}
+ adv.cardVisible=true;
+ adv.cardAnimState='pop-in';
+ el.style.display='block';
+ el.classList.remove('is-exiting','defeated-exit');
+ el.classList.add('pop-in');
+ el.setAttribute('data-card-anim','pop-in');
+ adv.cardPopTimer=setTimeout(()=>{
+  if(adv&&adv.cardAnimState==='pop-in'){
+   adv.cardAnimState='';
+   if(adv.domEl){
+    adv.domEl.classList.remove('pop-in');
+    adv.domEl.setAttribute('data-card-anim','idle');
+   }
+  }
+ },290);
+}
+window.triggerNpcCardPopIn=triggerNpcCardPopIn;
+
+function triggerNpcCardExit(adv, isDefeated=false){
+ if(!adv||!adv.domEl)return;
+ const el=adv.domEl;
+ if(adv.cardPopTimer){clearTimeout(adv.cardPopTimer);adv.cardPopTimer=null;}
+ if(!adv.cardVisible&&el.style.display==='none')return;
+ if(adv.cardAnimState==='is-exiting'||adv.cardAnimState==='defeated-exit')return;
+ adv.cardVisible=false;
+ const exitCls=isDefeated?'defeated-exit':'is-exiting';
+ adv.cardAnimState=exitCls;
+ el.classList.remove('pop-in');
+ el.classList.add('is-exiting');
+ if(isDefeated)el.classList.add('defeated-exit');
+ el.setAttribute('data-card-anim',exitCls);
+ if(adv.cardExitTimer)clearTimeout(adv.cardExitTimer);
+ adv.cardExitTimer=setTimeout(()=>{
+  if(!adv.cardVisible&&adv.domEl){
+   adv.domEl.style.display='none';
+   adv.domEl.classList.remove('is-exiting','defeated-exit');
+   adv.domEl.setAttribute('data-card-anim','hidden');
+   adv.cardAnimState='';
+  }
+ },isDefeated?280:220);
+}
+window.triggerNpcCardExit=triggerNpcCardExit;
+
 function createAdventurerDomCard(adv){
  const nl=$('npcLayer2D');if(!nl)return;
  const card=document.createElement('div');
- card.className='npc-card-2d';
+ card.className='npc-card-2d pop-in';
  card.id='npc-card-'+adv.id;
+ card.setAttribute('data-card-anim','pop-in');
  card.innerHTML=`
   <div class="npc-head-row">
    <button class="npc-avatar-btn" data-npc-lock="${adv.id}" title="Avatar antippen für Ziel-Lock (Angriff erlauben/sperren)">${adv.icon}</button>
@@ -6869,6 +7669,8 @@ function createAdventurerDomCard(adv){
  });
  nl.appendChild(card);
  adv.domEl=card;
+ adv.cardVisible=true;
+ adv.cardAnimState='pop-in';
 }
 
 function createVillageNpcDomCard(vnpc){
@@ -7107,7 +7909,7 @@ function hurtAdventurer(adv,dmg){
  if(adv.hp<=0){
   adv.dead=true;
   world.remove(adv.m.root);
-  if(adv.domEl)adv.domEl.style.display='none';
+  triggerNpcCardExit(adv,true);
  }
 }
 
@@ -7125,7 +7927,7 @@ function hitAdventurerByPlayer(adv,dmg,isCrit){
  if(adv.hp<=0){
   adv.dead=true;
   world.remove(adv.m.root);
-  if(adv.domEl)adv.domEl.style.display='none';
+  triggerNpcCardExit(adv,true);
   const wName=(S.eq&&S.eq.weapon)?S.eq.weapon.n:'Waffe';
   const deathInfo=lang==='de'
    ?`auf Ebene ${S.floor} mit ${wName} (Lv ${S.lvl})`
@@ -7145,18 +7947,44 @@ function hitAdventurerByPlayer(adv,dmg,isCrit){
 
 function updateAdventurerDomCard(adv){
  const el=adv.domEl;if(!el)return;
- if(adv.dead||mode!=='play'||invOpen||isPaused||villageActive||guildShopActive){el.style.display='none';return;}
+ if(adv.dead||mode!=='play'||invOpen||isPaused||villageActive||guildShopActive){
+  if(adv.cardVisible){
+   triggerNpcCardExit(adv,Boolean(adv.dead));
+  }else if(!adv.cardAnimState){
+   el.style.display='none';
+  }
+  return;
+ }
  const dPlayer=Math.hypot(adv.x-P.x,adv.y-P.y);
- if(dPlayer>15){el.style.display='none';return;}
+ if(dPlayer>15){
+  if(adv.cardVisible){
+   triggerNpcCardExit(adv,false);
+  }else if(!adv.cardAnimState){
+   el.style.display='none';
+  }
+  return;
+ }
  const v=new Tt.Vector3(adv.x,1.95,adv.y).project(cam);
- if(v.z>1){el.style.display='none';return;}
- el.style.display='block';
+ if(v.z>1){
+  if(adv.cardVisible){
+   triggerNpcCardExit(adv,false);
+  }else if(!adv.cardAnimState){
+   el.style.display='none';
+  }
+  return;
+ }
+ if(!adv.cardVisible){
+  triggerNpcCardPopIn(adv);
+ }else{
+  el.style.display='block';
+ }
  const sx=cl((v.x*0.5+0.5)*innerWidth,95,innerWidth-95);
  const sy=cl((-v.y*0.5+0.5)*innerHeight,65,innerHeight-110);
  el.style.left=sx+'px';
  el.style.top=sy+'px';
  const isCamp=adv.state==='camp';
- el.className='npc-card-2d '+(adv.inDanger?'danger':adv.hostileToPlayer?'negative':isCamp?'camp':adv.stance==='positive'?'positive':'')+(adv.targetLocked?' locked':'');
+ const animCls=adv.cardAnimState?(' '+(adv.cardAnimState==='defeated-exit'?'is-exiting defeated-exit':adv.cardAnimState)):'';
+ el.className='npc-card-2d '+(adv.inDanger?'danger':adv.hostileToPlayer?'negative':isCamp?'camp':adv.stance==='positive'?'positive':'')+(adv.targetLocked?' locked':'')+animCls;
  const avBtn=el.querySelector('.npc-avatar-btn');
  if(avBtn){
   avBtn.classList.toggle('locked',adv.targetLocked);
@@ -7454,25 +8282,48 @@ function renderNpcRelationsModal(){
  const speechCountEl=$('npcSpeechHistoryCount');
  const speechTitleEl=$('npcSpeechHistoryTitle');
  const speechListEl=$('npcSpeechHistoryList');
+ const unreadTotal=npcSpeechLog.reduce((acc,it)=>acc+(it&&!it.read?1:0),0);
  if(speechTitleEl){
   speechTitleEl.textContent=lang==='de'?'💬 Letzte NPC-Interaktionen & Dialog-Verlauf':'💬 Recent NPC Interactions & Dialogue Log';
  }
  if(speechCountEl){
-  speechCountEl.textContent=lang==='de'?`${npcSpeechLog.length} Einträge`:`${npcSpeechLog.length} Entries`;
+  speechCountEl.textContent=lang==='de'?`${unreadTotal} ungelesen / ${npcSpeechLog.length} Einträge`:`${unreadTotal} unread / ${npcSpeechLog.length} Entries`;
  }
  if(speechListEl){
   if(!npcSpeechLog.length){
    speechListEl.innerHTML=`<div style="opacity:.7;font-size:11px;padding:6px">${lang==='de'?'Noch keine NPC-Dialoge in diesem Durchlauf aufgezeichnet.':'No NPC dialogue lines recorded yet.'}</div>`;
   }else{
-   speechListEl.innerHTML=npcSpeechLog.map(item=>{
-    const catCls=item.cat||'new';
-    const catBadge=catCls==='positive'?'💚 Freund':catCls==='danger'?'⚠️ Gefahr':catCls==='negative'?'⚔️ Konflikt':catCls==='camp'?'🔥 Lagerfeuer':'🛡️ Begegnung';
-    return `<div class="npc-speech-entry ${catCls}">
-     <div class="npc-speech-entry-top">
-      <span>${item.icon||'🗣️'} <b>${item.name}</b> <small style="opacity:.8">(${catBadge})</small></span>
-      <span>${lang==='de'?'Ebene':'Floor'} ${item.floor||1} · ${item.time||''}</span>
+   const grouped=groupNpcSpeechByNpc(npcSpeechLog,false);
+   speechListEl.innerHTML=grouped.map(group=>{
+    const unreadBadge=group.unreadCount>0
+     ?`<span class="npc-speech-unread-badge">${group.unreadCount} ${lang==='de'?'neu':'unread'}</span>`
+     :`<span class="npc-speech-allread-badge">✓ ${lang==='de'?'gelesen':'read'}</span>`;
+    const entriesHtml=group.entries.map(({item,logIdx,entryId,isRead})=>{
+     const catCls=item.cat||'new';
+     const catBadge=catCls==='positive'?'💚 Freund':catCls==='danger'?'⚠️ Gefahr':catCls==='negative'?'⚔️ Konflikt':catCls==='camp'?'🔥 Lagerfeuer':'🛡️ Begegnung';
+     const glowInfo=evaluateNpcSpeechQuestFactionGlow(item);
+     const glowClasses=glowInfo.hasGlow
+      ?` quest-faction-glow${glowInfo.isQuestMatch?' quest-glow':''}${glowInfo.isFactionMatch?' faction-glow':''}`
+      :'';
+     const markBtnLabel=isRead?(lang==='de'?'✓ Gelesen':'✓ Read'):'Mark as Read';
+     const isMerchant=isMerchantNpcTrait(item)||isMerchantNpcTrait(group);
+     const tradeNpcId=item.npcId||group.npcId||'vnpc_0';
+     const quickTradeBtnHtml=isMerchant
+      ?`<button type="button" class="npc-speech-quick-trade-btn" onclick="triggerNpcQuickTrade('${tradeNpcId}')" data-quick-trade-npc="${tradeNpcId}">⚖️ Quick Trade</button>`
+      :'';
+     return `<div class="npc-speech-entry ${catCls}${isRead?' is-read':' is-unread'}${glowClasses}${isMerchant?' merchant-speech':''}" data-log-idx="${logIdx}" data-entry-id="${entryId}" data-is-merchant="${isMerchant?'true':'false'}" data-quest-faction-glow="${glowInfo.hasGlow?'true':'false'}" data-glow-type="${glowInfo.glowType}">
+      <div class="npc-speech-entry-top">
+       <span><small style="opacity:.85">${catBadge}</small> · ${lang==='de'?'Ebene':'Floor'} ${item.floor||1} · ${item.time||''}</span>
+       <span class="npc-speech-entry-actions">${quickTradeBtnHtml}<button type="button" class="npc-speech-mark-read-btn${isRead?' read':''}" onclick="markNpcSpeechAsRead('${entryId}')" data-mark-read-id="${entryId}">${markBtnLabel}</button></span>
+      </div>
+      <div class="npc-speech-entry-msg">"${item.text}"</div>
+     </div>`;
+    }).join('');
+    return `<div class="npc-speech-group${group.unreadCount===0?' all-read':''}" data-npc-group="${group.npcKey}">
+     <div class="npc-speech-group-head">
+      <span class="npc-speech-group-title">${group.icon||'🗣️'} <b>${group.name}</b> <span class="npc-speech-group-count">(${group.entries.length})</span> ${unreadBadge}</span>
      </div>
-     <div class="npc-speech-entry-msg">"${item.text}"</div>
+     <div class="npc-speech-group-body">${entriesHtml}</div>
     </div>`;
    }).join('');
   }

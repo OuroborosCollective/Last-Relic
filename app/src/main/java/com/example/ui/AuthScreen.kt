@@ -264,8 +264,8 @@ fun AuthScreen(
           )
           FeatureRow(
             icon = Icons.Default.Security,
-            title = "In-App-Käufe & Ad-Free Status",
-            subtitle = "Werbefreiheit bleibt dauerhaft auf deinem Google-Konto gespeichert"
+            title = "Gilden-Laden & Fraktions-Vertrauen",
+            subtitle = "Fortschritt bei Dorf-Händlern, Quests & Kanais Würfel sicher in der Cloud"
           )
         }
 

@@ -777,6 +777,167 @@ object GameRuntimeValidator {
     )
   }
 
+  data class NpcSpeechLogEntry(
+    val id: String,
+    val npcId: String,
+    val name: String,
+    val icon: String = "🗣️",
+    val trait: String = "",
+    val text: String,
+    val cat: String = "new",
+    val floor: Int = 1,
+    val timestampMs: Long = 0L,
+    val read: Boolean = false
+  )
+
+  data class NpcSpeechGroup(
+    val npcKey: String,
+    val npcId: String,
+    val name: String,
+    val icon: String,
+    val trait: String,
+    val entries: List<NpcSpeechLogEntry>,
+    val visibleEntries: List<NpcSpeechLogEntry>,
+    val unreadCount: Int,
+    val totalCount: Int,
+    val latestTimestampMs: Long
+  )
+
+  data class NpcSpeechGlowEvaluation(
+    val hasGlow: Boolean,
+    val isQuestMatch: Boolean,
+    val isFactionMatch: Boolean,
+    val glowType: String,
+    val matchedQuestKeywords: List<String>,
+    val matchedFactionKeywords: List<String>,
+    val matchedKeywords: List<String>
+  )
+
+  /**
+   * Evaluates whether an NPC speech log entry contains keywords related to the active player quest
+   * or current faction goal so that `#npcLayer2D .npc-speech-entry` pulses with a subtle glow.
+   */
+  fun evaluateNpcSpeechQuestFactionGlow(
+    entry: NpcSpeechLogEntry,
+    questKeywords: List<String> = listOf("quest", "auftrag", "ἄθλος", "bounty", "relikt", "relic", "wächter", "guardian", "husk", "eidolon", "εἴδωλον", "mage", "drone", "archer", "brute"),
+    factionKeywords: List<String> = listOf("vertrauen", "trust", "fraktion", "faction", "gilde", "guild", "θίασος", "handel", "trade", "gruppe", "party", "rette", "save", "lagerfeuer", "campfire", "μύστης", "mystes")
+  ): NpcSpeechGlowEvaluation {
+    val textLower = entry.text.lowercase()
+    val matchedQuest = questKeywords
+      .map { it.trim().lowercase() }
+      .filter { it.isNotEmpty() && textLower.contains(it) }
+      .distinct()
+    val matchedFaction = factionKeywords
+      .map { it.trim().lowercase() }
+      .filter { it.isNotEmpty() && textLower.contains(it) }
+      .distinct()
+    val isQuestMatch = matchedQuest.isNotEmpty()
+    val isFactionMatch = matchedFaction.isNotEmpty()
+    val hasGlow = isQuestMatch || isFactionMatch
+    val glowType = when {
+      isQuestMatch && isFactionMatch -> "both"
+      isQuestMatch -> "quest"
+      isFactionMatch -> "faction"
+      else -> "none"
+    }
+    return NpcSpeechGlowEvaluation(
+      hasGlow = hasGlow,
+      isQuestMatch = isQuestMatch,
+      isFactionMatch = isFactionMatch,
+      glowType = glowType,
+      matchedQuestKeywords = matchedQuest,
+      matchedFactionKeywords = matchedFaction,
+      matchedKeywords = (matchedQuest + matchedFaction).distinct()
+    )
+  }
+
+  /**
+   * Live-filters NPC speech log entries based on the NPC's name, their trait, or keywords found within the speech text.
+   */
+  fun filterNpcSpeechLog(
+    entries: List<NpcSpeechLogEntry>,
+    query: String?
+  ): List<NpcSpeechLogEntry> {
+    val q = query?.trim()?.lowercase().orEmpty()
+    if (q.isEmpty()) return entries
+    val tokens = q.split(Regex("\\s+")).filter { it.isNotEmpty() }
+    return entries.filter { item ->
+      val haystack = "${item.name} ${item.trait} ${item.text}".lowercase()
+      tokens.all { token -> haystack.contains(token) }
+    }
+  }
+
+  /**
+   * Groups NPC speech history entries by NPC and optionally filters out entries marked as read
+   * to keep the scrollable speech drawer clean.
+   */
+  fun groupNpcSpeechByNpc(
+    entries: List<NpcSpeechLogEntry>,
+    hideRead: Boolean = false
+  ): List<NpcSpeechGroup> {
+    val grouped = linkedMapOf<String, MutableList<NpcSpeechLogEntry>>()
+    for (entry in entries) {
+      val key = entry.npcId.ifBlank { entry.name.ifBlank { "unknown" } }
+      grouped.getOrPut(key) { mutableListOf() }.add(entry)
+    }
+
+    val result = mutableListOf<NpcSpeechGroup>()
+    for ((key, allEntries) in grouped) {
+      val first = allEntries.first()
+      val resolvedTrait = allEntries.firstOrNull { it.trait.isNotBlank() }?.trait.orEmpty()
+      val visible = if (hideRead) allEntries.filter { !it.read } else allEntries
+      if (visible.isNotEmpty()) {
+        val unreadCount = allEntries.count { !it.read }
+        val latestTs = allEntries.maxOfOrNull { it.timestampMs } ?: 0L
+        result.add(
+          NpcSpeechGroup(
+            npcKey = key,
+            npcId = first.npcId.ifBlank { key },
+            name = first.name.ifBlank { key },
+            icon = first.icon,
+            trait = resolvedTrait,
+            entries = allEntries.toList(),
+            visibleEntries = visible,
+            unreadCount = unreadCount,
+            totalCount = allEntries.size,
+            latestTimestampMs = latestTs
+          )
+        )
+      }
+    }
+    return result
+  }
+
+  /**
+   * Marks a specific speech entry (or all entries for an NPC group) as read and returns the updated list.
+   */
+  fun markNpcSpeechAsRead(
+    entries: List<NpcSpeechLogEntry>,
+    entryId: String? = null,
+    npcKey: String? = null,
+    readState: Boolean = true
+  ): List<NpcSpeechLogEntry> {
+    return entries.map { item ->
+      val itemNpcKey = item.npcId.ifBlank { item.name.ifBlank { "unknown" } }
+      val matchesId = !entryId.isNullOrBlank() && item.id == entryId
+      val matchesGroup = !npcKey.isNullOrBlank() && itemNpcKey == npcKey
+      if (matchesId || matchesGroup) {
+        item.copy(read = readState)
+      } else {
+        item
+      }
+    }
+  }
+
+  /**
+   * Clears the unread status of all current NPC speech history entries at once.
+   */
+  fun markAllNpcSpeechAsRead(
+    entries: List<NpcSpeechLogEntry>
+  ): List<NpcSpeechLogEntry> {
+    return entries.map { it.copy(read = true) }
+  }
+
   /**
    * Verifies that bundled WebGL game assets exist and contain required HUD/runtime structures.
    */
@@ -803,6 +964,8 @@ object GameRuntimeValidator {
         "guildShopOvl",
         "openGuildShop",
         "buyGuildShopItem",
+        "groupNpcSpeechByNpc",
+        "markNpcSpeechAsRead",
         "isWarriorMeleeAttack",
         "getAutoAttackMaxRange",
         "qtabDaily",
@@ -912,5 +1075,20 @@ object GameRuntimeValidator {
     if (rollPct < acc) return 0
     return -1
   }
+
+  private val merchantTraitKeywords = listOf(
+    "merchant", "händler", "haendler", "κάπηλος", "kapelos", "ἔμπορος", "emporos",
+    "quartiermeister", "quartermaster", "waffenmeister", "alchemist", "trader",
+    "shop", "shopkeeper", "krämer", "gilden-händler", "guild merchant"
+  )
+
+  fun isMerchantNpcTrait(trait: String?, npcId: String? = null): Boolean {
+    val cleanId = npcId?.trim()?.lowercase().orEmpty()
+    if (cleanId.startsWith("vnpc_")) return true
+    val cleanTrait = trait?.trim()?.lowercase().orEmpty()
+    if (cleanTrait.isEmpty()) return false
+    return merchantTraitKeywords.any { cleanTrait.contains(it) }
+  }
 }
+
 

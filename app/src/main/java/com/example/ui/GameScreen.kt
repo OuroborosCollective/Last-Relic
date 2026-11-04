@@ -471,53 +471,55 @@ fun GameScreen(
             )
           }
 
-          // IAP Remove Ads / VIP Badge
-          if (!adsRemoved) {
-            Row(
-              modifier = Modifier
-                .clip(RoundedCornerShape(50))
-                .background(Color(0x33FFD54A))
-                .border(1.dp, Color(0x88FFD54A), RoundedCornerShape(50))
-                .clickable { viewModel.openIapDialog() }
-                .padding(horizontal = 8.dp, vertical = 3.dp)
-                .testTag("open_iap_button"),
-              verticalAlignment = Alignment.CenterVertically
-            ) {
-              Icon(
-                imageVector = Icons.Default.RemoveCircleOutline,
-                contentDescription = "Werbung entfernen",
-                tint = Color(0xFFFFD54A),
-                modifier = Modifier.size(14.dp)
-              )
-              Spacer(modifier = Modifier.width(4.dp))
-              Text(
-                text = "No-Ads",
-                color = Color(0xFFFFD54A),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold
-              )
-            }
-          } else {
-            Row(
-              modifier = Modifier
-                .clip(RoundedCornerShape(50))
-                .background(Color(0x266DFF9B))
-                .padding(horizontal = 8.dp, vertical = 3.dp),
-              verticalAlignment = Alignment.CenterVertically
-            ) {
-              Icon(
-                imageVector = Icons.Default.Verified,
-                contentDescription = "VIP Werbefrei",
-                tint = Color(0xFF6DFF9B),
-                modifier = Modifier.size(14.dp)
-              )
-              Spacer(modifier = Modifier.width(3.dp))
-              Text(
-                text = "VIP",
-                color = Color(0xFF6DFF9B),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold
-              )
+          // IAP Remove Ads / VIP Badge (hidden until Google Play Billing integration is active)
+          if (GameViewModel.IS_PLAY_BILLING_INTEGRATED) {
+            if (!adsRemoved) {
+              Row(
+                modifier = Modifier
+                  .clip(RoundedCornerShape(50))
+                  .background(Color(0x33FFD54A))
+                  .border(1.dp, Color(0x88FFD54A), RoundedCornerShape(50))
+                  .clickable { viewModel.openIapDialog() }
+                  .padding(horizontal = 8.dp, vertical = 3.dp)
+                  .testTag("open_iap_button"),
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                Icon(
+                  imageVector = Icons.Default.RemoveCircleOutline,
+                  contentDescription = "Werbung entfernen",
+                  tint = Color(0xFFFFD54A),
+                  modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                  text = "No-Ads",
+                  color = Color(0xFFFFD54A),
+                  fontSize = 10.sp,
+                  fontWeight = FontWeight.Bold
+                )
+              }
+            } else {
+              Row(
+                modifier = Modifier
+                  .clip(RoundedCornerShape(50))
+                  .background(Color(0x266DFF9B))
+                  .padding(horizontal = 8.dp, vertical = 3.dp),
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                Icon(
+                  imageVector = Icons.Default.Verified,
+                  contentDescription = "VIP Werbefrei",
+                  tint = Color(0xFF6DFF9B),
+                  modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(3.dp))
+                Text(
+                  text = "VIP",
+                  color = Color(0xFF6DFF9B),
+                  fontSize = 10.sp,
+                  fontWeight = FontWeight.Bold
+                )
+              }
             }
           }
           // Toggleable GameMonitor Performance Pill
@@ -708,8 +710,8 @@ fun GameScreen(
     )
   }
 
-  // In-App Purchase (Remove Ads) Modal
-  if (showIapDialog) {
+  // In-App Purchase (Remove Ads) Modal (hidden until Google Play Billing integration is available)
+  if (GameViewModel.IS_PLAY_BILLING_INTEGRATED && showIapDialog) {
     RemoveAdsIapDialog(
       adsRemoved = adsRemoved,
       onDismiss = { viewModel.closeIapDialog() },
@@ -902,19 +904,21 @@ private fun AdMobBannerBar(
           )
         }
 
-        TextButton(
-          onClick = onRemoveAdsClick,
-          contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-          modifier = Modifier
-            .height(34.dp)
-            .testTag("banner_remove_ads_button")
-        ) {
-          Text(
-            text = "✕ Werbefrei",
-            fontSize = 10.sp,
-            color = Color(0xFFFFD54A),
-            fontWeight = FontWeight.Bold
-          )
+        if (GameViewModel.IS_PLAY_BILLING_INTEGRATED) {
+          TextButton(
+            onClick = onRemoveAdsClick,
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier
+              .height(34.dp)
+              .testTag("banner_remove_ads_button")
+          ) {
+            Text(
+              text = "✕ Werbefrei",
+              fontSize = 10.sp,
+              color = Color(0xFFFFD54A),
+              fontWeight = FontWeight.Bold
+            )
+          }
         }
       }
     }
@@ -1116,7 +1120,7 @@ private fun PlayGamesCloudDialog(
               }
             }
 
-            if (!adsRemoved) {
+            if (GameViewModel.IS_PLAY_BILLING_INTEGRATED && !adsRemoved) {
               OutlinedButton(
                 onClick = onOpenIap,
                 modifier = Modifier
@@ -1456,14 +1460,14 @@ private fun AdMobInterstitialDialog(
         ) {
           Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-              text = "LAST RELIC: NO-ADS EDITION",
+              text = "LAST RELIC · DUNGEON CHRONIK",
               color = Color(0xFF4FD1FF),
               fontWeight = FontWeight.ExtraBold,
               fontSize = 16.sp
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-              text = "Spiele komplett ohne Unterbrechungen nach jedem Run!",
+              text = "Sammle Relikt-Splitter & verhandle mit der Gilde im Dorf für deinen nächsten Run!",
               color = Color(0xFFE8ECF4),
               fontSize = 12.sp,
               textAlign = TextAlign.Center,
@@ -1472,20 +1476,22 @@ private fun AdMobInterstitialDialog(
           }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        if (GameViewModel.IS_PLAY_BILLING_INTEGRATED) {
+          Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-          onClick = onRemoveAds,
-          modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp),
-          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFB347))
-        ) {
-          Text(
-            text = "Werbung dauerhaft entfernen",
-            color = Color(0xFF0A0E17),
-            fontWeight = FontWeight.ExtraBold
-          )
+          Button(
+            onClick = onRemoveAds,
+            modifier = Modifier
+              .fillMaxWidth()
+              .height(48.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFB347))
+          ) {
+            Text(
+              text = "Werbung dauerhaft entfernen",
+              color = Color(0xFF0A0E17),
+              fontWeight = FontWeight.ExtraBold
+            )
+          }
         }
       }
     }
