@@ -9,7 +9,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.robolectric.annotation.Config
 
+@Config(sdk = [36], manifest = Config.NONE)
 class GameRepositoryRuleTest : FirestoreEmulatorTestBase() {
 
   @Test

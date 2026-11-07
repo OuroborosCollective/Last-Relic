@@ -109,6 +109,14 @@ jobs:
             echo "KEY_PASSWORD=$EFF_KEY_PASS" >> $GITHUB_ENV
           fi
 
+          # Pre-cache Robolectric SDK 36 runtime JAR from Google's Maven Central mirror for fast offline unit testing
+          ROBO_M2_DIR="$HOME/.m2/repository/org/robolectric/android-all-instrumented/16-robolectric-13921718-i7"
+          ROBO_JAR="$ROBO_M2_DIR/android-all-instrumented-16-robolectric-13921718-i7.jar"
+          if [ ! -f "$ROBO_JAR" ]; then
+            mkdir -p "$ROBO_M2_DIR"
+            curl -sSL --retry 3 "https://maven-central.storage-download.googleapis.com/maven2/org/robolectric/android-all-instrumented/16-robolectric-13921718-i7/android-all-instrumented-16-robolectric-13921718-i7.jar" -o "$ROBO_JAR" || rm -f "$ROBO_JAR"
+          fi
+
       - name: Run Unit & Runtime Integrity Tests
         run: gradle :app:testDebugUnitTest
 

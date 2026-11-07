@@ -1,6 +1,8 @@
 package com.example
 
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -24,16 +26,32 @@ import com.example.ui.GameViewModel
 import com.example.ui.theme.MyApplicationTheme
 import com.example.util.AdMobRewardedAdManager
 import com.google.firebase.Firebase
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
+fun ensureFirebaseInitialized(context: Context): Boolean {
+  return try {
+    val appContext = context.applicationContext ?: context
+    if (FirebaseApp.getApps(appContext).isNotEmpty()) {
+      true
+    } else {
+      FirebaseApp.initializeApp(appContext) != null
+    }
+  } catch (t: Throwable) {
+    Log.w("MainActivity", "Firebase initialization unavailable, continuing in local mode", t)
+    false
+  }
+}
+
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    enableEdgeToEdge()
-    AdMobRewardedAdManager.initialize(this)
+    runCatching { enableEdgeToEdge() }
+    ensureFirebaseInitialized(this)
+    runCatching { AdMobRewardedAdManager.initialize(this) }
     setContent {
       MyApplicationTheme(darkTheme = true, dynamicColor = false) {
         LastRelicApp()
@@ -46,26 +64,41 @@ class MainActivity : ComponentActivity() {
 fun LastRelicApp() {
   val context = LocalContext.current
   val scope = rememberCoroutineScope()
-  val auth = remember { Firebase.auth }
-  var currentUser by remember { mutableStateOf(auth.currentUser) }
+  val auth: FirebaseAuth? = remember(context) {
+    if (ensureFirebaseInitialized(context)) {
+      runCatching { Firebase.auth }.getOrNull()
+    } else {
+      null
+    }
+  }
+  var currentUser by remember {
+    mutableStateOf(runCatching { auth?.currentUser }.getOrNull())
+  }
 
   DisposableEffect(auth) {
-    val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-      currentUser = firebaseAuth.currentUser
-    }
-    auth.addAuthStateListener(listener)
-    onDispose {
-      auth.removeAuthStateListener(listener)
+    if (auth == null) {
+      onDispose { }
+    } else {
+      val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+        currentUser = runCatching { firebaseAuth.currentUser }.getOrNull()
+      }
+      runCatching { auth.addAuthStateListener(listener) }
+      onDispose {
+        runCatching { auth.removeAuthStateListener(listener) }
+      }
     }
   }
 
   val user = currentUser
-  var isOfflineLocalMode by remember { mutableStateOf(false) }
+  var isOfflineLocalMode by remember { mutableStateOf(true) }
 
   if (user == null && !isOfflineLocalMode) {
     AuthScreen(
       onAuthSuccess = {
-        currentUser = auth.currentUser
+        currentUser = runCatching { auth?.currentUser }.getOrNull()
+        if (currentUser == null) {
+          isOfflineLocalMode = true
+        }
       },
       onPlayOffline = {
         isOfflineLocalMode = true
@@ -83,8 +116,14 @@ fun LastRelicApp() {
       key = activeUid,
       factory = viewModelFactory {
         initializer {
-          val dbId = context.applicationContext.getString(R.string.firestore_database_id)
-          val firestore = FirebaseFirestore.getInstance(dbId)
+          val firestore = if (ensureFirebaseInitialized(context)) {
+            runCatching {
+              val dbId = context.applicationContext.getString(R.string.firestore_database_id)
+              FirebaseFirestore.getInstance(dbId)
+            }.getOrNull()
+          } else {
+            null
+          }
           val repository = GameRepository(firestore)
           GameViewModel(
             repository = repository,
@@ -102,9 +141,9 @@ fun LastRelicApp() {
           try {
             val credentialManager = CredentialManager.create(context)
             credentialManager.clearCredentialState(ClearCredentialStateRequest())
-          } catch (_: Exception) {
+          } catch (_: Throwable) {
           }
-          auth.signOut()
+          runCatching { auth?.signOut() }
           currentUser = null
           isOfflineLocalMode = false
         }

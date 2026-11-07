@@ -134,8 +134,8 @@ object AdMobRewardedAdManager {
       } else {
         loadRewardedAd(appContext)
       }
-    } catch (e: Exception) {
-      Log.w(TAG, "AdMob SDK initialization skipped or failed in current environment", e)
+    } catch (t: Throwable) {
+      Log.w(TAG, "AdMob SDK initialization skipped or failed in current environment", t)
     }
   }
 
@@ -169,11 +169,11 @@ object AdMobRewardedAdManager {
           }
         }
       )
-    } catch (e: Exception) {
+    } catch (t: Throwable) {
       rewardedAd = null
       isLoadingAd = false
       _isAdReady.value = false
-      Log.w(TAG, "Exception while requesting AdMob RewardedAd", e)
+      Log.w(TAG, "Throwable while requesting AdMob RewardedAd", t)
     }
   }
 
@@ -200,45 +200,52 @@ object AdMobRewardedAdManager {
       return
     }
 
-    currentAd.fullScreenContentCallback = object : FullScreenContentCallback() {
-      override fun onAdShowedFullScreenContent() {
-        Log.d(TAG, "AdMob RewardedAd showed fullscreen content")
-        onAudioPauseChanged(true)
+    try {
+      currentAd.fullScreenContentCallback = object : FullScreenContentCallback() {
+        override fun onAdShowedFullScreenContent() {
+          Log.d(TAG, "AdMob RewardedAd showed fullscreen content")
+          onAudioPauseChanged(true)
+        }
+
+        override fun onAdDismissedFullScreenContent() {
+          Log.d(TAG, "AdMob RewardedAd dismissed fullscreen content")
+          rewardedAd = null
+          _isAdReady.value = false
+          onAudioPauseChanged(false)
+          loadRewardedAd(activity.applicationContext)
+        }
+
+        override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+          Log.w(TAG, "AdMob RewardedAd failed to show: ${adError.message}")
+          rewardedAd = null
+          _isAdReady.value = false
+          onAudioPauseChanged(false)
+          loadRewardedAd(activity.applicationContext)
+          onAdUnavailableFallback()
+        }
       }
 
-      override fun onAdDismissedFullScreenContent() {
-        Log.d(TAG, "AdMob RewardedAd dismissed fullscreen content")
-        rewardedAd = null
-        _isAdReady.value = false
-        onAudioPauseChanged(false)
-        loadRewardedAd(activity.applicationContext)
-      }
-
-      override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-        Log.w(TAG, "AdMob RewardedAd failed to show: ${adError.message}")
-        rewardedAd = null
-        _isAdReady.value = false
-        onAudioPauseChanged(false)
-        loadRewardedAd(activity.applicationContext)
-        onAdUnavailableFallback()
-      }
+      rewardedAd = null
+      _isAdReady.value = false
+      currentAd.show(
+        activity,
+        OnUserEarnedRewardListener { rewardItem ->
+          val grant = calculateInGameReward(
+            rawRewardType = rewardItem.type,
+            rawRewardAmount = rewardItem.amount
+          )
+          Log.d(
+            TAG,
+            "User earned AdMob reward: ${grant.rewardAmount}x ${grant.rewardName} -> +${grant.goldGranted} Gold, +${grant.shardsGranted} Shards"
+          )
+          onUserEarnedReward(grant)
+        }
+      )
+    } catch (t: Throwable) {
+      rewardedAd = null
+      _isAdReady.value = false
+      onAudioPauseChanged(false)
+      onAdUnavailableFallback()
     }
-
-    rewardedAd = null
-    _isAdReady.value = false
-    currentAd.show(
-      activity,
-      OnUserEarnedRewardListener { rewardItem ->
-        val grant = calculateInGameReward(
-          rawRewardType = rewardItem.type,
-          rawRewardAmount = rewardItem.amount
-        )
-        Log.d(
-          TAG,
-          "User earned AdMob reward: ${grant.rewardAmount}x ${grant.rewardName} -> +${grant.goldGranted} Gold, +${grant.shardsGranted} Shards"
-        )
-        onUserEarnedReward(grant)
-      }
-    )
   }
 }

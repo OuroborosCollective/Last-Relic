@@ -156,5 +156,45 @@ class ExampleRobolectricTest {
     assertEquals("13+", appInfo.metaData?.getString("com.google.play.target_age_group"))
     assertEquals(true, appInfo.metaData?.getBoolean("com.google.play.data_safety_declared"))
   }
+
+  @Test
+  fun `MainActivity launches cleanly without crashing or finishing on startup`() {
+    val controller = org.robolectric.Robolectric.buildActivity(MainActivity::class.java).setup()
+    val activity = controller.get()
+    assertFalse("MainActivity must not finish immediately on startup", activity.isFinishing)
+    assertFalse("MainActivity must not be destroyed on startup", activity.isDestroyed)
+    controller.pause().stop().destroy()
+  }
+
+  @Test
+  fun `MainActivity and GameRepository survive missing FirebaseApp initialization without crashing`() {
+    com.google.firebase.FirebaseApp.clearInstancesForTest()
+    val repository = com.example.data.GameRepository(db = null)
+    val viewModel = com.example.ui.GameViewModel(
+      repository = repository,
+      currentUserId = "local_offline_hero",
+      defaultPlayerName = "RelicHunter"
+    )
+    assertEquals("local_offline_hero", viewModel.currentUserId)
+    assertEquals("RelicHunter", viewModel.defaultPlayerName)
+    assertEquals("[]", viewModel.getGlobalLeaderboardJson())
+
+    val controller = org.robolectric.Robolectric.buildActivity(MainActivity::class.java).setup()
+    val activity = controller.get()
+    assertFalse("MainActivity must stay open even after FirebaseApp instances were cleared", activity.isFinishing)
+    controller.pause().stop().destroy()
+  }
+
+  @Test
+  fun `Robolectric SDK 36 environment and Android SDK JAR provider are properly configured`() {
+    assertEquals("Robolectric must execute against Android SDK 36", 36, android.os.Build.VERSION.SDK_INT)
+    val javaSpecVersion = System.getProperty("java.specification.version")?.substringBefore(".")?.toIntOrNull() ?: 0
+    assertTrue(
+      "Robolectric SDK 36 requires Java 21+ runtime to prevent DefaultSdkProvider UnsupportedOperationException",
+      javaSpecVersion >= 21
+    )
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    assertEquals("com.aistudio.lastrelic.xkvpzr", context.packageName)
+  }
 }
 

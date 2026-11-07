@@ -360,56 +360,87 @@ fun GameScreen(
             .fillMaxSize()
             .testTag("game_webview"),
           factory = { ctx ->
-            WebView(ctx).apply {
-              layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-              )
-              setLayerType(View.LAYER_TYPE_HARDWARE, null)
-              setBackgroundColor(android.graphics.Color.parseColor("#05060A"))
-              isFocusable = true
-              isFocusableInTouchMode = true
+            try {
+              WebView(ctx).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                  ViewGroup.LayoutParams.MATCH_PARENT,
+                  ViewGroup.LayoutParams.MATCH_PARENT
+                )
+                runCatching { setLayerType(View.LAYER_TYPE_HARDWARE, null) }
+                setBackgroundColor(android.graphics.Color.parseColor("#05060A"))
+                isFocusable = true
+                isFocusableInTouchMode = true
 
-              settings.apply {
-                javaScriptEnabled = true
-                domStorageEnabled = true
-                mediaPlaybackRequiresUserGesture = false
-                allowFileAccess = true
-                allowContentAccess = true
-                cacheMode = WebSettings.LOAD_DEFAULT
-                useWideViewPort = true
-                loadWithOverviewMode = true
-                setSupportZoom(false)
-                builtInZoomControls = false
-                displayZoomControls = false
-              }
-
-              val bridge = AndroidWebBridge(
-                viewModel = viewModel,
-                gameMonitor = gameMonitor,
-                mainHandler = mainHandler,
-                onWebViewEvaluate = { script ->
-                  evaluateJavascript(script, null)
-                }
-              )
-              addJavascriptInterface(bridge, "AndroidBridge")
-
-              webChromeClient = WebChromeClient()
-              webViewClient = object : WebViewClient() {
-                override fun onPageFinished(view: WebView?, url: String?) {
-                  super.onPageFinished(view, url)
-                  if (adsRemoved) {
-                    view?.evaluateJavascript("if(window.onAdsRemoved) window.onAdsRemoved();", null)
+                runCatching {
+                  settings.apply {
+                    javaScriptEnabled = true
+                    domStorageEnabled = true
+                    mediaPlaybackRequiresUserGesture = false
+                    allowFileAccess = true
+                    allowContentAccess = true
+                    cacheMode = WebSettings.LOAD_DEFAULT
+                    useWideViewPort = true
+                    loadWithOverviewMode = true
+                    setSupportZoom(false)
+                    builtInZoomControls = false
+                    displayZoomControls = false
                   }
                 }
-              }
 
-              loadUrl("file:///android_asset/index.html")
-              webViewRef = this
+                val bridge = AndroidWebBridge(
+                  viewModel = viewModel,
+                  gameMonitor = gameMonitor,
+                  mainHandler = mainHandler,
+                  onWebViewEvaluate = { script ->
+                    runCatching { evaluateJavascript(script, null) }
+                  }
+                )
+                runCatching { addJavascriptInterface(bridge, "AndroidBridge") }
+
+                webChromeClient = WebChromeClient()
+                webViewClient = object : WebViewClient() {
+                  override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    if (adsRemoved) {
+                      runCatching {
+                        view?.evaluateJavascript("if(window.onAdsRemoved) window.onAdsRemoved();", null)
+                      }
+                    }
+                  }
+
+                  override fun onRenderProcessGone(
+                    view: WebView?,
+                    detail: android.webkit.RenderProcessGoneDetail?
+                  ): Boolean {
+                    runCatching {
+                      (view?.parent as? ViewGroup)?.removeView(view)
+                      view?.destroy()
+                    }
+                    if (webViewRef === view) {
+                      webViewRef = null
+                    }
+                    viewModel.showStatus("Grafik-Engine wird neu initialisiert...")
+                    return true
+                  }
+                }
+
+                runCatching { loadUrl("file:///android_asset/index.html") }
+                webViewRef = this
+              }
+            } catch (t: Throwable) {
+              View(ctx).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                  ViewGroup.LayoutParams.MATCH_PARENT,
+                  ViewGroup.LayoutParams.MATCH_PARENT
+                )
+                setBackgroundColor(android.graphics.Color.parseColor("#05060A"))
+              }
             }
           },
           update = { view ->
-            webViewRef = view
+            if (view is WebView) {
+              webViewRef = view
+            }
           }
         )
 

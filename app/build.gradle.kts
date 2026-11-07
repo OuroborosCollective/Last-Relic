@@ -88,14 +88,32 @@ android {
     }
   }
   compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
   }
   buildFeatures {
     compose = true
     buildConfig = true
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+      isReturnDefaultValues = true
+      all { testTask ->
+        testTask.jvmArgs(
+          "--add-opens=java.base/java.lang=ALL-UNNAMED",
+          "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+          "--add-opens=java.base/java.io=ALL-UNNAMED",
+          "--add-opens=java.base/java.net=ALL-UNNAMED",
+          "--add-opens=java.base/java.security=ALL-UNNAMED",
+          "--add-opens=java.base/java.text=ALL-UNNAMED",
+          "--add-opens=java.base/java.util=ALL-UNNAMED",
+          "--add-opens=java.base/jdk.internal.access=ALL-UNNAMED",
+          "--add-opens=java.desktop/java.awt.font=ALL-UNNAMED"
+        )
+      }
+    }
+  }
   dependenciesInfo {
     includeInApk = false
     includeInBundle = true
@@ -105,17 +123,35 @@ android {
 tasks.withType<Test> {
   failFast = true
   timeout.set(Duration.ofMinutes(2))
+  if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
+    runCatching {
+      javaLauncher.set(
+        javaToolchains.launcherFor {
+          languageVersion.set(JavaLanguageVersion.of(21))
+        }
+      )
+    }
+  }
   val localRoboDir =
     listOf(
         file("/home/appuser/robolectric-jars"),
         file(
           "/home/appuser/.m2/repository/org/robolectric/android-all-instrumented/16-robolectric-13921718-i7"
+        ),
+        file(
+          "${System.getProperty("user.home")}/.m2/repository/org/robolectric/android-all-instrumented/16-robolectric-13921718-i7"
         )
       )
       .firstOrNull { it.exists() && it.isDirectory }
   if (localRoboDir != null) {
     systemProperty("robolectric.offline", "true")
     systemProperty("robolectric.dependency.dir", localRoboDir.absolutePath)
+  } else {
+    systemProperty(
+      "robolectric.dependency.repo.url",
+      "https://maven-central.storage-download.googleapis.com/maven2"
+    )
+    systemProperty("robolectric.dependency.repo.id", "gcs-maven-central-mirror")
   }
   testLogging {
     events("passed", "failed", "skipped")
@@ -179,6 +215,7 @@ dependencies {
   // implementation(libs.okhttp)
   // implementation(libs.play.services.location)
   // implementation(libs.retrofit)
+  testImplementation(platform(libs.androidx.compose.bom))
   testImplementation(libs.androidx.compose.ui.test.junit4)
   testImplementation(libs.androidx.core)
   testImplementation(libs.androidx.junit)
